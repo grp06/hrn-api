@@ -1,0 +1,8 @@
+config.yaml
+.env
+.env.yml
+graphql-ec2-key-pair.pem
+.DS_Store
+node_modules
+.webpack
+.serverless
