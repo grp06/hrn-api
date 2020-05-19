@@ -23,6 +23,7 @@ roomsRouter
   //rename to make function clearer?
   .route('/complete-rooms')
   .get((req, res) => {
+    console.log('are we here/????')
     client.video.rooms.list({ status: 'in-progress' }).then((rooms) => {
       console.log('rooms = ', rooms)
       return rooms.forEach((r) => {
