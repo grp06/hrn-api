@@ -24,6 +24,11 @@ app.use(cors())
 app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 
+// app.get('/api/rooms/yo', (req, res) => {
+//   console.log('hello!')
+//   res.send('wow')
+// })
+
 app.use(function errorHandler(error, req, res, next) {
   let response
   if (NODE_ENV === 'production') {

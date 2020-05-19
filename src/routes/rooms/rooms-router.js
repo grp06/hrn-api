@@ -8,31 +8,21 @@ const authToken = '95af76d75ebe6811a23ec3b43d7e6477' // Your Auth Token from www
 const client = new Twilio(twilioAccountSid, authToken)
 
 roomsRouter
-  .route('/:room_id')
-  //check room exists...maybe just keep error response in catch
-  .get((req, res) => {
-    client.video
-      .rooms(req.params.id)
-      .fetch()
-      .then((room) => {
-        res.status(200).send(room)
-      })
-  })
-
-roomsRouter
   //rename to make function clearer?
   .route('/complete-rooms')
   .get((req, res) => {
     console.log('are we here/????')
+    const completedIds = []
     client.video.rooms.list({ status: 'in-progress' }).then((rooms) => {
-      console.log('rooms = ', rooms)
       return rooms.forEach((r) => {
+        completedIds.push(r.sid)
         client.video
           .rooms(r.sid)
           .update({ status: 'completed' })
           .then((room) => console.log('completed rooms'))
       })
     })
+    res.status(200).send('completed some rooms')
   })
 
 // evetually, this func should receive an array
@@ -49,11 +39,23 @@ roomsRouter
           enable_turn: false,
         })
         .then((room) => {
-          res.status(201).send('room created')
           console.log('room created with ID = ', room.sid)
         })
         .catch((err) => console.log('err == ', err))
     })
+    res.status(201).send('room created')
+  })
+
+roomsRouter
+  .route('/:room_id')
+  //check room exists...maybe just keep error response in catch
+  .get((req, res) => {
+    client.video
+      .rooms(req.params.id)
+      .fetch()
+      .then((room) => {
+        res.status(200).send(room)
+      })
   })
 
 module.exports = roomsRouter
