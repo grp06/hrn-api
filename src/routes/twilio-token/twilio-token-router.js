@@ -1,6 +1,6 @@
+require('dotenv').config({ path: __dirname + '/.env' })
 const express = require('express')
 const tokenRouter = express.Router()
-const { TWILIO_API_KEY, TWILIO_API_SECRET } = require('../../config')
 const { AccessToken } = require('twilio').jwt
 const { VideoGrant } = AccessToken
 const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SID from www.twilio.com/console
@@ -10,10 +10,11 @@ const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SI
 tokenRouter.post('/', (req, res) => {
   // Create an access token which we will sign and return to the client,
   // containing the grant we just created
+
   const token = new AccessToken(
     twilioAccountSid,
-    TWILIO_API_KEY,
-    TWILIO_API_SECRET
+    process.env.TWILIO_API_KEY,
+    process.env.TWILIO_API_SECRET
   )
   token.identity = req.body.myUserId
 

@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config({ path: __dirname + '/.env' })
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
@@ -22,7 +22,7 @@ app.use(cors())
 // startServer(app, 8000)
 // console.log(`Apollo :${port}/graphql`)
 app.use('/api/rooms', roomsRouter)
-app.use('/api/get-twilio-token', tokenRouter)
+app.use('/api/token', tokenRouter)
 
 app.use(function errorHandler(error, req, res, next) {
   let response
