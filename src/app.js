@@ -21,8 +21,15 @@ app.use(morgan(morganOption))
 app.use(cors())
 // startServer(app, 8000)
 // console.log(`Apollo :${port}/graphql`)
-app.use('/api/rooms', roomsRouter)
-app.use('/api/get-twilio-token', tokenRouter)
+app.use("/api/rooms", roomsRouter)
+app.use('/api/token', tokenRouter)
+
+
+// app.get('/api/rooms/yo', (req, res) => {
+//   console.log('hello!')
+//   res.send('wow')
+// })
+
 
 app.use(function errorHandler(error, req, res, next) {
   let response
