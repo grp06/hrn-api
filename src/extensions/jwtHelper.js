@@ -20,6 +20,13 @@ export const createToken = async (user, secret, expiresIn) => {
     iat: Date.now() / 1000,
   }
 
+  // const tokenContents = {
+  //   sub: '' + 1,
+  //   name: 'BOB@BOB.COM',
+  //   iat: Date.now() / 1000,
+  // }
+  
+
   tokenContents[constants.claims] = {}
   tokenContents[constants.claims][constants.allowedRoles] = [
     roles.anonymous,

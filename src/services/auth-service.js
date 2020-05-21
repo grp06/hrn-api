@@ -17,6 +17,7 @@ const AuthService = {
   },
   createJwt(subject, payload) {
     return jwt.sign(payload, process.env.SECRET, {
+
       subject,
       algorithm: "HS256"
     });

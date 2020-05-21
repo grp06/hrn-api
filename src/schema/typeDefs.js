@@ -6,6 +6,7 @@ const linkSchema = gql`
   type Query {
     _: Boolean
     numberSix: Int!
+    user: User
   }
 
   type Mutation {
@@ -14,6 +15,12 @@ const linkSchema = gql`
 
   type Subscription {
     _: Boolean
+  }
+
+  type User {
+    id: ID!
+    name: String,
+    age: Int
   }
 
 

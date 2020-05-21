@@ -27,17 +27,39 @@ console.log(`Apollo :${PORT}/graphql`)
 app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 
-app.get('/token', jsonBodyParser, (req, res, next) => {
+const user = {
+  id: 1,
+  name: "bob",
+  email: "bob@bob.com",
+  role: "user"
+}
+app.get('/graphql/login', jsonBodyParser, (req, res, next) => {
 
-  const sub = 'bob'
-  const payload = {
-    user_id: 1,
-    date_created: "2020-05-19T19:13:49.74303+00:00"
-  }
-  res.send({
-    payload,
-    authToken: AuthService.createJwt(sub, payload)
-  });
+  console.log('gql login');
+  createToken(user, process.env.SECRET).then((data) => {
+    console.log('thing', data);
+    res.send(data)
+  })
+
+  // app.get('/token', jsonBodyParser, (req, res) => {
+
+  //   createToken(user, process.env.SECRET).then((data) => {
+  //     console.log('thing', data);
+  //     res.send(data)
+  //   })
+  
+
+
+
+  // const sub = 'bozxcxzcb'
+  // const payload = {
+  //   user_id: 1,
+  //   iat: Date.now() / 1000,
+  // }
+  // res.send({
+  //   payload,
+  //   authToken: AuthService.createJwt(sub, payload)
+  // });
 }) 
 
 app.use(function errorHandler(error, req, res, next) {

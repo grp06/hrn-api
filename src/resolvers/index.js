@@ -5,7 +5,13 @@ const customScalarResolver = {
 }
 
 const resolvers = {
-  Date: GraphQLDateTime
+  Date: GraphQLDateTime,
+  Query: {
+    numberSix: () => {
+      return 6
+    }
+  }
+  
 }
 
 
