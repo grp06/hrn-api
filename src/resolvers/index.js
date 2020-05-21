@@ -4,6 +4,9 @@ const customScalarResolver = {
   Date: GraphQLDateTime,
 }
 
-const resolvers = [customScalarResolver]
+const resolvers = {
+  Date: GraphQLDateTime
+}
+
 
 export default resolvers

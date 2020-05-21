@@ -5,6 +5,7 @@ const linkSchema = gql`
 
   type Query {
     _: Boolean
+    numberSix: Int!
   }
 
   type Mutation {
@@ -14,6 +15,8 @@ const linkSchema = gql`
   type Subscription {
     _: Boolean
   }
+
+
 `
 
 export default [linkSchema]
