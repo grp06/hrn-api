@@ -2,16 +2,7 @@ import jwt from 'jsonwebtoken'
 import orm from '../services/orm'
 import signUp from '../gql/mutations/users/signUp'
 import getUsers from '../gql/queries/users/getUsers'
-
-let users = [
-  {
-    id: 'user-0',
-    name: 'www.howtographql.com',
-    email: 'great email.com',
-  },
-]
-
-let idCount = users.length
+import { createToken } from '../extensions/jwtHelper'
 
 export default {
   Query: {
@@ -28,7 +19,7 @@ export default {
   },
 
   Mutation: {
-    insertUser: async (parent, { name, email, password, role }) => {
+    insertUser: async (parent, { name, email, password, role }, { secret }) => {
       console.log('in insertUser')
 
       let userObject = { name, email, password, role }
@@ -38,6 +29,7 @@ export default {
       const signUpResult = await orm.request(signUp, variables)
 
       newUser = signUpResult.data.insert_users.returning[0]
+      console.log('newUser=', newUser)
 
       //after checking if user exists in db
       //   newUser = userObject
@@ -45,17 +37,17 @@ export default {
 
       //   console.log(users)
 
-      return {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      }
       // return {
-      //   token: await createToken(newUser, secret),
-      //     role: newUser.role,
-      //     id: newUser.id,
+      //   id: newUser.id,
+      //   name: newUser.name,
+      //   email: newUser.email,
+      //   role: newUser.role,
       // }
+      return {
+        token: await createToken(newUser, secret),
+        role: newUser.role,
+        id: newUser.id,
+      }
     },
   },
 }

@@ -6,7 +6,7 @@ export default gql`
       users: [User!]!
   }
   extend type Mutation {
-    insertUser(name: String!, email: String!, password: String!, role: String!): User!
+    insertUser(name: String!, email: String!, password: String!, role: String!): Token!
   }
 
   type User {
@@ -16,5 +16,11 @@ export default gql`
     password: String!
     role: String
     last_seen: String
+  }
+
+  type Token {
+    token: String!
+    id: String!
+    role: String!
   }
 `
