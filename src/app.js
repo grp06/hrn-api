@@ -31,11 +31,16 @@ const user = {
   id: 1,
   name: "bob",
   email: "bob@bob.com",
-  role: "user"
+  // role: "user"
 }
-app.get('/graphql/login', jsonBodyParser, (req, res, next) => {
+app.get('/login', jsonBodyParser, (req, res, next) => {
 
-  console.log('gql login');
+
+  //1
+  //Does the user exist
+
+
+  console.log('simple login endpoint');
   createToken(user, process.env.SECRET).then((data) => {
     console.log('thing', data);
     res.send(data)

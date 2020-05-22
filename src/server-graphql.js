@@ -7,7 +7,6 @@ export const startServer = async (app, port) => {
   const server = new ApolloServer({
     schema,
     context: async ({ req }) => {
-      console.log('---ran----');
       const currentUser = await getCurrentUser(req.headers)
       return {
         currentUser,
