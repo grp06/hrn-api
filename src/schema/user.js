@@ -4,6 +4,8 @@ export default gql`
 
   extend type Query {
       users: [User!]!
+
+      userByEmail(email: String!): User
   }
   extend type Mutation {
     insertUser(name: String!, email: String!, password: String!, role: String!): Token!

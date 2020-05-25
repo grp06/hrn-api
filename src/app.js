@@ -7,13 +7,17 @@ const bodyParser = require('body-parser')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const app = express()
+import orm from './services/orm'
 const AuthService = require('./services/auth-service')
 import { startServer } from './server-graphql'
 import { createToken } from './extensions/jwtHelper'
+import { users } from './resolvers/user'
+import getUsers from './gql/queries/users/getUsers'
+import findUserByEmail from './gql/queries/users/findUserByEmail'
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
-const jsonBodyParser = express.json();
+const jsonBodyParser = express.json()
 app.use(
   bodyParser.urlencoded({
     extended: true,
@@ -27,45 +31,27 @@ console.log(`Apollo :${PORT}/graphql`)
 app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 
-const user = {
-  id: 1,
-  name: "bob",
-  email: "bob@bob.com",
-  // role: "user"
-}
-app.get('/login', jsonBodyParser, (req, res, next) => {
+app.get('/users', (req, res) => {
+  console.log('/users endpoint')
+  const stuff = users
+  res.json(stuff)
+})
 
+app.post('/signup', async (req, res) => {
+  const { email } = req.body
+  console.log('email', email)
+  let user
+  const emailRequest = await orm.request(findUserByEmail, { email: email })
 
-  //1
-  //Does the user exist
+  user = emailRequest.data.users[0]
+  console.log(user)
 
-
-  console.log('simple login endpoint');
-  createToken(user, process.env.SECRET).then((data) => {
-    console.log('thing', data);
-    res.send(data)
-  })
-
-  // app.get('/token', jsonBodyParser, (req, res) => {
-
-  //   createToken(user, process.env.SECRET).then((data) => {
-  //     console.log('thing', data);
-  //     res.send(data)
-  //   })
-  
-
-
-
-  // const sub = 'bozxcxzcb'
-  // const payload = {
-  //   user_id: 1,
-  //   iat: Date.now() / 1000,
-  // }
-  // res.send({
-  //   payload,
-  //   authToken: AuthService.createJwt(sub, payload)
-  // });
-}) 
+  if (user) {
+    console.log('error!!')
+    res.send(500).status('does not compute')
+  }
+  res.status(200).json(user)
+})
 
 app.use(function errorHandler(error, req, res, next) {
   let response

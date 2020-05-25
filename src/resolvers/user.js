@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import orm from '../services/orm'
 import signUp from '../gql/mutations/users/signUp'
 import getUsers from '../gql/queries/users/getUsers'
+import findUserByEmail from '../gql/queries/users/findUserByEmail'
 import { createToken } from '../extensions/jwtHelper'
 
 export default {
@@ -10,12 +11,26 @@ export default {
       try {
         let users
         const request = await orm.request(getUsers)
-        users = request.data.users
+        users = request.data.users 
         return users
       } catch {
         console.log('user query error')
       }
     },
+
+
+
+    userByEmail: async (parent, {email}) => {
+
+      try {
+        let user
+        const request = await orm.request(findUserByEmail, { email: email})
+        user = request.data.users[0]
+        return user
+      } catch {
+        console.log('user email query error');
+      }
+    }
   },
 
   Mutation: {

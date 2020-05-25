@@ -14,6 +14,9 @@ const request = async (gqlQuery, variables = {}, token) => {
     headers[constants.adminSecret] = process.env.HASURA_GRAPHQL_ACCESS_KEY
   }
 
+  console.log(gqlQuery);
+  console.log(variables);
+
   try {
     const result = await axios.post(
       // 'https://hi-right-now.herokuapp.com/v1/graphql',
@@ -21,6 +24,7 @@ const request = async (gqlQuery, variables = {}, token) => {
       {
         query: print(gqlQuery),
         variables: variables,
+
       },
       {
         headers: headers,
