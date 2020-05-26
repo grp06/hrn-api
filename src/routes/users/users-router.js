@@ -16,16 +16,21 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       })
 
   let userObject = { name, email, password, role }
+  let user
 
   //password and email validation
 
   //check if user with email exists
-  let user
-  const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-  user = checkEmailRequest.data.users[0]
 
-  if (user) {
-    return res.status(400).json({ error: 'Email already in use.' })
+  try {
+    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
+    existingUser = checkEmailRequest.data.users[0]
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already in use.' })
+    }
+  } catch {
+    console.log('Error creating user')
   }
 
   //hash the password
@@ -36,8 +41,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   try {
     const insertUserResult = await orm.request(signUp, variables)
     newUser = insertUserResult.data.insert_users.returning[0]
-
-    console.log(newUser)
   } catch {
     res.status(500).send('womp')
   }

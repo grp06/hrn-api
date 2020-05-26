@@ -2,8 +2,7 @@ const express = require('express')
 const AuthService = require('../../services/auth-service')
 import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
-import {createToken} from '../../extensions/jwtHelper'
-
+import { createToken } from '../../extensions/jwtHelper'
 
 const authRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -19,15 +18,13 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
         error: `Missing '${key}' in request body`,
       })
 
-  //check if user with email exists
-
   let dbUser
-  try {
 
+  try {
+    //check if user with email exists
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
 
     dbUser = checkEmailRequest.data.users[0]
-    console.log(dbUser)
 
     if (!dbUser) {
       return res.status(400).json({ error: 'Incorrect email or password' })
@@ -46,27 +43,15 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     //     error: 'Incorrect user_name or password',
     //   })
     // }
-
-    const sub = dbUser.email
-    const payload = {
-      user_id: dbUser.id,
-    }
-
-    console.log('sub', sub)
-    console.log('payload: ', payload)
-
-    
-  } catch  {
-    return res.send('whoops')
+  } catch {
+    console.log('Error logging in')
   }
 
   return res.send({
-    //   payload,
-    //   authToken: await Authservice.createJwt(sub, payload),
-      token: await createToken(dbUser, process.env.SECRET),
-      role: dbUser.role,
-      id: dbUser.id
-    })
+    token: await createToken(dbUser, process.env.SECRET),
+    role: dbUser.role,
+    id: dbUser.id,
+  })
 })
 
 module.exports = authRouter
