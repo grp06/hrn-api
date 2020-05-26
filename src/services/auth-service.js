@@ -1,4 +1,4 @@
-// const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const AuthService = {
@@ -7,9 +7,9 @@ const AuthService = {
       .where({ user_name })
       .first();
   },
-//   comparePasswords(password, hash) {
-//     return bcrypt.compare(password, hash);
-//   },
+  comparePasswords(password, hash) {
+    return bcrypt.compare(password, hash);
+  },
   parseBasicToken(token) {
     return Buffer.from(token, "base64")
       .toString()

@@ -6,6 +6,7 @@ export const findUserByEmail = gql`
       id
       email
       role
+      password
       name
       last_seen
     }

@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
+const authRouter = require('./routes/auth/auth-router')
 const app = express()
 import { startServer } from './server-graphql'
 
@@ -26,6 +27,7 @@ console.log(`Apollo :${PORT}/graphql`)
 app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
+app.use('/api/auth', authRouter)
 
 
 app.use(function errorHandler(error, req, res, next) {
