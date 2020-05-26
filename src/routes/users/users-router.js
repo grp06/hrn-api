@@ -2,7 +2,7 @@ const express = require('express')
 import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
-import bcrypt from 'bcryptjs'
+import { hashPassword } from '../../services/auth-service'
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -38,7 +38,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   //hash the password
   let hashedPassword
   try {
-    hashedPassword = await bcrypt.hash(password, 12)
+    hashedPassword = await hashPassword(password)
   } catch {
     console.log('error hashing password')
   }

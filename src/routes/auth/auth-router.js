@@ -1,8 +1,8 @@
 const express = require('express')
-const AuthService = require('../../services/auth-service')
 import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import { createToken } from '../../extensions/jwtHelper'
+import { comparePasswords } from '../../services/auth-service'
 
 const authRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -20,6 +20,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
 
   let dbUser
 
+  //is the await functionality correct here?
   try {
     //check if user with email exists
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
@@ -30,19 +31,14 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
       return res.status(400).json({ error: 'Incorrect email or password' })
     }
 
-    //compare passwords
-    if (loginUser.password !== dbUser.password) {
-      return res.status(400).json({ error: 'bad password' })
+    // compare passwords with hashing
+    const passwordCheck = await comparePasswords(loginUser.password, dbUser.password)
+
+    if (!passwordCheck) {
+      return res.status(400).json({
+        error: 'Incorrect user_name or password',
+      })
     }
-
-    //compare passwords with hashing
-    // const passwordCheck = await AuthService.comparePasswords(loginUser.password, dbUser.password)
-
-    // if (!passwordCheck) {
-    //   return res.status(400).json({
-    //     error: 'Incorrect user_name or password',
-    //   })
-    // }
   } catch {
     console.log('Error logging in')
   }
