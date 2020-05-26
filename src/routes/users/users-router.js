@@ -2,6 +2,7 @@ const express = require('express')
 import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
+import bcrypt from 'bcryptjs'
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -15,13 +16,14 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
         error: `Missing '${field}' in request body`,
       })
 
-  let userObject = { name, email, password, role }
-  let user
+
 
   //password and email validation
 
-  //check if user with email exists
 
+
+  //check if user with email exists
+  let existingUser
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
     existingUser = checkEmailRequest.data.users[0]
@@ -34,6 +36,14 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   }
 
   //hash the password
+  let hashedPassword
+  try {
+    hashedPassword = await bcrypt.hash(password, 12)
+  } catch {
+    console.log('error hashing password')
+  }
+
+  let userObject = { name, email, password: hashedPassword, role }
 
   const variables = { objects: [userObject] }
   let newUser
