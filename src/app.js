@@ -8,8 +8,11 @@ const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
+const emailRouter = require('./routes/email/email-router')
 const app = express()
+const sgMail = require('@sendgrid/mail');
 import { startServer } from './server-graphql'
+// import { emailRouter } from './routes/email/email-router'
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
@@ -28,6 +31,29 @@ app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
+// app.use('/api/reset_password', emailRouter)
+
+app.use('/password_reset', emailRouter)
+// app.post('/email', async (req, res) => {
+
+//   try {
+//     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+//     const msg = {
+//       to: 'kevin.dan.rob@gmail.com',
+//       from: 'kevinrobinsondeveloper@gmail.com',
+//       subject: 'Sending with Twilio SendGrid is Fun',
+//       text: 'and easy to do anywhere, even with Node.js',
+//       html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+//     };
+//     await sgMail.send(msg)
+//     res.send('cool')
+//   } catch {
+//     console.log('not right');
+//   }
+
+
+
+// })
 
 
 app.use(function errorHandler(error, req, res, next) {

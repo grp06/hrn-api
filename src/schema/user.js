@@ -1,11 +1,12 @@
 import gql from 'graphql-tag'
 
 export default gql`
-
   extend type Query {
-      users: [User!]!
+    users: [User!]!
 
-      userByEmail(email: String!): User
+    userByEmail(email: String!): User
+
+    userById(id: Int!): User
   }
   extend type Mutation {
     insertUser(name: String!, email: String!, password: String!, role: String!): Token!

@@ -2,6 +2,7 @@ import orm from '../services/orm'
 import signUp from '../gql/mutations/users/signUp'
 import getUsers from '../gql/queries/users/getUsers'
 import findUserByEmail from '../gql/queries/users/findUserByEmail'
+import findUserById from '../gql/queries/users/findUserById'
 import { createToken } from '../extensions/jwtHelper'
 
 export default {
@@ -25,6 +26,17 @@ export default {
         return user
       } catch {
         console.log('user email query error')
+      }
+    },
+
+    userById: async (parent, { id }) => {
+      try {
+        let user
+        const request = await orm.request(findUserById, { id: id })
+        user = request.data.users[0]
+        return user
+      } catch {
+        console.log('user id query error')
       }
     },
   },
