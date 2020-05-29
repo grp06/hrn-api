@@ -10,6 +10,8 @@ export default gql`
   }
   extend type Mutation {
     insertUser(name: String!, email: String!, password: String!, role: String!): Token!
+
+    updatePasswordByUserId(id: Int!, newPassword: String!): Token!
   }
 
   type User {

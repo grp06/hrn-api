@@ -14,17 +14,22 @@
  **/
 
 import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
+import bcrypt, { hash } from 'bcryptjs'
 import { transporter, getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
+import updatePasswordByUserId from '../../gql/mutations/users/updatePasswordByUserId'
 import orm from '../../services/orm'
 import findUserById from '../../gql/queries/users/findUserById'
+import { hashPassword } from '../../services/auth-service'
+import { createToken } from '../../extensions/jwtHelper'
 const sgMail = require('@sendgrid/mail')
 
 // `secret` is passwordHash concatenated with user's createdAt,
 // so if someones gets a user token they still need a timestamp to intercept.
-export const usePasswordHashToMakeToken = ({ password: passwordHash, _id: userId, createdAt }) => {
-  const secret = passwordHash + '-' + createdAt
+export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId, created_at }) => {
+  console.log('created_at: ', created_at)
+  const secret = passwordHash + '-' + created_at
+  console.log(userId)
   const token = jwt.sign({ userId }, secret, {
     expiresIn: 3600, // 1 hour
   })
@@ -42,7 +47,7 @@ export const sendPasswordResetEmail = async (req, res) => {
 
     console.log('checkEmailRequest', checkEmailRequest)
     user = checkEmailRequest.data.users[0]
-    console.log(user)
+    console.log('user sendPasswordResetEmail', user)
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -80,38 +85,12 @@ export const receiveNewPassword = async (req, res) => {
   const { userId, token } = req.params
   const { password } = req.body
 
-  //   User.findOne({ _id: userId })
-
-  //     .then((user) => {
-  //       const secret = user.password + '-' + user.createdAt
-  //       const payload = jwt.decode(token, secret)
-  //       if (payload.userId === user.id) {
-  //         bcrypt.genSalt(10, function (err, salt) {
-  //           if (err) return
-  //           bcrypt.hash(password, salt, function (err, hash) {
-  //             if (err) return
-  //             //update password, finding by id
-  //             User.findOneAndUpdate({ _id: userId }, { password: hash })
-  //               .then(() => res.status(202).json('Password changed accepted'))
-  //               .catch((err) => res.status(500).json(err))
-  //           })
-  //         })
-  //       }
-  //     })
-
-  //     .catch(() => {
-  //       res.status(404).json('Invalid user')
-  //     })
-
   //find user by ID
   let user
   try {
     //change to find user by id
     const checkIdRequest = await orm.request(findUserById, { id: userId })
-
-    console.log('checkIdRequest', checkIdRequest)
     user = checkIdRequest.data.users[0]
-    console.log(user)
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -121,9 +100,35 @@ export const receiveNewPassword = async (req, res) => {
 
   //in a try block?
 
-  //need to add created_at
-//   const secret = user.password + '-' + user.createdAt
-//   const payload = jwt.decode(token, secret)
+  const secret = user.password + '-' + user.created_at
+  const payload = jwt.decode(token, secret)
 
-  return res.send('function ended')
+  if (payload.userId === user.id) {
+    let hashedPassword
+    let updatedUser
+    try {
+      hashedPassword = await hashPassword(password)
+    } catch {
+      return res.send('error hashing password')
+    }
+
+    //find user and update
+
+    try {
+      const userObject = { id: userId, newPassword: hashedPassword }
+      const updatePasswordResult = await orm.request(updatePasswordByUserId, userObject)
+
+      updatedUser = updatePasswordResult.data.update_users.returning[0]
+    } catch {
+      return res.send('error inserting new password')
+    }
+
+    return res.status(200).send({
+      token: await createToken(updatedUser, process.env.SECRET),
+      role: updatedUser.role,
+      id: updatedUser.id
+    })
+  } else {
+    return res.status(404).json({ error: 'Something went wrong with the link you used.' })
+  }
 }

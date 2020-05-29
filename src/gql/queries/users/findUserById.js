@@ -9,6 +9,7 @@ export const findUserById = gql`
       password
       name
       last_seen
+      created_at
     }
   }
 `

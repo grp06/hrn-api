@@ -3,6 +3,7 @@ import signUp from '../gql/mutations/users/signUp'
 import getUsers from '../gql/queries/users/getUsers'
 import findUserByEmail from '../gql/queries/users/findUserByEmail'
 import findUserById from '../gql/queries/users/findUserById'
+import updatePasswordByUserId from '../gql/mutations/users/updatePasswordByUserId'
 import { createToken } from '../extensions/jwtHelper'
 
 export default {
@@ -55,6 +56,23 @@ export default {
         token: await createToken(newUser, secret),
         role: newUser.role,
         id: newUser.id,
+      }
+    },
+
+    updatePasswordByUserId: async (parent, { id, newPassword }, { secret }) => {
+      let userObject = { id, newPassword }
+      console.log('userObject: ', userObject)
+
+      let updatedUser
+      const updatePasswordResult = await orm.request(updatePasswordByUserId, userObject)
+
+      updatedUser = updatePasswordResult.data.update_users.returning[0]
+      console.log('updatedUser: ', updatedUser)
+
+      return {
+        token: await createToken(updatedUser, secret),
+        role: updatedUser.role,
+        id: updatedUser.id,
       }
     },
   },
