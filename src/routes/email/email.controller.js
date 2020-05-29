@@ -29,15 +29,13 @@ const sgMail = require('@sendgrid/mail')
 export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId, created_at }) => {
   console.log('created_at: ', created_at)
   const secret = passwordHash + '-' + created_at
-  console.log(userId)
+  console.log('first secret', secret);
   const token = jwt.sign({ userId }, secret, {
     expiresIn: 3600, // 1 hour
   })
   return token
 }
 
-/*** Calling this function with a registered user's email sends an email IRL ***/
-/*** I think Nodemail has a free service specifically designed for mocking   ***/
 export const sendPasswordResetEmail = async (req, res) => {
   const { email } = req.params
   let user
@@ -45,7 +43,6 @@ export const sendPasswordResetEmail = async (req, res) => {
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
 
-    console.log('checkEmailRequest', checkEmailRequest)
     user = checkEmailRequest.data.users[0]
     console.log('user sendPasswordResetEmail', user)
     if (!user) {
@@ -60,25 +57,15 @@ export const sendPasswordResetEmail = async (req, res) => {
 
   console.log(emailTemplate)
 
-  //---------edit transporter for SendGrid-----------
-  //   const sendEmail = async () => {
-  // transporter.sendMail(emailTemplate, (err, info) => {
-  //   if (err) {
-  //     res.status(500).json("Error sending email")
-  //   }
-  //   console.log(`** Email sent **`, info.response)
-  // })
-
-  try {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    console.log('trying to send email')
-    await sgMail.send(emailTemplate)
-    return res.send('email template sent')
-  } catch {
-    console.log('Something went wrong sending the password reset email')
-  }
-  //   }
-  //   sendEmail()
+  // try {
+  //   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+  //   console.log('trying to send email')
+  //   await sgMail.send(emailTemplate)
+  //   return res.send('email template sent')
+  // } catch {
+  //   console.log('Something went wrong sending the password reset email')
+  // }
+  return res.send('template sent')
 }
 
 export const receiveNewPassword = async (req, res) => {
@@ -88,7 +75,6 @@ export const receiveNewPassword = async (req, res) => {
   //find user by ID
   let user
   try {
-    //change to find user by id
     const checkIdRequest = await orm.request(findUserById, { id: userId })
     user = checkIdRequest.data.users[0]
     if (!user) {
@@ -100,20 +86,28 @@ export const receiveNewPassword = async (req, res) => {
 
   //in a try block?
 
+  console.log('initial user', user);
   const secret = user.password + '-' + user.created_at
+  console.log('second secret', secret);
   const payload = jwt.decode(token, secret)
+  console.log(payload);
 
   if (payload.userId === user.id) {
     let hashedPassword
     let updatedUser
     try {
-      hashedPassword = await hashPassword(password)
+       bcrypt.genSalt(10, function(err, salt) {
+        if (err) return
+        // hashedPassword = await hashPassword(password)
+        hashedPassword = bcrypt.hash(password, salt)
+      console.log('hashedPassword', hashedPassword);
+      })
+      
     } catch {
       return res.send('error hashing password')
     }
 
     //find user and update
-
     try {
       const userObject = { id: userId, newPassword: hashedPassword }
       const updatePasswordResult = await orm.request(updatePasswordByUserId, userObject)
