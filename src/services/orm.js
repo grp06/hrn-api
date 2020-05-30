@@ -5,6 +5,7 @@ import { print } from 'graphql'
 import { constants } from '../extensions/jwtHelper.js'
 
 const request = async (gqlQuery, variables = {}, token) => {
+  console.log('request started');
   const headers = {}
 
   if (token) {
@@ -15,16 +16,18 @@ const request = async (gqlQuery, variables = {}, token) => {
 
   try {
     const result = await axios.post(
-      'https://hi-right-now.herokuapp.com/v1/graphql',
+      // 'https://hi-right-now.herokuapp.com/v1/graphql',
+      'http://localhost:8080/v1/graphql',
       {
         query: print(gqlQuery),
         variables: variables,
+
       },
       {
         headers: headers,
       }
     )
-    console.log('gota  result = ', result)
+    console.log('gota  result = ')
 
     if (result.data) {
       console.log('got result.data = ', result.data)

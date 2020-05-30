@@ -1,10 +1,12 @@
 import gql from 'graphql-tag'
+import user from './user'
 
 const linkSchema = gql`
   scalar Date
 
   type Query {
     _: Boolean
+    numberSix: Int!
   }
 
   type Mutation {
@@ -16,4 +18,4 @@ const linkSchema = gql`
   }
 `
 
-export default [linkSchema]
+export default [linkSchema, user]

@@ -21,10 +21,7 @@ export const createToken = async (user, secret, expiresIn) => {
   }
 
   tokenContents[constants.claims] = {}
-  tokenContents[constants.claims][constants.allowedRoles] = [
-    roles.anonymous,
-    roles.user,
-  ]
+  tokenContents[constants.claims][constants.allowedRoles] = [roles.anonymous, roles.user]
   tokenContents[constants.claims][constants.userId] = '' + user.id
   tokenContents[constants.claims][constants.defaultRole] = user.role
 
