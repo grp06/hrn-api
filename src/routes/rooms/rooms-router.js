@@ -1,11 +1,155 @@
-const express = require('express')
+import orm from '../../services/orm'
+import axios from 'axios'
 
+import getEventUsers from '../../gql/queries/users/getEventUsers'
+import getRoundsByEventId from '../../gql/queries/users/getRoundsByEventId'
+import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
+import createRooms from './createRooms'
+import completeRooms from './completeRooms'
+import samyakAlgoPro from './samyakAlgoPro'
+
+const express = require('express')
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
 const Twilio = require('twilio')
 const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SID from www.twilio.com/console
 const authToken = '95af76d75ebe6811a23ec3b43d7e6477' // Your Auth Token from www.twilio.com/console
 const client = new Twilio(twilioAccountSid, authToken)
+
+let executeEvent
+let timeout
+
+const createRoundsMap = (roundData, users) => {
+  // look out for this in new algo
+  if (!roundData || roundData.rounds.length === 0) {
+    return {}
+  }
+
+  const generateUserMap = (user_id) => {
+    const userRounds = roundData.rounds.filter(
+      (pairing) => pairing.partnerX_id === user_id || pairing.partnerY_id === user_id
+    )
+    // This is to get an array of only your partners id for each round as the array element
+    return userRounds.map((roundObject) => {
+      if (roundObject.partnerX_id === user_id) {
+        return roundObject.partnerY_id
+      }
+      return roundObject.partnerX_id
+    })
+  }
+
+  const roundsMapObject = users.reduce((all, user) => {
+    const map = generateUserMap(user)
+    all[user] = map
+    return all
+  }, {})
+
+  return roundsMapObject
+}
+
+roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
+  completeRooms()
+
+  let currentRound = 0
+  const roundLength = 10000
+  const { eventId } = req.body
+
+  let isFirstRound = true
+
+  executeEvent = async () => {
+    console.log('calling execute event')
+    let eventUsers
+    let roundsData
+    try {
+      const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
+      eventUsers = eventUsersResponse.data.event_users
+    } catch (e) {
+      console.log('get event users error = ', e)
+    }
+
+    try {
+      const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
+      roundsData = getRoundsResponse.data
+    } catch (e) {
+      console.log('getRounds error = ', e)
+    }
+
+    const onlineUsers = eventUsers.map((userObj) => userObj.user.id)
+
+    // hardcoding admin ID into online users. need to set this up on the frontend
+    onlineUsers.push(237)
+
+    if (!eventUsers.length) {
+      console.log('not enough users to start evetn')
+      return res.status(400).json({ error: 'not enough users to start event' })
+    }
+
+    const variablesArr = []
+    const roundsMap = createRoundsMap(roundsData, onlineUsers)
+    const { pairingsArray, userIdsMap } = samyakAlgoPro(onlineUsers, roundsMap)
+
+    pairingsArray.forEach((pairing) => {
+      variablesArr.push({
+        partnerX_id: pairing[0],
+        partnerY_id: pairing[1],
+        round_number: currentRound + 1,
+        event_id: eventId,
+      })
+    })
+
+    let insertedRounds
+    try {
+      insertedRounds = await orm.request(bulkInsertRounds, {
+        objects: variablesArr,
+      })
+      const currentRoundData = insertedRounds.data.insert_rounds.returning
+      const newCurrentRound = currentRoundData.reduce((all, item) => {
+        if (item.round_number > all) {
+          return item.round_number
+        }
+        return all
+      }, 0)
+
+      const currentRoundObj = currentRoundData.filter(
+        (round) => round.round_number === newCurrentRound + 1
+      )
+
+      currentRound = newCurrentRound
+      console.log('new current round = ', newCurrentRound)
+
+      const allRoomIds = currentRoundData.reduce((all, item) => {
+        all.push(item.id)
+        return all
+      }, [])
+
+      // on the frontend maybe consider putting in a delay on the 'join room'  function
+      createRooms(allRoomIds)
+      if (newCurrentRound === 4) {
+        console.log('event is over')
+        clearTimeout(timeout)
+      }
+      isFirstRound = false
+      setTimeout(() => {
+        completeRooms()
+      }, 5000)
+      if (currentRound !== 4) {
+        timeout = setTimeout(executeEvent, roundLength)
+      }
+    } catch (e) {
+      console.log('getRounds error = ', e)
+    }
+  }
+
+  executeEvent()
+
+  return res.status(200).json({ res: 'response' })
+})
+
+roomsRouter.route('/cancel-event').get((req, res) => {
+  completeRooms()
+  clearTimeout(timeout)
+  return res.status(200).json({ res: 'reset the event yo' })
+})
 
 roomsRouter
   .route('/:room_id')
