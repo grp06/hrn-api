@@ -11,9 +11,9 @@ export const transporter = nodemailer.createTransport({
 //API endpoint
 export const getPasswordResetURL = (user, token) => {
   console.log('user in getPasswordResetURL', user);
-  //this should point to front end code, which will have a POST request to the password_reset endpoint
-  // return `http://localhost:8000/password/reset/${user.id}/${token}`
-  return `http://localhost:8000/receive_new_password/${user.id}/${token}`
+  //this should point to front end code, which will have a POST request to the /password_reset/receive_new_password endpoint
+  // return `http://hrn.com/password/reset/${user.id}/${token}`
+  return `http://localhost:8000/api/receive_new_password/${user.id}/${token}`
 }
 
 
