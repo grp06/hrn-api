@@ -48,16 +48,20 @@ const createRoundsMap = (roundData, users) => {
 }
 
 roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
-  completeRooms()
-
   let currentRound = 0
   const roundLength = 10000
   const { eventId } = req.body
 
-  let isFirstRound = true
-
   executeEvent = async () => {
-    console.log('calling execute event')
+    const completedRoomsPromises = await completeRooms()
+    console.log('executeEvent -> completedRoomsPromises', completedRoomsPromises.length)
+    await Promise.all(completedRoomsPromises)
+    console.log('rooms completed')
+
+    if (currentRound === 3) {
+      console.log('event is over')
+      return clearTimeout(timeout)
+    }
     let eventUsers
     let roundsData
     try {
@@ -102,41 +106,38 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
       insertedRounds = await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
-      const currentRoundData = insertedRounds.data.insert_rounds.returning
-      const newCurrentRound = currentRoundData.reduce((all, item) => {
-        if (item.round_number > all) {
-          return item.round_number
-        }
-        return all
-      }, 0)
-
-      const currentRoundObj = currentRoundData.filter(
-        (round) => round.round_number === newCurrentRound + 1
-      )
-
-      currentRound = newCurrentRound
-      console.log('new current round = ', newCurrentRound)
-
-      const allRoomIds = currentRoundData.reduce((all, item) => {
-        all.push(item.id)
-        return all
-      }, [])
-
-      // on the frontend maybe consider putting in a delay on the 'join room'  function
-      createRooms(allRoomIds)
-      if (newCurrentRound === 4) {
-        console.log('event is over')
-        clearTimeout(timeout)
-      }
-      isFirstRound = false
-      setTimeout(() => {
-        completeRooms()
-      }, 5000)
-      if (currentRound !== 4) {
-        timeout = setTimeout(executeEvent, roundLength)
-      }
     } catch (e) {
       console.log('getRounds error = ', e)
+    }
+
+    const currentRoundData = insertedRounds.data.insert_rounds.returning
+    const newCurrentRound = currentRoundData.reduce((all, item) => {
+      if (item.round_number > all) {
+        return item.round_number
+      }
+      return all
+    }, 0)
+
+    const currentRoundObj = currentRoundData.filter(
+      (round) => round.round_number === newCurrentRound + 1
+    )
+
+    currentRound = newCurrentRound
+    console.log('NEW CURRENT ROUND = ', newCurrentRound)
+
+    const allRoomIds = currentRoundData.reduce((all, item) => {
+      all.push(item.id)
+      return all
+    }, [])
+
+    console.log('executeEvent -> allRoomIds', allRoomIds)
+    // on the frontend maybe consider putting in a delay on the 'join room'  function
+    const createdRoomsPromises = await createRooms(allRoomIds)
+    await Promise.all(createdRoomsPromises)
+    if (currentRound < 4) {
+      console.log('rooms in progress - closing them in 20 secs')
+      clearTimeout(timeout)
+      timeout = setTimeout(executeEvent, roundLength)
     }
   }
 
@@ -145,7 +146,7 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
   return res.status(200).json({ res: 'response' })
 })
 
-roomsRouter.route('/cancel-event').get((req, res) => {
+roomsRouter.route('/reset-event').get((req, res) => {
   completeRooms()
   clearTimeout(timeout)
   return res.status(200).json({ res: 'reset the event yo' })
@@ -176,28 +177,6 @@ roomsRouter
       })
     )
     res.status(200).send(JSON.stringify({ body: 'something' }))
-  })
-
-// evetually, this func should receive an array
-roomsRouter
-  .route('/create')
-  //require auth and parse JSON
-  .post(jsonBodyParser, (req, res, next) => {
-    const allPartnerXs = req.body
-    allPartnerXs
-      .forEach((id) => {
-        client.video.rooms
-          .create({
-            uniqueName: id,
-            type: 'peer-to-peer',
-            enable_turn: false,
-          })
-          .then((room) => {
-            res.status(201).send('room created')
-            console.log('room created with ID = ', room.sid)
-          })
-      })
-      .catch(next)
   })
 
 module.exports = roomsRouter
