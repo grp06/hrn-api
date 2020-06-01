@@ -49,24 +49,26 @@ const createRoundsMap = (roundData, users) => {
 
 roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
   let currentRound = 0
-  const roundLength = 10000
+  const roundLength = 20000
   const { eventId } = req.body
 
   executeEvent = async () => {
     const completedRoomsPromises = await completeRooms()
-    console.log('executeEvent -> completedRoomsPromises', completedRoomsPromises.length)
+
     await Promise.all(completedRoomsPromises)
-    console.log('rooms completed')
 
     if (currentRound === 3) {
       console.log('event is over')
       return clearTimeout(timeout)
     }
+
     let eventUsers
     let roundsData
+
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
+      console.log('got event users')
     } catch (e) {
       console.log('get event users error = ', e)
     }
@@ -74,6 +76,7 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
+      console.log('got rounds data')
     } catch (e) {
       console.log('getRounds error = ', e)
     }
@@ -106,6 +109,7 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
       insertedRounds = await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
+      console.log('inserted rounds')
     } catch (e) {
       console.log('getRounds error = ', e)
     }
@@ -130,12 +134,12 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
       return all
     }, [])
 
-    console.log('executeEvent -> allRoomIds', allRoomIds)
     // on the frontend maybe consider putting in a delay on the 'join room'  function
     const createdRoomsPromises = await createRooms(allRoomIds)
     await Promise.all(createdRoomsPromises)
+
     if (currentRound < 4) {
-      console.log('rooms in progress - closing them in 20 secs')
+      console.log('created rooms')
       clearTimeout(timeout)
       timeout = setTimeout(executeEvent, roundLength)
     }
