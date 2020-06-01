@@ -67,7 +67,7 @@ export const receiveNewPassword = async (req, res) => {
       return res.status(400).json({ error: 'No user with that email' })
     }
   } catch (err) {
-    return res.status(404).json('Error finding user')
+    return res.status(404).json({error: 'Error finding user'})
   }
 
   let payload
@@ -75,7 +75,7 @@ export const receiveNewPassword = async (req, res) => {
     const secret = user.password + '-' + user.created_at
     payload = jwt.verify(token, secret)
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized request' })
+    return res.status(401).json({ error: 'Unauthorized request' })
   }
 
   if (payload.userId === user.id) {
