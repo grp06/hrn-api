@@ -16,9 +16,6 @@ const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SI
 const authToken = '95af76d75ebe6811a23ec3b43d7e6477' // Your Auth Token from www.twilio.com/console
 const client = new Twilio(twilioAccountSid, authToken)
 
-let executeEvent
-let timeout
-
 const createRoundsMap = (roundData, users) => {
   // look out for this in new algo
   if (!roundData || roundData.rounds.length === 0) {
@@ -47,13 +44,17 @@ const createRoundsMap = (roundData, users) => {
   return roundsMapObject
 }
 
-roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
+roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res, next) => {
   let currentRound = 0
-  const roundLength = 20000
-  const { eventId } = req.body
+  const roundLength = 30000
+  let timeout
 
-  executeEvent = async () => {
+  const eventId = req.params.id
+  console.log('createRoundsMap -> eventId', eventId)
+
+  const executeEvent = async () => {
     const completedRoomsPromises = await completeRooms()
+    console.log('rooms completed = ', completedRoomsPromises.length)
 
     await Promise.all(completedRoomsPromises)
 
@@ -121,10 +122,6 @@ roomsRouter.post('/start-event', jsonBodyParser, async (req, res, next) => {
       }
       return all
     }, 0)
-
-    const currentRoundObj = currentRoundData.filter(
-      (round) => round.round_number === newCurrentRound + 1
-    )
 
     currentRound = newCurrentRound
     console.log('NEW CURRENT ROUND = ', newCurrentRound)

@@ -7,8 +7,6 @@ const client = new Twilio(twilioAccountSid, authToken)
 const completeRooms = async () => {
   const allRooms = await client.video.rooms.list({ status: 'in-progress' })
   return allRooms.map((r) => {
-    console.log('r.uniqueName = ', r.uniqueName)
-
     return client.video.rooms(r.sid).update({ status: 'completed' })
   })
 }
