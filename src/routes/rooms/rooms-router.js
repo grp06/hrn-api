@@ -7,6 +7,7 @@ import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import createRooms from './createRooms'
 import completeRooms from './completeRooms'
 import samyakAlgoPro from './samyakAlgoPro'
+import createRoundsMap from './createRoundsMap'
 
 const express = require('express')
 const roomsRouter = express.Router()
@@ -16,41 +17,12 @@ const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SI
 const authToken = '95af76d75ebe6811a23ec3b43d7e6477' // Your Auth Token from www.twilio.com/console
 const client = new Twilio(twilioAccountSid, authToken)
 
-const createRoundsMap = (roundData, users) => {
-  // look out for this in new algo
-  if (!roundData || roundData.rounds.length === 0) {
-    return {}
-  }
-
-  const generateUserMap = (user_id) => {
-    const userRounds = roundData.rounds.filter(
-      (pairing) => pairing.partnerX_id === user_id || pairing.partnerY_id === user_id
-    )
-    // This is to get an array of only your partners id for each round as the array element
-    return userRounds.map((roundObject) => {
-      if (roundObject.partnerX_id === user_id) {
-        return roundObject.partnerY_id
-      }
-      return roundObject.partnerX_id
-    })
-  }
-
-  const roundsMapObject = users.reduce((all, user) => {
-    const map = generateUserMap(user)
-    all[user] = map
-    return all
-  }, {})
-
-  return roundsMapObject
-}
-
 roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res, next) => {
   let currentRound = 0
   const roundLength = 30000
   let timeout
 
   const eventId = req.params.id
-  console.log('createRoundsMap -> eventId', eventId)
 
   const executeEvent = async () => {
     const completedRoomsPromises = await completeRooms()
