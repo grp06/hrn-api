@@ -58,4 +58,27 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   return res.status(201).json(newUser)
 })
 
+usersRouter.post('/reset-password', async (req, res) => {
+  const { email } = req.body
+
+  if (!email) {
+    return res.status(400).json({
+      error: `Missing 'email' in request body`
+    })
+  }
+
+  let existingUser
+  try {
+    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
+    existingUser = checkEmailRequest.data.users[0]
+
+    if (!existingUser) {
+      return res.status(400).json({ error: 'Could not find user with that email' })
+    }
+  } catch {
+    console.log('Error creating user')
+  }
+  
+})
+
 module.exports = usersRouter

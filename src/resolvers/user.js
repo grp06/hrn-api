@@ -4,6 +4,8 @@ import getUsers from '../gql/queries/users/getUsers'
 import findUserByEmail from '../gql/queries/users/findUserByEmail'
 import getEventUsers from '../gql/queries/users/getEventUsers'
 import getRoundsByEventId from '../gql/queries/users/getRoundsByEventId'
+import findUserById from '../gql/queries/users/findUserById'
+import updatePasswordByUserId from '../gql/mutations/users/updatePasswordByUserId'
 import { createToken } from '../extensions/jwtHelper'
 
 export default {
@@ -51,6 +53,16 @@ export default {
         console.log('get rounds query error')
       }
     },
+    userById: async (parent, { id }) => {
+      try {
+        let user
+        const request = await orm.request(findUserById, { id: id })
+        user = request.data.users[0]
+        return user
+      } catch {
+        console.log('user id query error')
+      }
+    },
   },
 
   Mutation: {
@@ -85,5 +97,21 @@ export default {
     //     id: newUser.id,
     //   }
     // },
+    updatePasswordByUserId: async (parent, { id, newPassword }, { secret }) => {
+      let userObject = { id, newPassword }
+      console.log('userObject: ', userObject)
+
+      let updatedUser
+      const updatePasswordResult = await orm.request(updatePasswordByUserId, userObject)
+
+      updatedUser = updatePasswordResult.data.update_users.returning[0]
+      console.log('updatedUser: ', updatedUser)
+
+      return {
+        token: await createToken(updatedUser, secret),
+        role: updatedUser.role,
+        id: updatedUser.id,
+      }
+    },
   },
 }

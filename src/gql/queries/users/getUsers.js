@@ -9,6 +9,7 @@ export const query = gql`
       email
       role
       last_seen
+      created_at
     }
   }
 `

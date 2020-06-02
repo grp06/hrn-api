@@ -8,12 +8,12 @@ const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
+const emailRouter = require('./routes/email/email-router')
 const app = express()
 import { startServer } from './server-graphql'
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
-const jsonBodyParser = express.json()
 app.use(
   bodyParser.urlencoded({
     extended: true,
@@ -28,7 +28,7 @@ app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
-
+app.use('/api/password_reset', emailRouter)
 
 app.use(function errorHandler(error, req, res, next) {
   let response
