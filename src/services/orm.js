@@ -15,8 +15,8 @@ const request = async (gqlQuery, variables = {}, token) => {
 
   try {
     const result = await axios.post(
-      'https://hi-right-now.herokuapp.com/v1/graphql',
-      // 'http://localhost:8080/v1/graphql',
+      // 'https://hi-right-now.herokuapp.com/v1/graphql',
+      'http://localhost:8080/v1/graphql',
       {
         query: print(gqlQuery),
         variables: variables,
@@ -34,7 +34,7 @@ const request = async (gqlQuery, variables = {}, token) => {
 
     throw result.error
   } catch (error) {
-    console.log(error)
+    console.log('error from orm.js = ', error)
     throw error
   }
 }
