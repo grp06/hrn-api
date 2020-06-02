@@ -20,13 +20,4 @@ roomsRouter.route('/reset-event').get((req, res) => {
   return res.status(200).json({ res: 'reset the event yo' })
 })
 
-roomsRouter.route('/:room_id').get((req, res) => {
-  client.video
-    .rooms(req.params.id)
-    .fetch()
-    .then((room) => {
-      res.status(200).send(room)
-    })
-})
-
 module.exports = roomsRouter
