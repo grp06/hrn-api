@@ -3,6 +3,7 @@ import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
+import { createToken } from '../../extensions/jwtHelper'
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -55,7 +56,11 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     res.status(500).send('womp')
   }
 
-  return res.status(201).json(newUser)
+  return res.status(201).send({
+    token: await createToken(newUser, process.env.SECRET),
+    role: newUser.role,
+    id: newUser.id,
+  })
 })
 
 usersRouter.post('/reset-password', async (req, res) => {
