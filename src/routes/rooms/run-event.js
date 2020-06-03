@@ -33,7 +33,7 @@ const runEvent = async (req, res) => {
     return clearTimeout(timeout)
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : 15000
+  const delayBetweenRounds = currentRound === 0 ? 0 : 10000
 
   setTimeout(async () => {
     let eventUsers
@@ -50,7 +50,7 @@ const runEvent = async (req, res) => {
 
     const onlineUsers = eventUsers.map((userObj) => userObj.user.id)
     // hardcoding admin ID into online users. need to set this up on the frontend
-    onlineUsers.push(3)
+    onlineUsers.push(13)
 
     // we should set a min number of users here --- and send a warning back to the UI
     if (!onlineUsers.length) {
