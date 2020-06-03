@@ -27,6 +27,7 @@
     "graphql": "^15.0.0",
     "graphql-iso-date": "^3.6.1",
     "graphql-resolvers": "^0.4.2",
+    "graphql-tag": "^2.10.3",
     "js": "^0.1.0",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
