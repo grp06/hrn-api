@@ -10,7 +10,6 @@ export default gql`
   }
 
   extend type Mutation {
-    bulkInsertRounds(input: [rounds_insert_input]!): Int!
     insertUser(name: String!, email: String!, password: String!, role: String!): Token!
     updatePasswordByUserId(id: Int!, newPassword: String!): Token!
   }

@@ -7,6 +7,7 @@ export const getRoundsByEventId = gql`
       round_number
       partnerX_id
       partnerY_id
+      ended_at
     }
   }
 `
