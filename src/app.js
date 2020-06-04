@@ -1,16 +1,18 @@
+import { startServer } from './server-graphql'
+
 require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
-const { NODE_ENV, PORT } = require('./config.js')
 const bodyParser = require('body-parser')
+const { NODE_ENV, PORT } = require('./config.js')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
+
 const app = express()
-import { startServer } from './server-graphql'
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
