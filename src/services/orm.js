@@ -5,7 +5,6 @@ import { print } from 'graphql'
 import { constants } from '../extensions/jwtHelper.js'
 
 const request = async (gqlQuery, variables = {}, token) => {
-  console.log('request started');
   const headers = {}
 
   if (token) {
@@ -21,16 +20,13 @@ const request = async (gqlQuery, variables = {}, token) => {
       {
         query: print(gqlQuery),
         variables: variables,
-
       },
       {
         headers: headers,
       }
     )
-    console.log('gota  result = ')
 
     if (result.data) {
-      console.log('got result.data = ', result.data)
       return result.data
     }
 
@@ -38,7 +34,7 @@ const request = async (gqlQuery, variables = {}, token) => {
 
     throw result.error
   } catch (error) {
-    console.log(error)
+    console.log('error from orm.js = ', error)
     throw error
   }
 }

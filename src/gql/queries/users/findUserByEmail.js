@@ -9,6 +9,7 @@ export const findUserByEmail = gql`
       password
       name
       last_seen
+      created_at
     }
   }
 `

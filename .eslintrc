@@ -1,5 +1,5 @@
 {
-  "extends": ["airbnb", "prettier", "airbnb/hooks"],
+  "extends": ["airbnb", "prettier"],
   "plugins": ["prettier"],
   "rules": {
     "prettier/prettier": ["error"],
@@ -8,6 +8,31 @@
     "func-names": "off",
     "no-process-exit": "off",
     "object-shorthand": "off",
-    "class-methods-use-this": "off"
-  },
+    "class-methods-use-this": "off",
+    "react/jsx-filename-extension": 0,
+    "no-param-reassign": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "camelcase": "off",
+    "import/prefer-default-export": "off",
+    "react/prop-types": "off"
+    // "import/order": [
+    //   "error",
+    //   {
+    //     "groups": ["builtin", "external", "internal"],
+    //     "pathGroups": [
+    //       {
+    //         "pattern": "react",
+    //         "group": "external",
+    //         "position": "before"
+    //       }
+    //     ],
+    //     "pathGroupsExcludedImportTypes": ["react"],
+    //     "newlines-between": "always",
+    //     "alphabetize": {
+    //       "order": "asc",
+    //       "caseInsensitive": true
+    //     }
+    //   }
+    // ]
+  }
 }
