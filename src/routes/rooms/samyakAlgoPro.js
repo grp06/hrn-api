@@ -42,7 +42,7 @@ const mainFunction = (mainNULL, upperBound, userIdsMap, finalArray, copyOfUserId
 }
 // Function that pairs the elements from the input array.
 function mainPairing(initialInput, userIdsMap) {
-  let tempArray = []
+  const tempArray = []
   let tempNULL = 0
   while (initialInput.length > 0) {
     const player1 = initialInput[0]
@@ -55,7 +55,7 @@ function mainPairing(initialInput, userIdsMap) {
       }
     }
     if (i > initialInput.length - 1) {
-      tempArray.push([player1, 'NULL'])
+      tempArray.push([player1, null])
       tempNULL++
     } else {
       const player2 = initialInput[i]
@@ -74,8 +74,8 @@ function mainPairing(initialInput, userIdsMap) {
 // Element at index 0 represents UserID
 // Element at index 1 represents PartneerID / NULL
 const finalMatch = (array, userIdsMap) => {
-  let arrayCopy = [...array]
-  let finalUserIdsMap = JSON.parse(JSON.stringify(userIdsMap))
+  const arrayCopy = [...array]
+  const finalUserIdsMap = JSON.parse(JSON.stringify(userIdsMap))
   while (arrayCopy.length > 0) {
     const temp1 = arrayCopy[0]
     const player = temp1[0]
@@ -90,7 +90,7 @@ const finalMatch = (array, userIdsMap) => {
 }
 function SamyakAlgoPro(userIds, prevAssignments) {
   const numRounds = userIds.length - 1
-  const firstRun = !prevAssignments ? true : false
+  const firstRun = !prevAssignments
   const userIdsMap = firstRun
     ? initialUserIdsMap(userIds)
     : grabExistingData(userIds, prevAssignments)
@@ -104,21 +104,21 @@ function SamyakAlgoPro(userIds, prevAssignments) {
     if (arrLength < value.length) {
       arrLength = value.length
     }
-    value.push('OUO')
+    value.push(0)
   }
   // For marking previous postions of a new user.
   // DNP - Did Not Participate
   for (const value of values) {
-    let tempLength = value.length
+    const tempLength = value.length
     for (let i = 0; i < arrLength - tempLength + 1; i++) {
-      value.unshift('DNP')
+      value.unshift(0)
     }
   }
   let finalArray = []
   // Counter to keep track of the best Pairs possible.
-  let mainNULL = copyOfUserIds.length
+  const mainNULL = copyOfUserIds.length
   // Counter to keep an upper bound on runtime.
-  let upperBound = 0
+  const upperBound = 0
   finalArray = mainFunction(mainNULL, upperBound, userIdsMap, finalArray, copyOfUserIds)
   // Extra safety check to ensure definite pairing when possible.
   if (mainNULL == copyOfUserIds.length) {
@@ -131,7 +131,7 @@ function SamyakAlgoPro(userIds, prevAssignments) {
   // When no possible pairs can be formed. aka. Event over.
   if (mainNULL == copyOfUserIds.length) {
     for (const value of values) {
-      value.splice(value.length - 1, 1, 'NULL')
+      value.splice(value.length - 1, 1, null)
     }
   }
   const finalUserIdsMap = finalMatch(finalArray, userIdsMap)

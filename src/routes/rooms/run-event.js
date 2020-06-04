@@ -16,11 +16,15 @@ const runEvent = async (req, res) => {
   let timeout
 
   const completedRoomsPromises = await completeRooms()
+  console.log('rooms completed = ', completedRoomsPromises.length)
 
   await Promise.all(completedRoomsPromises)
+  console.log('end of round = ', currentRound)
 
   // set and end time for the round we just completed
   if (currentRound > 0) {
+    console.log('updating last seen')
+
     await orm.request(updateRoundEndedAt, {
       event_id: eventId,
       roundNumber: currentRound,
@@ -41,16 +45,23 @@ const runEvent = async (req, res) => {
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
-      console.log('got event users')
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('get event users error = ', e)
       clearTimeout(timeout)
     }
 
-    const onlineUsers = eventUsers.map((userObj) => userObj.user.id)
+    const onlineUsers = eventUsers
+      .filter((user) => {
+        const lastSeen = new Date(user.user.last_seen).getTime()
+        const now = Date.now()
+        const seenInLast30secs = now - lastSeen < 30000
+        return seenInLast30secs
+      })
+      .map((user) => user.user.id)
+    console.log('onlineUsers', onlineUsers)
+
     // hardcoding admin ID into online users. need to set this up on the frontend
-    onlineUsers.push(13)
 
     // we should set a min number of users here --- and send a warning back to the UI
     if (!onlineUsers.length) {
@@ -62,7 +73,7 @@ const runEvent = async (req, res) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
-      console.log('got rounds data = ', roundsData)
+      console.log('got rounds data = ')
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('getRounds error = ', e)
@@ -71,6 +82,8 @@ const runEvent = async (req, res) => {
 
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineUsers)
+    console.log('roundsMap', roundsMap)
+
     const { pairingsArray } = samyakAlgoPro(onlineUsers, roundsMap)
 
     // maybe a .map would be cleaner here?
