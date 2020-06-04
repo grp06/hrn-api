@@ -25,7 +25,7 @@ app.use(
 app.use(bodyParser.json())
 app.use(morgan(morganOption))
 app.use(cors())
-startServer(app, 8000)
+startServer(app, PORT)
 console.log(`Apollo :${PORT}/graphql`)
 app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
