@@ -25,6 +25,7 @@ const request = async (gqlQuery, variables = {}, token) => {
         headers: headers,
       }
     )
+    console.log('request -> result', result)
 
     if (result.data) {
       return result.data
