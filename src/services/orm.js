@@ -32,10 +32,6 @@ const request = async (gqlQuery, variables = {}, token) => {
     if (result.data) {
       return result.data
     }
-
-    console.log(result.error)
-
-    throw result.error
   } catch (error) {
     console.log('error = ', error)
     throw error
