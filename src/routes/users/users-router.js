@@ -39,9 +39,9 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   let hashedPassword
   try {
     hashedPassword = await hashPassword(password)
-  } catch (e) {
+  } catch (error) {
     return res.status(500).json({
-      error: 'error hashing password',
+      error,
     })
   }
 
@@ -53,8 +53,8 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   try {
     const insertUserResult = await orm.request(signUp, variables)
     console.log('insertUserResult', insertUserResult)
+
     newUser = insertUserResult.data.insert_users.returning[0]
-    throw insertUserResult.error
   } catch (error) {
     return res.status(500).json({
       error,
@@ -85,9 +85,9 @@ usersRouter.post('/reset-password', async (req, res) => {
     if (!existingUser) {
       return res.status(400).json({ error: 'Could not find user with that email' })
     }
-  } catch (e) {
+  } catch (error) {
     return res.status(500).json({
-      error: 'error creating user',
+      error,
     })
   }
 })
