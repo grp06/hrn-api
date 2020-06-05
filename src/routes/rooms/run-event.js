@@ -9,22 +9,27 @@ import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 
+let betweenRoundsTimeout
+let roundsTimeout
 let currentRound = 0
+let totalRounds
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const roundLength = 10000
-  let timeout
+  const roundLength = 120000
 
   const completedRoomsPromises = await completeRooms()
-  console.log('rooms completed = ', completedRoomsPromises.length)
+
+  if (req.body.reset) {
+    currentRound = 0
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    return
+  }
 
   await Promise.all(completedRoomsPromises)
-  console.log('end of round = ', currentRound)
 
   // set and end time for the round we just completed
   if (currentRound > 0) {
-    console.log('updating last seen')
-
     await orm.request(updateRoundEndedAt, {
       event_id: eventId,
       roundNumber: currentRound,
@@ -34,12 +39,15 @@ const runEvent = async (req, res) => {
 
   const numRounds = 3
   if (currentRound === numRounds) {
-    return clearTimeout(timeout)
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    currentRound = 0
+    return
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : 10000
+  const delayBetweenRounds = currentRound === 0 ? 0 : 20000
 
-  setTimeout(async () => {
+  betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
 
     try {
@@ -47,8 +55,8 @@ const runEvent = async (req, res) => {
       eventUsers = eventUsersResponse.data.event_users
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
-      console.log('get event users error = ', e)
-      clearTimeout(timeout)
+
+      clearTimeout(roundsTimeout)
     }
 
     const onlineUsers = eventUsers
@@ -60,29 +68,28 @@ const runEvent = async (req, res) => {
       })
       .map((user) => user.user.id)
     console.log('onlineUsers', onlineUsers)
-
+    totalRounds = onlineUsers.length - 1
+    console.log('totalRounds', totalRounds)
     // hardcoding admin ID into online users. need to set this up on the frontend
 
     // we should set a min number of users here --- and send a warning back to the UI
     if (!onlineUsers.length) {
       console.log('not enough users to start event')
-      clearTimeout(timeout)
+      clearTimeout(roundsTimeout)
     }
 
     let roundsData
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
-      console.log('got rounds data = ')
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('getRounds error = ', e)
-      clearTimeout(timeout)
+      clearTimeout(roundsTimeout)
     }
 
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineUsers)
-    console.log('roundsMap', roundsMap)
 
     const { pairingsArray } = samyakAlgoPro(onlineUsers, roundsMap)
 
@@ -105,7 +112,7 @@ const runEvent = async (req, res) => {
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('getRounds error = ', e)
-      clearTimeout(timeout)
+      clearTimeout(roundsTimeout)
     }
 
     const currentRoundData = insertedRounds.data.insert_rounds.returning
@@ -131,8 +138,10 @@ const runEvent = async (req, res) => {
 
     if (currentRound <= numRounds) {
       console.log('created rooms')
-      clearTimeout(timeout)
-      timeout = setTimeout(() => runEvent(req, res), roundLength)
+      console.log('TIMEOUT = ', roundsTimeout)
+
+      clearTimeout(roundsTimeout)
+      roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
   }, delayBetweenRounds)
 }
