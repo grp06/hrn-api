@@ -38,7 +38,7 @@ const runEvent = async (req, res) => {
   }
 
   const numRounds = 3
-  if (currentRound === numRounds) {
+  if (currentRound === totalRounds) {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
     currentRound = 0
