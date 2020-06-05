@@ -52,10 +52,11 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   try {
     const insertUserResult = await orm.request(signUp, variables)
+    console.log('insertUserResult', insertUserResult)
     newUser = insertUserResult.data.insert_users.returning[0]
-  } catch (e) {
+  } catch (error) {
     return res.status(500).json({
-      error: 'error inserting user',
+      error,
     })
   }
 
