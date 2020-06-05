@@ -30,9 +30,9 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: 'Email already in use.' })
     }
-  } catch (e) {
+  } catch (error) {
     return res.status(500).json({
-      error: 'error creating user',
+      error,
     })
   }
 
