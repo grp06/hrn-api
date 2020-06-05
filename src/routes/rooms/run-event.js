@@ -15,7 +15,7 @@ let currentRound = 0
 let totalRounds
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const roundLength = 120000
+  const roundLength = 30000
 
   const completedRoomsPromises = await completeRooms()
 
@@ -45,7 +45,7 @@ const runEvent = async (req, res) => {
     return
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : 20000
+  const delayBetweenRounds = currentRound === 0 ? 0 : 15000
 
   betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
