@@ -15,7 +15,6 @@ const request = async (gqlQuery, variables = {}, token) => {
 
   try {
     const result = await axios.post(
-      // 'https://hi-right-now.herokuapp.com/v1/graphql',
       process.env.HASURA_ENDPOINT,
       {
         query: print(gqlQuery),
@@ -34,7 +33,7 @@ const request = async (gqlQuery, variables = {}, token) => {
 
     throw result.error
   } catch (error) {
-    console.log('error from orm.js = ', error)
+    console.log('error = ', error)
     throw error
   }
 }

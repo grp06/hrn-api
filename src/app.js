@@ -13,9 +13,9 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 
 const app = express()
+console.log('new build')
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
-console.log('process.env = ', process.env)
 
 app.use(
   bodyParser.urlencoded({

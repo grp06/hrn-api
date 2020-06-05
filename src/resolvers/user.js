@@ -16,8 +16,9 @@ export default {
         const request = await orm.request(getUsers)
         users = request.data.users
         return users
-      } catch {
-        console.log('user query error')
+      } catch (error) {
+        console.log('error = ', error)
+        throw error
       }
     },
 
@@ -27,8 +28,9 @@ export default {
         const request = await orm.request(findUserByEmail, { email: email })
         user = request.data.users[0]
         return user
-      } catch {
-        console.log('user email query error')
+      } catch (error) {
+        console.log('error = ', error)
+        throw error
       }
     },
 
@@ -38,8 +40,9 @@ export default {
         const request = await orm.request(getEventUsers, { event_id: eventId })
         users = request.data.users[0]
         return users
-      } catch {
-        console.log('get event users query error')
+      } catch (error) {
+        console.log('error = ', error)
+        throw error
       }
     },
 
@@ -49,8 +52,9 @@ export default {
         const request = await orm.request(getRoundsByEventId, { event_id: eventId })
         rounds = request.data.rounds[0]
         return rounds
-      } catch {
-        console.log('get rounds query error')
+      } catch (error) {
+        console.log('error = ', error)
+        throw error
       }
     },
     userById: async (parent, { id }) => {
@@ -59,17 +63,20 @@ export default {
         const request = await orm.request(findUserById, { id: id })
         user = request.data.users[0]
         return user
-      } catch {
-        console.log('user id query error')
+      } catch (error) {
+        console.log('error = ', error)
+        throw error
       }
     },
   },
 
   Mutation: {
     insertUser: async (parent, { name, email, password, role }, { secret }) => {
-      let userObject = { name, email, password, role }
+      const userObject = { name, email, password, role }
       const variables = { objects: [userObject] }
+      console.log('userObject', userObject)
 
+      console.log('variables', variables)
       let newUser
       const signUpResult = await orm.request(signUp, variables)
 
@@ -98,8 +105,7 @@ export default {
     //   }
     // },
     updatePasswordByUserId: async (parent, { id, newPassword }, { secret }) => {
-      let userObject = { id, newPassword }
-      console.log('userObject: ', userObject)
+      const userObject = { id, newPassword }
 
       let updatedUser
       const updatePasswordResult = await orm.request(updatePasswordByUserId, userObject)
