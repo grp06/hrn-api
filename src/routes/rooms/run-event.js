@@ -12,7 +12,6 @@ import orm from '../../services/orm'
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
-let totalRounds
 const runEvent = async (req, res) => {
   const eventId = req.params.id
   const roundLength = process.env.ROUND_LENGTH
@@ -38,13 +37,18 @@ const runEvent = async (req, res) => {
     })
   }
 
-  const numRounds = process.env.NUM_ROUNDS
-  if (currentRound === numRounds) {
+  console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
+  console.log('runEvent -> currentRound', currentRound)
+  if (parseInt(currentRound, 10) === parseInt(process.env.NUM_ROUNDS, 10)) {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
     currentRound = 0
+    console.log('we should end the event here')
+
     return
   }
+
+  console.log('if we end the event we shouldnt get here')
 
   const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
 
@@ -69,8 +73,7 @@ const runEvent = async (req, res) => {
       })
       .map((user) => user.user.id)
     console.log('onlineUsers', onlineUsers)
-    totalRounds = onlineUsers.length - 1
-    console.log('totalRounds', totalRounds)
+
     // hardcoding admin ID into online users. need to set this up on the frontend
 
     // we should set a min number of users here --- and send a warning back to the UI
@@ -137,7 +140,7 @@ const runEvent = async (req, res) => {
     const createdRoomsPromises = await createRooms(allRoomIds)
     await Promise.all(createdRoomsPromises)
 
-    if (currentRound <= numRounds) {
+    if (currentRound <= process.env.NUM_ROUNDS) {
       console.log('created rooms')
       console.log('TIMEOUT = ', roundsTimeout)
 

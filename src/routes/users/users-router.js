@@ -25,6 +25,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   let existingUser
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
+    console.log('checkEmailRequest', checkEmailRequest)
     existingUser = checkEmailRequest.data.users[0]
 
     if (existingUser) {
@@ -52,6 +53,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   try {
     const insertUserResult = await orm.request(signUp, variables)
+    console.log('insertUserResult', insertUserResult)
 
     newUser = insertUserResult.data.insert_users.returning[0]
   } catch (error) {
