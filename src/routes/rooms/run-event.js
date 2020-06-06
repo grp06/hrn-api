@@ -15,8 +15,9 @@ let currentRound = 0
 let totalRounds
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const roundLength = 120000
+  const roundLength = process.env.ROUND_LENGTH
 
+  // put in try/catch
   const completedRoomsPromises = await completeRooms()
 
   if (req.body.reset) {
@@ -37,7 +38,7 @@ const runEvent = async (req, res) => {
     })
   }
 
-  const numRounds = 3
+  const numRounds = process.env.NUM_ROUNDS
   if (currentRound === numRounds) {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
@@ -45,7 +46,7 @@ const runEvent = async (req, res) => {
     return
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : 20000
+  const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
 
   betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
@@ -63,8 +64,8 @@ const runEvent = async (req, res) => {
       .filter((user) => {
         const lastSeen = new Date(user.user.last_seen).getTime()
         const now = Date.now()
-        const seenInLast30secs = now - lastSeen < 30000
-        return seenInLast30secs
+        const seenInLast60secs = now - lastSeen < 60000
+        return seenInLast60secs
       })
       .map((user) => user.user.id)
     console.log('onlineUsers', onlineUsers)
