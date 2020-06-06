@@ -30,11 +30,15 @@ const runEvent = async (req, res) => {
 
   // set and end time for the round we just completed
   if (currentRound > 0) {
-    await orm.request(updateRoundEndedAt, {
-      event_id: eventId,
-      roundNumber: currentRound,
-      endedAt: new Date().toISOString(),
-    })
+    try {
+      await orm.request(updateRoundEndedAt, {
+        event_id: eventId,
+        roundNumber: currentRound,
+        endedAt: new Date().toISOString(),
+      })
+    } catch (error) {
+      console.log('error = ', error)
+    }
   }
 
   console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
@@ -43,12 +47,10 @@ const runEvent = async (req, res) => {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
     currentRound = 0
-    console.log('we should end the event here')
+    console.log('EVENT FINISHED')
 
     return
   }
-
-  console.log('if we end the event we shouldnt get here')
 
   const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
 
@@ -58,8 +60,8 @@ const runEvent = async (req, res) => {
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
-    } catch (e) {
-      // if theres an error here, we should send a response to the client and display a warning
+    } catch (error) {
+      console.log('error = ', error)
 
       clearTimeout(roundsTimeout)
     }
@@ -74,9 +76,6 @@ const runEvent = async (req, res) => {
       .map((user) => user.user.id)
     console.log('onlineUsers', onlineUsers)
 
-    // hardcoding admin ID into online users. need to set this up on the frontend
-
-    // we should set a min number of users here --- and send a warning back to the UI
     if (!onlineUsers.length) {
       console.log('not enough users to start event')
       clearTimeout(roundsTimeout)
@@ -86,9 +85,8 @@ const runEvent = async (req, res) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
-    } catch (e) {
-      // if theres an error here, we should send a response to the client and display a warning
-      console.log('getRounds error = ', e)
+    } catch (error) {
+      console.log('getRounds error = ', error)
       clearTimeout(roundsTimeout)
     }
 
@@ -135,10 +133,12 @@ const runEvent = async (req, res) => {
       return all
     }, [])
 
-    // on the frontend maybe consider putting in a delay on the 'join room'  function
-    // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-    const createdRoomsPromises = await createRooms(allRoomIds)
-    await Promise.all(createdRoomsPromises)
+    try {
+      const createdRoomsPromises = await createRooms(allRoomIds)
+      await Promise.all(createdRoomsPromises)
+    } catch (error) {
+      console.log('error = ', error)
+    }
 
     if (currentRound <= process.env.NUM_ROUNDS) {
       console.log('created rooms')
