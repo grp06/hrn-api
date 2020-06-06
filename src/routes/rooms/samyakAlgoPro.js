@@ -98,6 +98,7 @@ function SamyakAlgoPro(userIds, prevAssignments) {
   const copyOfUserIds = [...userIds]
   let arrLength = 0
   const values = Object.values(userIdsMap)
+  console.log('SamyakAlgoPro -> values', values)
   // For marking postitions when the user was offline
   // OUO - Old User Offline
   for (const value of values) {
@@ -136,17 +137,37 @@ function SamyakAlgoPro(userIds, prevAssignments) {
   }
   const finalUserIdsMap = finalMatch(finalArray, userIdsMap)
   // this function is to filter out the duplicate rounds
-  finalArray.forEach((pairing, index, array) => {
-    const partnerX = pairing[0]
-    const firstInstanceOfPartnerX = index
-    array.forEach((pair, idx) => {
-      if (idx === firstInstanceOfPartnerX) return
-      const indexOfDuplicate = pair.indexOf(partnerX)
-      if (indexOfDuplicate > 0) {
-        array.splice(indexOfDuplicate, 1)
-      }
-    })
+
+  const newArr = []
+
+  finalArray.forEach((item, idx) => {
+    item.sort()
+    if (JSON.stringify(newArr).indexOf(JSON.stringify(item)) === -1) {
+      newArr.push(item)
+    }
   })
-  return { pairingsArray: finalArray, userIdsMap: finalUserIdsMap }
+  console.log('newArr = ', newArr)
+
+  // finalArray.forEach((pairing, index, array) => {
+  //   console.log('SamyakAlgoPro -> array', array)
+  //   console.log('SamyakAlgoPro -> index', index)
+  //   console.log('SamyakAlgoPro -> pairing', pairing)
+  //   const partnerX = pairing[0]
+  //   console.log('SamyakAlgoPro -> partnerX', partnerX)
+  //   const firstInstanceOfPartnerX = index
+  //   console.log('SamyakAlgoPro -> firstInstanceOfPartnerX', firstInstanceOfPartnerX)
+  //   array.forEach((pair, idx) => {
+  //     console.log('SamyakAlgoPro -> pair', pair)
+  //     console.log('SamyakAlgoPro -> idx', idx)
+  //     if (idx === firstInstanceOfPartnerX) return
+  //     const indexOfDuplicate = pair.indexOf(partnerX)
+  //     if (indexOfDuplicate > 0) {
+  //       array.splice(indexOfDuplicate, 1)
+  //     }
+  //   })
+  // })
+  console.log('FINAL ARRAY =- ', finalArray)
+
+  return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
 }
 export default SamyakAlgoPro

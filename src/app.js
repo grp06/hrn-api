@@ -13,7 +13,8 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 
 const app = express()
-
+console.log('process.env.DELAY_BETWEEN_ROUNDS = ', process.env.DELAY_BETWEEN_ROUNDS)
+console.log('process.env.NUM_ROUNDS = ', process.env.NUM_ROUNDS)
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 app.use(
