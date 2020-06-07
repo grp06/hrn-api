@@ -94,6 +94,7 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineUsers)
 
     const { pairingsArray } = samyakAlgoPro(onlineUsers, roundsMap)
+    console.log('pairingsArray', pairingsArray)
 
     // maybe a .map would be cleaner here?
     pairingsArray.forEach((pairing) => {
@@ -142,7 +143,6 @@ const runEvent = async (req, res) => {
 
     if (currentRound <= process.env.NUM_ROUNDS) {
       console.log('created rooms')
-      console.log('TIMEOUT = ', roundsTimeout)
 
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)

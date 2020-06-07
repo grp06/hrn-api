@@ -98,7 +98,6 @@ function SamyakAlgoPro(userIds, prevAssignments) {
   const copyOfUserIds = [...userIds]
   let arrLength = 0
   const values = Object.values(userIdsMap)
-  console.log('SamyakAlgoPro -> values', values)
   // For marking postitions when the user was offline
   // OUO - Old User Offline
   for (const value of values) {
