@@ -1,4 +1,4 @@
-import completeRooms from './complete-rooms'
+import setRoomsCompleted from './set-rooms-completed'
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
@@ -12,10 +12,14 @@ let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
   const numRounds = req.body.num_rounds
-  const roundLength = 10000
+  //length for each round, from frontend
+  const roundLength = req.body.round_length
+  // const roundLength = 10000
   let timeout
 
-  const completedRoomsPromises = await completeRooms()
+  //one function lines 21-43 ---> omniFinishRound
+  //ensures that rooms are closed before next round
+  const completedRoomsPromises = await setRoomsCompleted()
   console.log('rooms completed = ', completedRoomsPromises.length)
 
   await Promise.all(completedRoomsPromises)
@@ -31,10 +35,12 @@ const runEvent = async (req, res) => {
         roundNumber: currentRound,
         endedAt: new Date().toISOString(),
       })
+      //does this actually do anything?  How should error be sent to client?
     } catch (e) {
       res.json(e)
     }
 
+    //update round iteration
   }
 
   // const numRounds = 3
@@ -60,7 +66,8 @@ const runEvent = async (req, res) => {
       clearTimeout(timeout)
     }
 
-    //see which users are online... maybe we should tell people on front end they need to be active or something?
+    //see which users are online
+    //try this same idea with a better online_users table in Hasura
     const onlineEventUsers = eventUsers
       .filter((user) => {
         const lastSeen = new Date(user.user.last_seen).getTime()
@@ -70,14 +77,6 @@ const runEvent = async (req, res) => {
       })
       .map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
-
-    // hardcoding admin ID into online users. need to set this up on the frontend
-
-    // we should set a min number of users here --- and send a warning back to the UI
-    if (!onlineEventUsers.length) {
-      console.log('not enough users to start event')
-      clearTimeout(timeout)
-    }
 
     //get data for rounds
     let roundsData
@@ -91,15 +90,19 @@ const runEvent = async (req, res) => {
       clearTimeout(timeout)
     }
 
-    //create an array of pairings for a given rounnd/event for use in algorithm
+    //create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
     console.log('roundsMap', roundsMap)
 
-    const { pairingsArray } = samyakAlgoPro(onlineEventUsers, roundsMap)
+    const { newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
 
+    //do something to check for NULL matches or if game is over somehow
+    //-------------------------------mutation to update eventComplete (ended_at in db)
+
+    //insert data for given round
     // maybe a .map would be cleaner here?
-    pairingsArray.forEach((pairing) => {
+    newPairings.forEach((pairing) => {
       variablesArr.push({
         partnerX_id: pairing[0],
         partnerY_id: pairing[1],
@@ -108,7 +111,7 @@ const runEvent = async (req, res) => {
       })
     })
 
-    //insert algorithm result into db
+    //insert new pairings result into db
     let insertedRounds
     try {
       insertedRounds = await orm.request(bulkInsertRounds, {
@@ -121,6 +124,7 @@ const runEvent = async (req, res) => {
       clearTimeout(timeout)
     }
 
+    //TODO: update round data in db
     //is this just checking what round to update to? not sure what's going on here
     const currentRoundData = insertedRounds.data.insert_rounds.returning
     const newCurrentRound = currentRoundData.reduce((all, item) => {
@@ -133,21 +137,26 @@ const runEvent = async (req, res) => {
     currentRound = newCurrentRound
     console.log('NEW CURRENT ROUND = ', newCurrentRound)
 
-    const allRoomIds = currentRoundData.reduce((all, item) => {
-      all.push(item.id)
+    // [1,2,3,4,5]
+    //143-151 createNewRooms()  use const currentRoundData = insertedRounds.data.insert_rounds.returning
+    const newRoundsByRowId = currentRoundData.reduce((all, row) => {
+      all.push(row.id)
       return all
     }, [])
 
     // on the frontend maybe consider putting in a delay on the 'join room'  function
     // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-    const createdRoomsPromises = await createRooms(allRoomIds) //Twilio call
+    // twilio room id is the same as the round id in the db
+    const createdRoomsPromises = await createRooms(newRoundsByRowId) //Twilio call
     await Promise.all(createdRoomsPromises)
 
-    if (currentRound <= numRounds) {
-      console.log('created rooms')
+    //get ready for function recall
+    console.log('created rooms')
+    if (currentRound > 1) {
       clearTimeout(timeout)
-      timeout = setTimeout(() => runEvent(req, res), roundLength)
     }
+
+    timeout = setTimeout(() => runEvent(req, res), roundLength)
   }, delayBetweenRounds)
 }
 

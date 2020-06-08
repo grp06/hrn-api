@@ -1,4 +1,4 @@
-import completeRooms from './complete-rooms'
+import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './run-event'
 
 const express = require('express')
@@ -12,7 +12,7 @@ roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
 })
 
 roomsRouter.route('/reset-event').get((req, res) => {
-  completeRooms()
+  setRoomsCompleted()
   return res.status(200).json({ res: 'reset the event yo' })
 })
 
