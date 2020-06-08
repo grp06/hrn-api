@@ -8,62 +8,64 @@ import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 
+let betweenRoundsTimeout
+let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds
-  //length for each round, from frontend
-  const roundLength = req.body.round_length
-  // const roundLength = 10000
-  let timeout
+  const roundLength = process.env.ROUND_LENGTH
 
-  //one function lines 21-43 ---> omniFinishRound
+  // put in try/catch
+    //one function lines 21-43 ---> omniFinishRound
   //ensures that rooms are closed before next round
-  const completedRoomsPromises = await setRoomsCompleted()
-  console.log('rooms completed = ', completedRoomsPromises.length)
+  const completedRoomsPromises = await completeRooms()
+
+  if (req.body.reset) {
+    currentRound = 0
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    return
+  }
 
   await Promise.all(completedRoomsPromises)
-  console.log('end of round = ', currentRound)
 
   // set ended_at for the round we just completed
   if (currentRound > 0) {
-    console.log('updating last seen')
-
     try {
       await orm.request(updateRoundEndedAt, {
         event_id: eventId,
         roundNumber: currentRound,
         endedAt: new Date().toISOString(),
       })
-      //does this actually do anything?  How should error be sent to client?
-    } catch (e) {
-      res.json(e)
+    } catch (error) {
+      console.log('error = ', error)
     }
-
-    //update round iteration
   }
 
-  // const numRounds = 3
-  // stop if round limit reached
-  console.log('current, max', currentRound, numRounds)
-  if (currentRound === numRounds) {
-    return clearTimeout(timeout)
+  console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
+  console.log('runEvent -> currentRound', currentRound)
+  if (parseInt(currentRound, 10) === parseInt(process.env.NUM_ROUNDS, 10)) {
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    currentRound = 0
+    console.log('EVENT FINISHED')
+
+    return
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : 10000
+  const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
 
-  //this function goes until the end of the file, let's make it more modular.
-  setTimeout(async () => {
+  betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
 
     //get the users for a given event
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
-    } catch (e) {
-      // if theres an error here, we should send a response to the client and display a warning
-      console.log('get event users error = ', e)
-      clearTimeout(timeout)
+    } catch (error) {
+      console.log('error = ', error)
+
+      clearTimeout(roundsTimeout)
     }
 
     //see which users are online
@@ -72,8 +74,8 @@ const runEvent = async (req, res) => {
       .filter((user) => {
         const lastSeen = new Date(user.user.last_seen).getTime()
         const now = Date.now()
-        const seenInLast30secs = now - lastSeen < 30000
-        return seenInLast30secs
+        const seenInLast60secs = now - lastSeen < 60000
+        return seenInLast60secs
       })
       .map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
@@ -83,11 +85,9 @@ const runEvent = async (req, res) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
-      console.log('got rounds data = ')
-    } catch (e) {
-      // if theres an error here, we should send a response to the client and display a warning
-      console.log('getRounds error = ', e)
-      clearTimeout(timeout)
+    } catch (error) {
+      console.log('getRounds error = ', error)
+      clearTimeout(roundsTimeout)
     }
 
     //create an array of pairings for a given round/event for use in algorithm
@@ -121,7 +121,7 @@ const runEvent = async (req, res) => {
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('getRounds error = ', e)
-      clearTimeout(timeout)
+      clearTimeout(roundsTimeout)
     }
 
     //TODO: update round data in db
@@ -146,14 +146,19 @@ const runEvent = async (req, res) => {
 
     // on the frontend maybe consider putting in a delay on the 'join room'  function
     // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-    // twilio room id is the same as the round id in the db
-    const createdRoomsPromises = await createRooms(newRoundsByRowId) //Twilio call
-    await Promise.all(createdRoomsPromises)
+    // twilio room id is the same as the round id in the db    
+try {
+      const createdRoomsPromises = await createRooms(allRoomIds)
+      await Promise.all(createdRoomsPromises)
+    } catch (error) {
+      console.log('error = ', error)
+    }
 
-    //get ready for function recall
-    console.log('created rooms')
     if (currentRound > 1) {
-      clearTimeout(timeout)
+      console.log('created rooms')
+
+      clearTimeout(roundsTimeout)
+      roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
 
     timeout = setTimeout(() => runEvent(req, res), roundLength)

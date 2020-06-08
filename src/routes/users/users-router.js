@@ -25,6 +25,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   let existingUser
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
+    console.log('checkEmailRequest', checkEmailRequest)
     existingUser = checkEmailRequest.data.users[0]
 
     if (existingUser) {

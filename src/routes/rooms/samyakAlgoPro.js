@@ -136,16 +136,14 @@ function SamyakAlgoPro(userIds, prevAssignments) {
   }
   const finalUserIdsMap = finalMatch(finalArray, userIdsMap)
   // this function is to filter out the duplicate rounds
-  finalArray.forEach((pairing, index, array) => {
-    const partnerX = pairing[0]
-    const firstInstanceOfPartnerX = index
-    array.forEach((pair, idx) => {
-      if (idx === firstInstanceOfPartnerX) return
-      const indexOfDuplicate = pair.indexOf(partnerX)
-      if (indexOfDuplicate > 0) {
-        array.splice(indexOfDuplicate, 1)
-      }
-    })
+
+  const newArr = []
+
+  finalArray.forEach((item, idx) => {
+    item.sort()
+    if (JSON.stringify(newArr).indexOf(JSON.stringify(item)) === -1) {
+      newArr.push(item)
+    }
   })
   return { newPairings: finalArray, userIdsMap: finalUserIdsMap }
 }

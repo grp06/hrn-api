@@ -13,8 +13,8 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 
 const app = express()
-console.log('new build')
-
+console.log('process.env.DELAY_BETWEEN_ROUNDS = ', process.env.DELAY_BETWEEN_ROUNDS)
+console.log('process.env.NUM_ROUNDS = ', process.env.NUM_ROUNDS)
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 app.use(
@@ -43,5 +43,20 @@ app.use(function errorHandler(error, req, res, next) {
   }
   res.status(500).json(response)
 })
+
+// app.use((req, res, next) => {
+//   const error = new Error('Not Found!')
+//   error.status = 404
+//   next(error)
+// })
+
+// app.use((error, req, res, next) => {
+//   res.status(error.status || 500)
+//   res.json({
+//     error: {
+//       message: error.message,
+//     },
+//   })
+// })
 
 module.exports = app
