@@ -26,6 +26,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
 
     dbUser = checkEmailRequest.data.users[0]
+    console.log(dbUser);
 
     if (!dbUser) {
       return res.status(400).json({ error: 'Incorrect email or password' })
@@ -41,8 +42,13 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     }
   } catch {
     console.log('Error logging in')
+    return res.status(500).json({
+      error: 'There was an error logging in'
+    })
+
   }
 
+  console.log(dbUser);
   return res.send({
     token: await createToken(dbUser, process.env.SECRET),
     role: dbUser.role,

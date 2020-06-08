@@ -13,7 +13,10 @@ let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const roundLength = process.env.ROUND_LENGTH
+  const roundLength = 10000
+
+  // const numRounds = req.body.num_rounds
+  // const roundLength = req.body.round_length
 
   // put in try/catch
   // one function lines 21-43 ---> omniFinishRound
@@ -160,8 +163,6 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
-
-    timeout = setTimeout(() => runEvent(req, res), roundLength)
   }, delayBetweenRounds)
 }
 
