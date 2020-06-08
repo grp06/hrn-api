@@ -16,9 +16,9 @@ const runEvent = async (req, res) => {
   const roundLength = process.env.ROUND_LENGTH
 
   // put in try/catch
-    //one function lines 21-43 ---> omniFinishRound
-  //ensures that rooms are closed before next round
-  const completedRoomsPromises = await completeRooms()
+  // one function lines 21-43 ---> omniFinishRound
+  // ensures that rooms are closed before next round
+  const completedRoomsPromises = await setRoomsCompleted()
 
   if (req.body.reset) {
     currentRound = 0
@@ -58,7 +58,7 @@ const runEvent = async (req, res) => {
   betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
 
-    //get the users for a given event
+    // get the users for a given event
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
@@ -68,8 +68,8 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
 
-    //see which users are online
-    //try this same idea with a better online_users table in Hasura
+    // see which users are online
+    // try this same idea with a better online_users table in Hasura
     const onlineEventUsers = eventUsers
       .filter((user) => {
         const lastSeen = new Date(user.user.last_seen).getTime()
@@ -80,7 +80,7 @@ const runEvent = async (req, res) => {
       .map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
 
-    //get data for rounds
+    // get data for rounds
     let roundsData
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
@@ -90,17 +90,17 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
 
-    //create an array of pairings for a given round/event for use in algorithm
+    // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
     console.log('roundsMap', roundsMap)
 
     const { newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
 
-    //do something to check for NULL matches or if game is over somehow
-    //-------------------------------mutation to update eventComplete (ended_at in db)
+    // do something to check for NULL matches or if game is over somehow
+    // -------------------------------mutation to update eventComplete (ended_at in db)
 
-    //insert data for given round
+    // insert data for given round
     // maybe a .map would be cleaner here?
     newPairings.forEach((pairing) => {
       variablesArr.push({
@@ -111,7 +111,7 @@ const runEvent = async (req, res) => {
       })
     })
 
-    //insert new pairings result into db
+    // insert new pairings result into db
     let insertedRounds
     try {
       insertedRounds = await orm.request(bulkInsertRounds, {
@@ -124,8 +124,8 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
 
-    //TODO: update round data in db
-    //is this just checking what round to update to? not sure what's going on here
+    // TODO: update round data in db
+    // is this just checking what round to update to? not sure what's going on here
     const currentRoundData = insertedRounds.data.insert_rounds.returning
     const newCurrentRound = currentRoundData.reduce((all, item) => {
       if (item.round_number > all) {
@@ -138,7 +138,7 @@ const runEvent = async (req, res) => {
     console.log('NEW CURRENT ROUND = ', newCurrentRound)
 
     // [1,2,3,4,5]
-    //143-151 createNewRooms()  use const currentRoundData = insertedRounds.data.insert_rounds.returning
+    // 143-151 createNewRooms()  use const currentRoundData = insertedRounds.data.insert_rounds.returning
     const newRoundsByRowId = currentRoundData.reduce((all, row) => {
       all.push(row.id)
       return all
@@ -146,9 +146,9 @@ const runEvent = async (req, res) => {
 
     // on the frontend maybe consider putting in a delay on the 'join room'  function
     // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-    // twilio room id is the same as the round id in the db    
-try {
-      const createdRoomsPromises = await createRooms(allRoomIds)
+    // twilio room id is the same as the round id in the db
+    try {
+      const createdRoomsPromises = await createRooms(newRoundsByRowId)
       await Promise.all(createdRoomsPromises)
     } catch (error) {
       console.log('error = ', error)
