@@ -3,6 +3,7 @@ import completeRooms from './complete-rooms'
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
+import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import createRooms from './create-rooms'
 import samyakAlgoPro from './samyakAlgoPro'
@@ -44,10 +45,19 @@ const runEvent = async (req, res) => {
   console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
   console.log('runEvent -> currentRound', currentRound)
   if (parseInt(currentRound, 10) === parseInt(process.env.NUM_ROUNDS, 10)) {
+    try {
+      const eventEndedResult = await orm.request(setEventEndedAt, {
+        id: eventId,
+        ended_at: new Date().toISOString(),
+      })
+      console.log('eventEndedResult = ', eventEndedResult)
+    } catch (error) {
+      console.log('error = ', error)
+    }
+
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
     currentRound = 0
-    console.log('EVENT FINISHED')
 
     return
   }
