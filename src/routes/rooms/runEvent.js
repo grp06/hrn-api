@@ -118,17 +118,22 @@ const runEvent = async (req, res) => {
       return all
     }, 0)
 
+    console.log(currentRound);
+    // increment current round in events table
+    //  try {
+
+    //  }
+
     currentRound = newCurrentRound
     console.log('NEW CURRENT ROUND = ', newCurrentRound)
 
     // create new rooms
     try {
-      console.log('trying to create new rooms');
+      console.log('trying to create new rooms')
       await createNewRooms(currentRoundData)
-    } catch {
+    } catch (e) {
       console.log(e)
     }
-
 
     if (currentRound > 0) {
       console.log('created rooms')
