@@ -30,9 +30,6 @@ const runEvent = async (req, res) => {
 
   await Promise.all(completedRoomsPromises)
 
-  if (currentRound === 0) {
-  }
-
   // set and end time for the round we just completed
   if (currentRound > 0) {
     try {
