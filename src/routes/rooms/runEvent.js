@@ -1,4 +1,3 @@
-import setRoomsCompleted from './set-rooms-completed'
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
@@ -6,51 +5,33 @@ import createRooms from './create-rooms'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
-import { omniFinishRounds } from './runEventHelpers'
+import { omniFinishRounds, createNewRooms } from './runEventHelpers'
 
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
+  console.log('eventId: ', eventId)
+
   const roundLength = 10000
   const numRounds = 3
 
   // const numRounds = req.body.num_rounds
   // const roundLength = req.body.round_length
 
-  // put in try/catch
-  // one function lines 21-43 ---> omniFinishRound
   // ensures that rooms are closed before next round
+  try {
+    await omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
+  } catch (e) {
+    console.log(e)
+  }
 
-  omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
-  // const completedRoomsPromises = await setRoomsCompleted()
-
-  // if (req.body.reset) {
-  //   currentRound = 0
-  //   clearTimeout(betweenRoundsTimeout)
-  //   clearTimeout(roundsTimeout)
-  //   return
-  // }
-
-  // await Promise.all(completedRoomsPromises)
-
-  // // set ended_at for the round we just completed
-  // if (currentRound > 0) {
-  //   try {
-  //     await orm.request(updateRoundEndedAt, {
-  //       event_id: eventId,
-  //       roundNumber: currentRound,
-  //       endedAt: new Date().toISOString(),
-  //     })
-  //   } catch (error) {
-  //     console.log('error = ', error)
-  //   }
-  // }
-
-  console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
+  console.log('runEvent -> numRounds', numRounds)
   console.log('runEvent -> currentRound', currentRound)
-  if (parseInt(currentRound, 10) === parseInt(process.env.NUM_ROUNDS, 10)) {
+
+  // end event if round numRounds reached
+  if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
     currentRound = 0
@@ -59,8 +40,10 @@ const runEvent = async (req, res) => {
     return
   }
 
-  const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
+  // variablize
+  const delayBetweenRounds = currentRound === 0 ? 0 : 10000
 
+  // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {
     let eventUsers
 
@@ -143,29 +126,21 @@ const runEvent = async (req, res) => {
     currentRound = newCurrentRound
     console.log('NEW CURRENT ROUND = ', newCurrentRound)
 
-    // [1,2,3,4,5]
-    // 143-151 createNewRooms()  use const currentRoundData = insertedRounds.data.insert_rounds.returning
-    const newRoundsByRowId = currentRoundData.reduce((all, row) => {
-      all.push(row.id)
-      return all
-    }, [])
-
-    // on the frontend maybe consider putting in a delay on the 'join room'  function
-    // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-    // twilio room id is the same as the round id in the db
+    // create new rooms
     try {
-      const createdRoomsPromises = await createRooms(newRoundsByRowId)
-      await Promise.all(createdRoomsPromises)
-    } catch (error) {
-      console.log('error = ', error)
+      console.log('trying to create new rooms');
+      await createNewRooms(currentRoundData)
+    } catch {
+      console.log(e)
     }
 
-    // if (currentRound > 1) {
+
+    if (currentRound > 0) {
       console.log('created rooms')
 
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
-    // }
+    }
   }, delayBetweenRounds)
 }
 

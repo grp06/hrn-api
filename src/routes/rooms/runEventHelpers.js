@@ -1,4 +1,5 @@
 import setRoomsCompleted from './set-rooms-completed'
+import createRooms from './create-rooms'
 import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
 import orm from '../../services/orm'
 
@@ -10,6 +11,7 @@ export const omniFinishRounds = async (
   betweenRoundsTimeout,
   roundsTimeout
 ) => {
+  console.log('in OMNI')
   const completedRoomsPromises = await setRoomsCompleted()
 
   if (req.body.reset) {
@@ -21,7 +23,7 @@ export const omniFinishRounds = async (
 
   await Promise.all(completedRoomsPromises)
 
-  // set ended_at for the round we just completed
+  // set ended_at in db for the round we just completed
   if (currentRound > 0) {
     try {
       await orm.request(updateRoundEndedAt, {
@@ -32,5 +34,22 @@ export const omniFinishRounds = async (
     } catch (error) {
       console.log('error = ', error)
     }
+  }
+}
+
+export const createNewRooms = async (currentRoundData) => {
+  const newRoundsByRowId = currentRoundData.reduce((all, row) => {
+    all.push(row.id)
+    return all
+  }, [])
+
+  // on the frontend maybe consider putting in a delay on the 'join room'  function
+  // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
+  // twilio room id is the same as the round id in the db
+  try {
+    const createdRoomsPromises = await createRooms(newRoundsByRowId)
+    await Promise.all(createdRoomsPromises)
+  } catch (error) {
+    console.log('error = ', error)
   }
 }
