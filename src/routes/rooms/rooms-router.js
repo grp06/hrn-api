@@ -1,5 +1,5 @@
 import setRoomsCompleted from './set-rooms-completed'
-import runEvent from './run-event'
+import runEvent from './runEvent'
 
 const express = require('express')
 

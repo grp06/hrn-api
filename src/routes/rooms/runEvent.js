@@ -1,12 +1,12 @@
 import setRoomsCompleted from './set-rooms-completed'
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
-import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import createRooms from './create-rooms'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
+import { omniFinishRounds } from './runEventHelpers'
 
 let betweenRoundsTimeout
 let roundsTimeout
@@ -14,6 +14,7 @@ let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
   const roundLength = 10000
+  const numRounds = 3
 
   // const numRounds = req.body.num_rounds
   // const roundLength = req.body.round_length
@@ -21,29 +22,31 @@ const runEvent = async (req, res) => {
   // put in try/catch
   // one function lines 21-43 ---> omniFinishRound
   // ensures that rooms are closed before next round
-  const completedRoomsPromises = await setRoomsCompleted()
 
-  if (req.body.reset) {
-    currentRound = 0
-    clearTimeout(betweenRoundsTimeout)
-    clearTimeout(roundsTimeout)
-    return
-  }
+  omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
+  // const completedRoomsPromises = await setRoomsCompleted()
 
-  await Promise.all(completedRoomsPromises)
+  // if (req.body.reset) {
+  //   currentRound = 0
+  //   clearTimeout(betweenRoundsTimeout)
+  //   clearTimeout(roundsTimeout)
+  //   return
+  // }
 
-  // set ended_at for the round we just completed
-  if (currentRound > 0) {
-    try {
-      await orm.request(updateRoundEndedAt, {
-        event_id: eventId,
-        roundNumber: currentRound,
-        endedAt: new Date().toISOString(),
-      })
-    } catch (error) {
-      console.log('error = ', error)
-    }
-  }
+  // await Promise.all(completedRoomsPromises)
+
+  // // set ended_at for the round we just completed
+  // if (currentRound > 0) {
+  //   try {
+  //     await orm.request(updateRoundEndedAt, {
+  //       event_id: eventId,
+  //       roundNumber: currentRound,
+  //       endedAt: new Date().toISOString(),
+  //     })
+  //   } catch (error) {
+  //     console.log('error = ', error)
+  //   }
+  // }
 
   console.log('runEvent -> process.env.NUM_ROUNDS', process.env.NUM_ROUNDS)
   console.log('runEvent -> currentRound', currentRound)
@@ -157,12 +160,12 @@ const runEvent = async (req, res) => {
       console.log('error = ', error)
     }
 
-    if (currentRound > 1) {
+    // if (currentRound > 1) {
       console.log('created rooms')
 
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
-    }
+    // }
   }, delayBetweenRounds)
 }
 
