@@ -5,11 +5,13 @@ import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 import { omniFinishRounds, createNewRooms } from './runEventHelpers'
+import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
 
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
+  console.log('runEvent ran')
   const eventId = req.params.id
   const numRounds = req.body.num_rounds
   const roundLength = req.body.round_length
@@ -107,25 +109,30 @@ const runEvent = async (req, res) => {
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
+    const currentRoundData = insertedRounds.data.insert_rounds.returning
 
     // TODO: update round data in db
     // is this just checking what round to update to? not sure what's going on here
-    const currentRoundData = insertedRounds.data.insert_rounds.returning
-    const newCurrentRound = currentRoundData.reduce((all, item) => {
-      if (item.round_number > all) {
-        return item.round_number
-      }
-      return all
-    }, 0)
+ 
+    // const newCurrentRound = currentRoundData.reduce((all, item) => {
+    //   if (item.round_number > all) {
+    //     return item.round_number
+    //   }
+    //   return all
+    // }, 0)
 
-    console.log(currentRound);
+    let newCurrentRound
     // increment current round in events table
-    //  try {
+    try {
+      console.log('trying to increment round')
+      newCurrentRound = currentRound + 1
+      await orm.request(updateCurrentRoundByEventId, { id: eventId, newCurrentRound })
+    } catch (e) {
+      console.log(e, 'Error incrementing round_number in db')
+    }
 
-    //  }
-
-    currentRound = newCurrentRound
     console.log('NEW CURRENT ROUND = ', newCurrentRound)
+    console.log('current round', currentRound)
 
     // create new rooms
     try {
@@ -136,8 +143,6 @@ const runEvent = async (req, res) => {
     }
 
     if (currentRound > 0) {
-      console.log('created rooms')
-
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
