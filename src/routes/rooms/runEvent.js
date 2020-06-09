@@ -1,7 +1,6 @@
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
-import createRooms from './create-rooms'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
@@ -12,13 +11,9 @@ let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  console.log('eventId: ', eventId)
-
-  const roundLength = 10000
-  const numRounds = 3
-
-  // const numRounds = req.body.num_rounds
-  // const roundLength = req.body.round_length
+  const numRounds = req.body.num_rounds
+  const roundLength = req.body.round_length
+  const roundInterval = req.body.round_interval || 10000
 
   // ensures that rooms are closed before next round
   try {
@@ -30,7 +25,7 @@ const runEvent = async (req, res) => {
   console.log('runEvent -> numRounds', numRounds)
   console.log('runEvent -> currentRound', currentRound)
 
-  // end event if round numRounds reached
+  // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
@@ -40,8 +35,8 @@ const runEvent = async (req, res) => {
     return
   }
 
-  // variablize
-  const delayBetweenRounds = currentRound === 0 ? 0 : 10000
+  // to be used for timeout function
+  const delayBetweenRounds = currentRound === 0 ? 0 : roundInterval
 
   // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {

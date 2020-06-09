@@ -6,6 +6,7 @@ const express = require('express')
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
 
+// endpoint needs an auth check
 roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
   runEvent(req, res)
   return res.status(200).json({ res: 'response' })
