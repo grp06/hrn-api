@@ -56,18 +56,23 @@ const runEvent = async (req, res) => {
 
     // see which users are online
     // try this same idea with a better online_users table in Hasura
-    const onlineEventUsers = eventUsers
-      .filter((user) => {
-        const lastSeen = new Date(user.user.last_seen).getTime()
-        const now = Date.now()
-        const seenInLast60secs = now - lastSeen < 60000
-        return seenInLast60secs
-      })
-      .map((user) => user.user.id)
+    // const onlineEventUsers = eventUsers
+    //   .filter((user) => {
+    //     const lastSeen = new Date(user.user.last_seen).getTime()
+    //     const now = Date.now()
+    //     const seenInLast60secs = now - lastSeen < 60000
+    //     return seenInLast60secs
+    //   })
+    //   .map((user) => user.user.id)
+    // console.log('onlineEventUsers', onlineEventUsers)
+
+    // hard code users online
+    const onlineEventUsers = eventUsers.map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
     let roundsData
+
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
@@ -103,36 +108,25 @@ const runEvent = async (req, res) => {
       insertedRounds = await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
-      console.log('inserted rounds - ', insertedRounds)
     } catch (e) {
       // if theres an error here, we should send a response to the client and display a warning
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
     const currentRoundData = insertedRounds.data.insert_rounds.returning
-
-    // TODO: update round data in db
-    // is this just checking what round to update to? not sure what's going on here
- 
-    // const newCurrentRound = currentRoundData.reduce((all, item) => {
-    //   if (item.round_number > all) {
-    //     return item.round_number
-    //   }
-    //   return all
-    // }, 0)
+    console.log('currentRoundData: ', currentRoundData)
 
     let newCurrentRound
     // increment current round in events table
     try {
       console.log('trying to increment round')
-      newCurrentRound = currentRound + 1
+      newCurrentRound = currentRound++
       await orm.request(updateCurrentRoundByEventId, { id: eventId, newCurrentRound })
     } catch (e) {
       console.log(e, 'Error incrementing round_number in db')
     }
 
-    console.log('NEW CURRENT ROUND = ', newCurrentRound)
-    console.log('current round', currentRound)
+    console.log(newCurrentRound)
 
     // create new rooms
     try {
@@ -143,6 +137,7 @@ const runEvent = async (req, res) => {
     }
 
     if (currentRound > 0) {
+      console.log(currentRound, 'in last If block')
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
