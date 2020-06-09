@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-const query = gql`
+const setEventEndedAt = gql`
   mutation setEventEndedAt($id: Int!, $ended_at: timestamptz) {
     update_events(where: { id: { _eq: $id } }, _set: { ended_at: $ended_at }) {
       returning {
@@ -15,4 +15,4 @@ const query = gql`
   }
 `
 
-export default query
+export default setEventEndedAt

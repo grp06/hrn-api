@@ -3,6 +3,7 @@ import completeRooms from './complete-rooms'
 import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
+import updateCurrentRound from '../../gql/mutations/users/updateCurrentRound'
 import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import createRooms from './create-rooms'
@@ -28,6 +29,9 @@ const runEvent = async (req, res) => {
   }
 
   await Promise.all(completedRoomsPromises)
+
+  if (currentRound === 0) {
+  }
 
   // set and end time for the round we just completed
   if (currentRound > 0) {
@@ -60,6 +64,15 @@ const runEvent = async (req, res) => {
     currentRound = 0
 
     return
+  }
+
+  try {
+    const currentRoundUpdated = await orm.request(updateCurrentRound, {
+      id: eventId,
+    })
+    console.log('runEvent -> currentRoundUpdated', currentRoundUpdated)
+  } catch (error) {
+    console.log('error = ', error)
   }
 
   const delayBetweenRounds = currentRound === 0 ? 0 : process.env.DELAY_BETWEEN_ROUNDS
