@@ -81,12 +81,17 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
 
+    console.log('roundsData', roundsData);
+
+
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
     console.log('roundsMap', roundsMap)
 
     const { newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
+
+    console.log('newPairings', newPairings);
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -114,7 +119,6 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
     const currentRoundData = insertedRounds.data.insert_rounds.returning
-    console.log('currentRoundData: ', currentRoundData)
 
     let newCurrentRound
     // increment current round in events table
