@@ -34,7 +34,7 @@ const runEvent = async (req, res) => {
     currentRound = 0
     console.log('EVENT FINISHED')
 
-    return
+    return res.status(200).json({ res: 'runEvent finished' })
   }
 
   // to be used for timeout function

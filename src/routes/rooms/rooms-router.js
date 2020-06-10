@@ -10,7 +10,7 @@ const jsonBodyParser = express.json()
 roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
   runEvent(req, res)
 
-  return res.status(200).json({ res: 'runEvent finished' })
+  // return res.status(200).json({ res: 'runEvent finished' })
 })
 
 roomsRouter.route('/reset-event').get((req, res) => {
