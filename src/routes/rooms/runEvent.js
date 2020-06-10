@@ -81,9 +81,6 @@ const runEvent = async (req, res) => {
       clearTimeout(roundsTimeout)
     }
 
-    console.log('roundsData', roundsData);
-
-
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
@@ -120,17 +117,17 @@ const runEvent = async (req, res) => {
     }
     const currentRoundData = insertedRounds.data.insert_rounds.returning
 
-    let newCurrentRound
     // increment current round in events table
     try {
       console.log('trying to increment round')
-      newCurrentRound = currentRound++
-      await orm.request(updateCurrentRoundByEventId, { id: eventId, newCurrentRound })
+      // newCurrentRound = currentRound + 1
+      currentRound += 1
+      console.log('currentRound: ', currentRound);
+      await orm.request(updateCurrentRoundByEventId, { id: eventId, currentRound })
     } catch (e) {
       console.log(e, 'Error incrementing round_number in db')
     }
 
-    console.log(newCurrentRound)
 
     // create new rooms
     try {
