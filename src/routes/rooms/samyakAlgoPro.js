@@ -146,11 +146,7 @@ function SamyakAlgoPro(userIds, prevAssignments) {
     }
   })
 
-  console.log(finalArray)
-  return { newPairings: finalArray, userIdsMap: finalUserIdsMap }
+  return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
 }
-// export default SamyakAlgoPro
-
-module.exports = { SamyakAlgoPro }
-
+export default SamyakAlgoPro
 

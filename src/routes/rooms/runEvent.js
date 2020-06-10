@@ -89,7 +89,7 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
     console.log('roundsMap', roundsMap)
 
-    const { newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
+    const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
 
     console.log('newPairings', newPairings);
 
