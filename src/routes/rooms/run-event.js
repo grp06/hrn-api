@@ -19,7 +19,13 @@ const runEvent = async (req, res) => {
   const roundLength = process.env.ROUND_LENGTH
 
   // put in try/catch
-  const completedRoomsPromises = await completeRooms()
+
+  try {
+    const completedRoomsPromises = await completeRooms()
+    await Promise.all(completedRoomsPromises)
+  } catch (error) {
+    console.log('completed promises fd up = ', error)
+  }
 
   if (req.body.reset) {
     currentRound = 0
@@ -27,8 +33,6 @@ const runEvent = async (req, res) => {
     clearTimeout(roundsTimeout)
     return
   }
-
-  await Promise.all(completedRoomsPromises)
 
   // set and end time for the round we just completed
   if (currentRound > 0) {
