@@ -33,8 +33,6 @@ const runEvent = async (req, res) => {
     clearTimeout(roundsTimeout)
     currentRound = 0
     console.log('EVENT FINISHED')
-
-    return res.status(200).json({ res: 'runEvent finished' })
   }
 
   // to be used for timeout function
@@ -56,18 +54,14 @@ const runEvent = async (req, res) => {
 
     // see which users are online
     // try this same idea with a better online_users table in Hasura
-    // const onlineEventUsers = eventUsers
-    //   .filter((user) => {
-    //     const lastSeen = new Date(user.user.last_seen).getTime()
-    //     const now = Date.now()
-    //     const seenInLast60secs = now - lastSeen < 60000
-    //     return seenInLast60secs
-    //   })
-    //   .map((user) => user.user.id)
-    // console.log('onlineEventUsers', onlineEventUsers)
-
-    // hard code users online
-    const onlineEventUsers = eventUsers.map((user) => user.user.id)
+    const onlineEventUsers = eventUsers
+      .filter((user) => {
+        const lastSeen = new Date(user.user.last_seen).getTime()
+        const now = Date.now()
+        const seenInLast60secs = now - lastSeen < 60000
+        return seenInLast60secs
+      })
+      .map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
@@ -88,7 +82,7 @@ const runEvent = async (req, res) => {
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
 
-    console.log('newPairings', newPairings);
+    console.log('newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -122,12 +116,11 @@ const runEvent = async (req, res) => {
       console.log('trying to increment round')
       // newCurrentRound = currentRound + 1
       currentRound += 1
-      console.log('currentRound: ', currentRound);
+      console.log('currentRound: ', currentRound)
       await orm.request(updateCurrentRoundByEventId, { id: eventId, currentRound })
     } catch (e) {
       console.log(e, 'Error incrementing round_number in db')
     }
-
 
     // create new rooms
     try {

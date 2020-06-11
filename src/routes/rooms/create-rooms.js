@@ -5,15 +5,11 @@ const authToken = '95af76d75ebe6811a23ec3b43d7e6477' // Your Auth Token from www
 const client = new Twilio(twilioAccountSid, authToken)
 
 const createRooms = async (allRoomIds) => {
-  // return allRoomIds.map((id) => {
-  //   client.video.rooms.create({
-  //     uniqueName: id,
-  //     type: 'peer-to-peer',
-  //   })
-  // })
-
   return allRoomIds.map((id) => {
-    console.log(id, 'cool')
+    return client.video.rooms.create({
+      uniqueName: id,
+      type: 'peer-to-peer',
+    })
   })
 }
 
