@@ -94,7 +94,7 @@ const runEvent = async (req, res) => {
       .filter((user) => {
         const lastSeen = new Date(user.user.last_seen).getTime()
         const now = Date.now()
-        const seenInLast60secs = now - lastSeen < 60000
+        const seenInLast60secs = now - lastSeen < 30000
         return seenInLast60secs
       })
       .map((user) => user.user.id)
