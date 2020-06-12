@@ -15,8 +15,8 @@ let currentRound = 0
 const runEvent = async (req, res) => {
   console.log('runEvent ran')
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds || 10 // default ten rounds
-  const roundLength = req.body.round_length || 500000 // default 5 minute rounds
+  const numRounds = req.body.num_rounds || 3 // default ten rounds
+  const roundLength = req.body.round_length || 30000 // default 5 minute rounds
   const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
   // ensures that rooms are closed before next round
@@ -76,14 +76,16 @@ const runEvent = async (req, res) => {
 
     // see which users are online
     // try this same idea with a better online_users table in Hasura
-    const onlineEventUsers = eventUsers
-      .filter((user) => {
-        const lastSeen = new Date(user.user.last_seen).getTime()
-        const now = Date.now()
-        const seenInLast60secs = now - lastSeen < 60000
-        return seenInLast60secs
-      })
-      .map((user) => user.user.id)
+    const onlineEventUsers =
+      eventUsers &&
+      eventUsers
+        .filter((user) => {
+          const lastSeen = new Date(user.user.last_seen).getTime()
+          const now = Date.now()
+          const seenInLast60secs = now - lastSeen < 60000
+          return seenInLast60secs
+        })
+        .map((user) => user.user.id)
     console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
@@ -135,11 +137,13 @@ const runEvent = async (req, res) => {
 
     // increment current round in events table
     try {
-      console.log('trying to increment round')
       // newCurrentRound = currentRound + 1
       currentRound += 1
-      console.log('currentRound: ', currentRound)
-      await orm.request(updateCurrentRoundByEventId, { id: eventId, currentRound })
+      const roundUpdated = await orm.request(updateCurrentRoundByEventId, {
+        id: eventId,
+        newCurrentRound: currentRound,
+      })
+      console.log('betweenRoundsTimeout -> roundUpdated', roundUpdated)
     } catch (e) {
       console.log(e, 'Error incrementing round_number in db')
     }
