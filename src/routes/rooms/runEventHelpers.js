@@ -15,13 +15,6 @@ export const omniFinishRounds = async (
   console.log('in OMNI')
   const completedRoomsPromises = await setRoomsCompleted()
 
-  if (req.body.reset) {
-    currentRound = 0
-    clearTimeout(betweenRoundsTimeout)
-    clearTimeout(roundsTimeout)
-    return
-  }
-
   await Promise.all(completedRoomsPromises)
 
   // set ended_at in db for the round we just completed

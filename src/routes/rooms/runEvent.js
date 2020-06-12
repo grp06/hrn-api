@@ -19,6 +19,14 @@ const runEvent = async (req, res) => {
   const roundLength = req.body.round_length || 30000 // default 5 minute rounds
   const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
+  if (req.body.reset) {
+    console.log('resetting event')
+
+    currentRound = 0
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    return
+  }
   // ensures that rooms are closed before next round
   try {
     await omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
