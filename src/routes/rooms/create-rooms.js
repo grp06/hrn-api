@@ -6,7 +6,7 @@ const client = new Twilio(twilioAccountSid, authToken)
 
 const createRooms = async (allRoomIds) => {
   return allRoomIds.map((id) => {
-    client.video.rooms.create({
+    return client.video.rooms.create({
       uniqueName: id,
       type: 'peer-to-peer',
     })
