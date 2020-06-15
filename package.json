@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "nodemon --exec \"babel-node --root-mode upward --ignore=\"hasura\" --ignore=\"**node_modules**\"\" src/app.js",
+    "test": "mocha --require @babel/register --require test/setup.js --exit",
     "lint": "estlint"
   },
   "author": "",
@@ -43,6 +44,7 @@
     "@babel/node": "^7.8.7",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/preset-env": "^7.9.6",
+    "@babel/register": "^7.10.1",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.1.0",

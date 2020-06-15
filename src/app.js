@@ -32,6 +32,9 @@ app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/password_reset', emailRouter)
+app.use('/', (req, res) => {
+  res.send('Looks like the HiRightNow API is working!')
+})
 
 app.use(function errorHandler(error, req, res, next) {
   let response
