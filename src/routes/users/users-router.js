@@ -3,6 +3,7 @@ import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
+import * as Sentry from '@sentry/node'
 
 const express = require('express')
 
@@ -28,8 +29,13 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     console.log('checkEmailRequest', checkEmailRequest)
     existingUser = checkEmailRequest.data.users[0]
 
+    Sentry.setUser({ email: 'james.com' })
+
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already in use.' })
+      const message = 'Email already in use'
+      Sentry.setUser({ email: 'bob.com' })
+      Sentry.captureMessage(message)
+      return res.status(400).json({ error: message })
     }
   } catch (error) {
     return res.status(500).json({

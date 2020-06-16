@@ -48,7 +48,7 @@ app.get('/debug-sentry', () => {
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
 
-app.use(function errorHandler(error, req, res) {
+app.use(function errorHandler(error, req, res, next) {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
