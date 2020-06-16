@@ -15,7 +15,7 @@ let currentRound = 0
 const runEvent = async (req, res) => {
   console.log('runEvent ran')
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds || 3 // default ten rounds
+  const numRounds = req.body.num_rounds || 8 // default ten rounds
   const roundLength = req.body.round_length || 30000 // default 5 minute rounds
   const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
@@ -76,6 +76,7 @@ const runEvent = async (req, res) => {
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
+      console.log('betweenRoundsTimeout -> eventUsers', eventUsers)
     } catch (error) {
       console.log('error = ', error)
 
