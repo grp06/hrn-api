@@ -4,6 +4,7 @@ import { getEventUsers } from '../../gql/queries/users/getEventUsers'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
 import updateCurrentRound from '../../gql/mutations/users/updateCurrentRound'
+import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
 import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import createRooms from './create-rooms'
@@ -37,6 +38,16 @@ const runEvent = async (req, res) => {
   // set and end time for the round we just completed
   if (currentRound > 0) {
     try {
+      const updatedEventStatus = await orm.request(updateEventStatus, {
+        eventId,
+        newStatus: 'in-between-rounds',
+      })
+      console.log('set room to in-between-rounds')
+    } catch (error) {
+      console.log('error = ', error)
+    }
+
+    try {
       await orm.request(updateRoundEndedAt, {
         event_id: eventId,
         roundNumber: currentRound,
@@ -56,6 +67,16 @@ const runEvent = async (req, res) => {
         ended_at: new Date().toISOString(),
       })
       console.log('eventEndedResult = ', eventEndedResult)
+    } catch (error) {
+      console.log('error = ', error)
+    }
+
+    try {
+      const updatedEventStatus = await orm.request(updateEventStatus, {
+        eventId,
+        newStatus: 'complete',
+      })
+      console.log('runEvent -> updatedEventStatus', updatedEventStatus)
     } catch (error) {
       console.log('error = ', error)
     }
@@ -161,6 +182,16 @@ const runEvent = async (req, res) => {
     try {
       const createdRoomsPromises = await createRooms(allRoomIds)
       await Promise.all(createdRoomsPromises)
+    } catch (error) {
+      console.log('error = ', error)
+    }
+
+    try {
+      await orm.request(updateEventStatus, {
+        eventId,
+        newStatus: 'room-in-progress',
+      })
+      console.log('set room to in-progress')
     } catch (error) {
       console.log('error = ', error)
     }
