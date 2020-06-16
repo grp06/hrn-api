@@ -41,14 +41,14 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
-app.get('/debug-sentry', function mainHandler(req, res) {
+app.get('/debug-sentry', () => {
   throw new Error('My first Sentry error!')
 })
 
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
 
-app.use(function errorHandler(error, req, res, next) {
+app.use(function errorHandler(error, req, res) {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
@@ -58,20 +58,5 @@ app.use(function errorHandler(error, req, res, next) {
   }
   res.status(500).json(response)
 })
-
-// app.use((req, res, next) => {
-//   const error = new Error('Not Found!')
-//   error.status = 404
-//   next(error)
-// })
-
-// app.use((error, req, res, next) => {
-//   res.status(error.status || 500)
-//   res.json({
-//     error: {
-//       message: error.message,
-//     },
-//   })
-// })
 
 module.exports = app
