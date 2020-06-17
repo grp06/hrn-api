@@ -71,43 +71,25 @@ const runEvent = async (req, res) => {
   // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {
     let onlineEventUsers
+    const offset = 60000
 
-    // get the online users for a given event
+    // get the online users for a given event by checking last_seen
     try {
       // make the last seen a bit longer to accomodate buffer/lag between clients/server?
       const now = Date.now()
-
-      const seenInLast60Seconds = now - 510060000
-
-      const dateObject = new Date(seenInLast60Seconds)
-      console.log('dateObject: ', dateObject)
+      const dateOffset = now - offset
+      const seenBefore = new Date(dateOffset)
 
       const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
-        later_than: dateObject,
+        later_than: seenBefore,
         event_id: eventId,
       })
 
       onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
-      console.log('onlineEventUsers: ', onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
-
       clearTimeout(roundsTimeout)
     }
-
-    // see which users are online
-    // try this same idea with a better online_users table in Hasura
-    // const onlineEventUsers =
-    //   eventUsers &&
-    //   eventUsers
-    //     .filter((user) => {
-    //       const lastSeen = new Date(user.user.last_seen).getTime()
-    //       const now = Date.now()
-    //       const seenInLast60secs = now - lastSeen < 30000
-    //       return seenInLast60secs
-    //     })
-    //     .map((user) => user.user.id)
-    // console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
     let roundsData
@@ -123,11 +105,8 @@ const runEvent = async (req, res) => {
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
-    console.log('roundsMap', roundsMap)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
-
-    console.log('newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
