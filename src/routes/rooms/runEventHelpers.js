@@ -5,13 +5,7 @@ import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
 
 // ensures that rooms are closed before next round
-export const omniFinishRounds = async (
-  req,
-  currentRound,
-  eventId,
-  betweenRoundsTimeout,
-  roundsTimeout
-) => {
+export const omniFinishRounds = async (req, currentRound, eventId) => {
   console.log('in OMNI')
   const completedRoomsPromises = await setRoomsCompleted()
 

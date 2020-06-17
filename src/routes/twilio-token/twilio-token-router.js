@@ -1,6 +1,8 @@
 const express = require('express')
+
 const tokenRouter = express.Router()
 const { AccessToken } = require('twilio').jwt
+
 const { VideoGrant } = AccessToken
 const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SID from www.twilio.com/console
 // const TokenService = require('../services/tokenService');
@@ -14,12 +16,12 @@ tokenRouter.post('/', (req, res) => {
     process.env.TWILIO_API_KEY,
     process.env.TWILIO_API_SECRET
   )
-  token.identity = req.body.myUserId
+  token.identity = req.body.userId
 
   // Create a Video grant which enables a client to use Video
   // and limits access to the specified Room (DailyStandup)
   const videoGrant = new VideoGrant({
-    room: req.body.partnerX,
+    room: req.body.roomId,
   })
 
   // Add the grant to the token

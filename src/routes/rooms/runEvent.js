@@ -76,7 +76,6 @@ const runEvent = async (req, res) => {
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
-      console.log('betweenRoundsTimeout -> eventUsers', eventUsers)
     } catch (error) {
       console.log('error = ', error)
 
