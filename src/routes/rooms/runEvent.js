@@ -72,14 +72,12 @@ const runEvent = async (req, res) => {
   betweenRoundsTimeout = setTimeout(async () => {
     let onlineEventUsers
 
-    // get the users for a given event
+    // get the online users for a given event
     try {
       // make the last seen a bit longer to accomodate buffer/lag between clients/server?
       const now = Date.now()
-      console.log('now: ', now)
 
       const seenInLast60Seconds = now - 510060000
-      console.log('seenInLast60Seconds: ', seenInLast60Seconds)
 
       const dateObject = new Date(seenInLast60Seconds)
       console.log('dateObject: ', dateObject)
@@ -89,8 +87,8 @@ const runEvent = async (req, res) => {
         event_id: eventId,
       })
 
-      onlineEventUsers = eventUsersResponse.data.event_users
-      console.log(onlineEventUsers)
+      onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
+      console.log('onlineEventUsers: ', onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
 
@@ -156,6 +154,7 @@ const runEvent = async (req, res) => {
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
+    console.log('INSERTED ROUNDS', insertedRounds)
     const currentRoundData = insertedRounds.data.insert_rounds.returning
 
     // increment current round in events table
