@@ -35,7 +35,10 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
 })
 
 roomsRouter.route('/reset-event').get((req, res) => {
-  setRoomsCompleted()
+  const { eventId } = req.body
+  console.log('reset')
+
+  setRoomsCompleted(eventId)
   return res.status(200).json({ res: 'reset the event yo' })
 })
 

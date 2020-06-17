@@ -21,7 +21,7 @@ tokenRouter.post('/', (req, res) => {
   // Create a Video grant which enables a client to use Video
   // and limits access to the specified Room (DailyStandup)
   const videoGrant = new VideoGrant({
-    room: req.body.roomId,
+    room: req.body.uniqueName,
   })
 
   // Add the grant to the token
