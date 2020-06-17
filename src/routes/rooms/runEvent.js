@@ -1,4 +1,4 @@
-import { getEventUsers } from '../../gql/queries/users/getEventUsers'
+import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
@@ -70,12 +70,27 @@ const runEvent = async (req, res) => {
 
   // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {
-    let eventUsers
+    let onlineEventUsers
 
     // get the users for a given event
     try {
-      const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
-      eventUsers = eventUsersResponse.data.event_users
+      // make the last seen a bit longer to accomodate buffer/lag between clients/server?
+      const now = Date.now()
+      console.log('now: ', now)
+
+      const seenInLast60Seconds = now - 510060000
+      console.log('seenInLast60Seconds: ', seenInLast60Seconds)
+
+      const dateObject = new Date(seenInLast60Seconds)
+      console.log('dateObject: ', dateObject)
+
+      const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
+        later_than: dateObject,
+        event_id: eventId,
+      })
+
+      onlineEventUsers = eventUsersResponse.data.event_users
+      console.log(onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
 
@@ -84,17 +99,17 @@ const runEvent = async (req, res) => {
 
     // see which users are online
     // try this same idea with a better online_users table in Hasura
-    const onlineEventUsers =
-      eventUsers &&
-      eventUsers
-        .filter((user) => {
-          const lastSeen = new Date(user.user.last_seen).getTime()
-          const now = Date.now()
-          const seenInLast60secs = now - lastSeen < 30000
-          return seenInLast60secs
-        })
-        .map((user) => user.user.id)
-    console.log('onlineEventUsers', onlineEventUsers)
+    // const onlineEventUsers =
+    //   eventUsers &&
+    //   eventUsers
+    //     .filter((user) => {
+    //       const lastSeen = new Date(user.user.last_seen).getTime()
+    //       const now = Date.now()
+    //       const seenInLast60secs = now - lastSeen < 30000
+    //       return seenInLast60secs
+    //     })
+    //     .map((user) => user.user.id)
+    // console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
     let roundsData
