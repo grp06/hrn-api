@@ -11,24 +11,13 @@ export const omniFinishRounds = async (req, currentRound, eventId) => {
 
   await Promise.all(completedRoomsPromises)
 
-  // set ended_at in db for the round we just completed
   if (currentRound > 0) {
     try {
-      const updatedEventStatus = await orm.request(updateEventStatus, {
+      await orm.request(updateEventStatus, {
         eventId,
         newStatus: 'in-between-rounds',
       })
       console.log('set room to in-between-rounds')
-    } catch (error) {
-      console.log('error = ', error)
-    }
-
-    try {
-      await orm.request(updateRoundEndedAt, {
-        event_id: eventId,
-        roundNumber: currentRound,
-        endedAt: new Date().toISOString(),
-      })
     } catch (error) {
       console.log('error = ', error)
     }
