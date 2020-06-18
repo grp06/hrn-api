@@ -29,8 +29,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     console.log('checkEmailRequest', checkEmailRequest)
     existingUser = checkEmailRequest.data.users[0]
 
-    Sentry.setUser({ email: 'james.com' })
-
     if (existingUser) {
       const message = 'Email already in use'
       Sentry.setUser({ email: 'bob.com' })
@@ -38,6 +36,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       return res.status(400).json({ error: message })
     }
   } catch (error) {
+    Sentry.captureMessage(error)
     return res.status(500).json({
       error,
     })
@@ -47,6 +46,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   try {
     hashedPassword = await hashPassword(password)
   } catch (error) {
+    Sentry.captureMessage(error)
     return res.status(500).json({
       error,
     })
@@ -63,11 +63,13 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
     newUser = insertUserResult.data.insert_users.returning[0]
   } catch (error) {
+    Sentry.captureMessage(error)
     return res.status(500).json({
       error,
     })
   }
 
+  Sentry.captureMessage(`New user with id ${newUser.id} created.`)
   return res.status(201).send({
     token: await createToken(newUser, process.env.SECRET),
     role: newUser.role,

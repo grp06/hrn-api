@@ -16,8 +16,8 @@ const request = async (gqlQuery, variables = {}, token) => {
 
   try {
     const result = await axios.post(
-      process.env.HASURA_ENDPOINT,
-      // "http://localhost:8080/v1/graphql",
+      // process.env.HASURA_ENDPOINT,
+      "http://localhost:8080/v1/graphql",
       {
         query: print(gqlQuery),
         variables: variables,
