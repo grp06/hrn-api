@@ -16,8 +16,11 @@ const emailRouter = require('./routes/email/email-router')
 
 const app = express()
 
+<<<<<<< HEAD
 Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sentry.io/5279031' })
 
+=======
+>>>>>>> staging
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 global.__logger = logger

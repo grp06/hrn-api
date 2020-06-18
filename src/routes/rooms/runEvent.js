@@ -15,9 +15,9 @@ let currentRound = 0
 const runEvent = async (req, res) => {
   console.log('runEvent ran')
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds || 3 // default ten rounds
-  const roundLength = req.body.round_length || 30000 // default 5 minute rounds
-  const roundInterval = req.body.round_interval || 15000 // default 15 second interval
+  const numRounds = req.body.num_rounds || 10 // default ten rounds
+  const roundLength = req.body.round_length || 300000 // default 5 minute rounds
+  const roundInterval = req.body.round_interval || 30000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
@@ -61,8 +61,8 @@ const runEvent = async (req, res) => {
 
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
-    currentRound = 0
     console.log('EVENT FINISHED')
+    return
   }
 
   // to be used for timeout function
@@ -76,6 +76,7 @@ const runEvent = async (req, res) => {
     try {
       const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
       eventUsers = eventUsersResponse.data.event_users
+      console.log('betweenRoundsTimeout -> eventUsers', eventUsers)
     } catch (error) {
       console.log('error = ', error)
 
@@ -90,7 +91,7 @@ const runEvent = async (req, res) => {
         .filter((user) => {
           const lastSeen = new Date(user.user.last_seen).getTime()
           const now = Date.now()
-          const seenInLast60secs = now - lastSeen < 60000
+          const seenInLast60secs = now - lastSeen < 30000
           return seenInLast60secs
         })
         .map((user) => user.user.id)
