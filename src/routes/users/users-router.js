@@ -1,9 +1,10 @@
+import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
-import findUserByEmail from '../../gql/queries/users/findUserByEmail'
+import { findUserByEmail } from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
-import * as Sentry from '@sentry/node'
+import logger from '../../logger'
 
 const express = require('express')
 
@@ -31,10 +32,10 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
     if (existingUser) {
       const message = 'Email already in use'
-      Sentry.setUser({ email: 'bob.com' })
       Sentry.captureMessage(message)
-      return res.status(400).json({ error: message })
+      return res.status(400).json({ message })
     }
+
   } catch (error) {
     Sentry.captureMessage(error)
     return res.status(500).json({
@@ -69,7 +70,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  Sentry.captureMessage(`New user with id ${newUser.id} created.`)
+  __logger.info(`User with email ${email} created`)
   return res.status(201).send({
     token: await createToken(newUser, process.env.SECRET),
     role: newUser.role,

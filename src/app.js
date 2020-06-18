@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { startServer } from './server-graphql'
+import logger from './logger'
 
 require('dotenv').config()
 const cors = require('cors')
@@ -19,6 +20,7 @@ Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sent
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
+global.__logger = logger
 // The request handler must be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler())
 
