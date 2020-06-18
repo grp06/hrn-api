@@ -2,3 +2,4 @@
 {"message":"User with email alex.com created","level":"info"}
 {"message":"User with email joe.com created","level":"info"}
 {"message":"User with email dave.com created","level":"info"}
+{"message":"Event with id 1 started.","level":"info"}

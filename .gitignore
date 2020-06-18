@@ -6,3 +6,4 @@ graphql-ec2-key-pair.pem
 node_modules
 .webpack
 .serverless
+info.log

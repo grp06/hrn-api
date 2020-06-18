@@ -4,7 +4,6 @@ import { findUserByEmail } from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
-import logger from '../../logger'
 
 const express = require('express')
 
