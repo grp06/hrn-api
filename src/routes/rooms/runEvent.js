@@ -71,14 +71,14 @@ const runEvent = async (req, res) => {
   // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {
     let onlineEventUsers
-    const offset = 60000
 
     // get the online users for a given event by checking last_seen
     try {
       // make the last seen a bit longer to accomodate buffer/lag between clients/server?
-      const now = Date.now()
-      const dateOffset = now - offset
-      const seenBefore = new Date(dateOffset)
+      const now = Date.now() // Unix timestamp
+      const millisecondsAgo = 60000 // 60 seconds
+      const timeDiff = now - millisecondsAgo // Unix timestamp
+      const seenBefore = new Date(timeDiff)
 
       const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
         later_than: seenBefore,
