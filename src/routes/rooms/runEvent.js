@@ -6,8 +6,8 @@ import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 import { omniFinishRounds, createNewRooms } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
-import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
-import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
+import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 
 let betweenRoundsTimeout
 let roundsTimeout

@@ -1,8 +1,8 @@
 import setRoomsCompleted from './set-rooms-completed'
 import createRooms from './create-rooms'
-import updateRoundEndedAt from '../../gql/mutations/users/updateRoundEndedAt'
+import updateRoundEndedAt from '../../gql/mutations/event/updateRoundEndedAt'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (
