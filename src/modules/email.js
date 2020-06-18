@@ -8,7 +8,7 @@ export const transporter = nodemailer.createTransport({
   },
 })
 const endpoint =
-  process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.com'
+  process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
   console.log('user in getPasswordResetURL', user)
