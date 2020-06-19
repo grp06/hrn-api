@@ -29,6 +29,19 @@ describe('Users Endpoints', function () {
         })
       })
 
+      it.only(`responds 400 'Please use a different name' when profanity filter triggered`, () => {
+        const badName = {
+          name: 'fuck',
+          password: '1!Password',
+          role: 'user',
+          email: 'test@test.com',
+        }
+
+        return supertest(app)
+          .post('/api/signup')
+          .send(badName)
+          .expect(400, { error: `Please use a different name` })
+      })
       it(`responds 400 'Password be longer than 8 characters' when short password`, () => {
         const userShortPassword = {
           name: 'test user_name',
@@ -102,7 +115,7 @@ describe('Users Endpoints', function () {
         return supertest(app)
           .post('/api/signup')
           .send(duplicateEmail)
-          .expect(400, { message: 'Email already in use' })
+          .expect(400, { error: 'Email already in use' })
       })
 
       it(`responds 400 'Email not valid' when email is not valid`, () => {
@@ -116,7 +129,7 @@ describe('Users Endpoints', function () {
         return supertest(app)
           .post('/api/signup')
           .send(invalidEmail)
-          .expect(400, { message: 'Email not valid' })
+          .expect(400, { error: 'Email not valid' })
       })
     })
   })

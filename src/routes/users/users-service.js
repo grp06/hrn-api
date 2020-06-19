@@ -1,6 +1,8 @@
 const xss = require('xss')
+const Filter = require('bad-words')
 import validator from 'validator'
-import { createToken } from '../../extensions/jwtHelper'
+
+const profanityFilter = new Filter()
 
 const REGEX_UPPER_LOWER_NUMBER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\$%\^&])[\S]+/
 
@@ -25,6 +27,16 @@ const UsersService = {
       return 'Password must contain 1 upper case, lower case, and special character'
     }
     return null
+  },
+
+  validateName(name) {
+    const filtered = profanityFilter.clean(name)
+
+    if (name !== filtered) {
+        return 'Please use a different name'
+    }
+    return null
+
   },
 
   serializeUser(user) {

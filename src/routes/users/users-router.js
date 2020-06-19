@@ -21,9 +21,15 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       })
     }
 
-  // password and email validation
+  // name, email, password validation
+
+  // add logging for these errors?
+
+  const nameError = UsersService.validateName(name)
+  if (nameError) return res.status(400).json({ error: nameError})
+
   const emailError = UsersService.validateEmail(email)
-  if (emailError) return res.status(400).json({ message: emailError })
+  if (emailError) return res.status(400).json({ error: emailError })
 
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
@@ -37,7 +43,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     if (existingUser) {
       const message = 'Email already in use'
       Sentry.captureMessage(message)
-      return res.status(400).json({ message })
+      return res.status(400).json({ error: message })
     }
   } catch (error) {
     Sentry.captureMessage(error)
