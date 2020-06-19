@@ -1,5 +1,6 @@
 const xss = require('xss')
 import validator from 'validator'
+import { createToken } from '../../extensions/jwtHelper'
 
 const REGEX_UPPER_LOWER_NUMBER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\$%\^&])[\S]+/
 

@@ -24,7 +24,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // password and email validation
   const emailError = UsersService.validateEmail(email)
   if (emailError) return res.status(400).json({ error: emailError })
-  
+
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
 
@@ -46,6 +46,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
+  // hash the password
   let hashedPassword
   try {
     hashedPassword = await hashPassword(password)
@@ -61,6 +62,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   const variables = { objects: [userObject] }
   let newUser
 
+  // insert user into db
   try {
     const insertUserResult = await orm.request(signUp, variables)
     console.log('insertUserResult', insertUserResult)
@@ -74,11 +76,19 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   }
 
   __logger.info(`User with email ${email} created`)
-  return res.status(201).send({
-    token: await createToken(newUser, process.env.SECRET),
-    role: newUser.role,
-    id: newUser.id,
-  })
+  // send token and user details
+  try {
+    return res.status(201).json({
+      token: await createToken(newUser, process.env.SECRET),
+      ...UsersService.serializeUser(newUser)
+    })
+  } catch (error) {
+    Sentry.captureMessage(error)
+    return res.status(500).json({
+      error,
+    })
+  }
+
 })
 
 usersRouter.post('/reset-password', async (req, res) => {
