@@ -75,12 +75,14 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  __logger.info(`User with email ${email} created`)
+
   // send token and user details
+  __logger.info(`User with email ${email} created`)
+  console.log('last');
   try {
     return res.status(201).json({
       token: await createToken(newUser, process.env.SECRET),
-      ...UsersService.serializeUser(newUser)
+      ...UsersService.serializeUser(newUser),
     })
   } catch (error) {
     Sentry.captureMessage(error)
@@ -88,7 +90,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       error,
     })
   }
-
 })
 
 usersRouter.post('/reset-password', async (req, res) => {
