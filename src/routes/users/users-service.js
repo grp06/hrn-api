@@ -4,7 +4,7 @@ import validator from 'validator'
 
 const profanityFilter = new Filter()
 
-const REGEX_UPPER_LOWER_NUMBER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\$%\^&])[\S]+/
+const REGEX_UPPER_LOWER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\$%\^&])[\S]+/
 
 const UsersService = {
   validateEmail(email) {
@@ -23,7 +23,7 @@ const UsersService = {
     if (password.startsWith(' ') || password.endsWith(' ')) {
       return 'Password must not start or end with empty spaces'
     }
-    if (!REGEX_UPPER_LOWER_NUMBER_SPECIAL.test(password)) {
+    if (!REGEX_UPPER_LOWER_SPECIAL.test(password)) {
       return 'Password must contain 1 upper case, lower case, and special character'
     }
     return null
