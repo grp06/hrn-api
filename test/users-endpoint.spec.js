@@ -1,5 +1,6 @@
 import app from '../src/app'
 import supertest from 'supertest'
+import { expect } from 'chai'
 
 // use knex format to insert mock data in PG db directly... then GQL queries are through the docker Hasura?
 
@@ -42,6 +43,30 @@ describe('Users Endpoints', function () {
                 .expect(400, {message: 'Email already in use'})
         })
       })
+    })
+
+    context(`Happy path`, () => {
+        it(`responds 201, returning a jwt, storing bcrypted password`, () => {
+            const newUser = {
+                name: 'sadsadsadsad',
+                email: "tasdsdaestasdsad@test.com",
+                password: "11AAaa!!",
+                role: "user",
+              };
+
+              return supertest(app)
+              .post('/api/signup')
+              .send(newUser)
+              .expect(201)
+              .expect(res => {
+                  expect(res.body).to.have.property("id")
+                  expect(res.body).to.have.property("role")
+                  expect(res.body).to.have.property("token")
+                  expect(res.body).to.not.have.property("password")
+              })
+
+              // check if in db
+        })
     })
   })
 })
