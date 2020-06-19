@@ -23,7 +23,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // password and email validation
   const emailError = UsersService.validateEmail(email)
-  if (emailError) return res.status(400).json({ error: emailError })
+  if (emailError) return res.status(400).json({ message: emailError })
 
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
