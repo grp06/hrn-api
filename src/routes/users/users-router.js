@@ -4,6 +4,7 @@ import { findUserByEmail } from '../../gql/queries/users/findUserByEmail'
 import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
+import UsersService from './users-service'
 
 const express = require('express')
 
@@ -21,6 +22,11 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     }
 
   // password and email validation
+  const emailError = UsersService.validateEmail(email)
+  if (emailError) return res.status(400).json({ error: emailError })
+  
+  const passwordError = UsersService.validatePassword(password)
+  if (passwordError) return res.status(400).json({ error: passwordError })
 
   // check if user with email exists
   let existingUser
@@ -33,7 +39,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       Sentry.captureMessage(message)
       return res.status(400).json({ message })
     }
-
   } catch (error) {
     Sentry.captureMessage(error)
     return res.status(500).json({

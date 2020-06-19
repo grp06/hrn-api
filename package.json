@@ -38,9 +38,11 @@
     "nodemon": "^2.0.4",
     "passport": "^0.4.1",
     "twilio": "^3.43.1",
+    "validator": "^13.1.1",
     "webpack": "^4.43.0",
     "webpack-node-externals": "^1.7.2",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "xss": "^1.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
