@@ -12,7 +12,6 @@ const request = async (gqlQuery, variables = {}, token) => {
   } else {
     headers[constants.adminSecret] = process.env.HASURA_GRAPHQL_ACCESS_KEY
   }
-  console.log('request -> headers', headers)
 
   try {
     const result = await axios.post(
