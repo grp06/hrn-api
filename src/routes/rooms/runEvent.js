@@ -1,4 +1,4 @@
-import { getEventUsers } from '../../gql/queries/users/getEventUsers'
+import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
@@ -70,32 +70,26 @@ const runEvent = async (req, res) => {
 
   // big function defining what to do during each round
   betweenRoundsTimeout = setTimeout(async () => {
-    let eventUsers
+    let onlineEventUsers
 
-    // get the users for a given event
+    // get the online users for a given event by checking last_seen
     try {
-      const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
-      eventUsers = eventUsersResponse.data.event_users
-      console.log('betweenRoundsTimeout -> eventUsers', eventUsers)
+      // make the last seen a bit longer to accomodate buffer/lag between clients/server?
+      const now = Date.now() // Unix timestamp
+      const millisecondsAgo = 60000 // 60 seconds
+      const timeDiff = now - millisecondsAgo // Unix timestamp
+      const seenBefore = new Date(timeDiff)
+
+      const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
+        later_than: seenBefore,
+        event_id: eventId,
+      })
+
+      onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
     } catch (error) {
       console.log('error = ', error)
-
       clearTimeout(roundsTimeout)
     }
-
-    // see which users are online
-    // try this same idea with a better online_users table in Hasura
-    const onlineEventUsers =
-      eventUsers &&
-      eventUsers
-        .filter((user) => {
-          const lastSeen = new Date(user.user.last_seen).getTime()
-          const now = Date.now()
-          const seenInLast60secs = now - lastSeen < 30000
-          return seenInLast60secs
-        })
-        .map((user) => user.user.id)
-    console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
     let roundsData
@@ -111,11 +105,8 @@ const runEvent = async (req, res) => {
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
-    console.log('roundsMap', roundsMap)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
-
-    console.log('newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -142,6 +133,7 @@ const runEvent = async (req, res) => {
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
+    console.log('INSERTED ROUNDS', insertedRounds)
     const currentRoundData = insertedRounds.data.insert_rounds.returning
 
     // increment current round in events table
