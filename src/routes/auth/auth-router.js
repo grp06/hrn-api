@@ -24,9 +24,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
   try {
     //check if user with email exists
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-
     dbUser = checkEmailRequest.data.users[0]
-    console.log(dbUser);
 
     if (!dbUser) {
       return res.status(400).json({ error: 'Incorrect email or password' })

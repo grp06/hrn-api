@@ -6,14 +6,11 @@ export default {
     updateCurrentRoundByEventId: async (parent, { id, newCurrentRound }) => {
       const eventObject = { id, newCurrentRound }
       const variables = { objects: [eventObject] }
-      console.log('variables: ', variables)
 
       let newEventDetails
       try {
         const updateCurrentRoundResult = await orm.request(updateCurrentRoundByEventId, variables)
         newEventDetails = updateCurrentRoundResult.data.update_events.returning[0]
-
-        console.log(newEventDetails)
       } catch (e) {
         console.log(e, 'could not update current round by event id')
       }

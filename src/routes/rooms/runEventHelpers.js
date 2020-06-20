@@ -12,7 +12,6 @@ export const omniFinishRounds = async (
   betweenRoundsTimeout,
   roundsTimeout
 ) => {
-  console.log('in OMNI')
   const completedRoomsPromises = await setRoomsCompleted()
 
   await Promise.all(completedRoomsPromises)
