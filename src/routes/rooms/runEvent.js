@@ -8,20 +8,21 @@ import { omniFinishRounds, createNewRooms } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
 import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import setRoomsCompleted from './set-rooms-completed'
 
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
-  console.log('runEvent ran')
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds || 10 // default ten rounds
-  const roundLength = req.body.round_length || 300000 // default 5 minute rounds
-  const roundInterval = req.body.round_interval || 30000 // default 15 second interval
+  const numRounds = req.body.num_rounds || 4 // default ten rounds
+  const roundLength = req.body.round_length || 20000 // default 5 minute rounds
+  const roundInterval = req.body.round_interval || 20000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
-
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    await Promise.all(completedRoomsPromises)
     currentRound = 0
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
@@ -40,21 +41,19 @@ const runEvent = async (req, res) => {
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
     try {
-      const eventEndedResult = await orm.request(setEventEndedAt, {
+      await orm.request(setEventEndedAt, {
         id: eventId,
         ended_at: new Date().toISOString(),
       })
-      console.log('eventEndedResult = ', eventEndedResult)
     } catch (error) {
       console.log('error = ', error)
     }
 
     try {
-      const updatedEventStatus = await orm.request(updateEventStatus, {
+      await orm.request(updateEventStatus, {
         eventId,
         newStatus: 'complete',
       })
-      console.log('runEvent -> updatedEventStatus', updatedEventStatus)
     } catch (error) {
       console.log('error = ', error)
     }
@@ -86,6 +85,7 @@ const runEvent = async (req, res) => {
       })
 
       onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
+      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
       clearTimeout(roundsTimeout)
@@ -123,9 +123,8 @@ const runEvent = async (req, res) => {
     })
 
     // insert new pairings result into db
-    let insertedRounds
     try {
-      insertedRounds = await orm.request(bulkInsertRounds, {
+      await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
     } catch (e) {
@@ -133,8 +132,6 @@ const runEvent = async (req, res) => {
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
-    console.log('INSERTED ROUNDS', insertedRounds)
-    const currentRoundData = insertedRounds.data.insert_rounds.returning
 
     // increment current round in events table
     try {
@@ -147,14 +144,6 @@ const runEvent = async (req, res) => {
       console.log('betweenRoundsTimeout -> roundUpdated', roundUpdated)
     } catch (e) {
       console.log(e, 'Error incrementing round_number in db')
-    }
-
-    // create new rooms
-    try {
-      console.log('trying to create new rooms')
-      await createNewRooms(currentRoundData)
-    } catch (e) {
-      console.log(e)
     }
 
     try {
