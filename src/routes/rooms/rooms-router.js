@@ -20,12 +20,12 @@ roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
 
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
-  const createdRooms = await client.video.rooms.create({
+  const createdRoom = await client.video.rooms.create({
     uniqueName: `${eventId}-pre-event`,
     type: 'group',
   })
 
-  console.log('createdRooms = ', createdRooms)
+  console.log('createdRoom = ', createdRoom)
 
   try {
     await orm.request(updateEventStatus, {
