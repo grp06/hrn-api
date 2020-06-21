@@ -5,7 +5,7 @@ const setRoomsCompleted = async (eventId) => {
   const listOfRoomsToComplete = allRooms.filter((room) => {
     return room.uniqueName.indexOf(`${eventId}-`) > -1
   })
-  console.log('setRoomsCompleted -> listOfRoomsToComplete', listOfRoomsToComplete)
+  console.log('completing this many rooms', listOfRoomsToComplete.length)
 
   return listOfRoomsToComplete.map((r) => {
     return client.video.rooms(r.sid).update({ status: 'completed' })

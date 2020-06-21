@@ -11,8 +11,6 @@ const jsonBodyParser = express.json()
 
 // endpoint needs an auth check
 roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
-  console.log('inside start EVENT')
-
   runEvent(req, res)
 
   return res.status(200).json({ message: 'runEvent started' })
@@ -24,8 +22,6 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
     uniqueName: `${eventId}-pre-event`,
     type: 'group',
   })
-
-  console.log('createdRoom = ', createdRoom)
 
   try {
     await orm.request(updateEventStatus, {
@@ -41,7 +37,6 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
 
 roomsRouter.route('/reset-event').get((req, res) => {
   const { eventId } = req.body
-  console.log('reset')
 
   setRoomsCompleted(eventId)
   return res.status(200).json({ res: 'reset the event yo' })

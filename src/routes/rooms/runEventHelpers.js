@@ -2,6 +2,7 @@ import setRoomsCompleted from './set-rooms-completed'
 import createRooms from './create-rooms'
 import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (req, currentRound, eventId) => {
@@ -22,6 +23,30 @@ export const omniFinishRounds = async (req, currentRound, eventId) => {
       console.log('error = ', error)
     }
   }
+}
+
+export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => {
+  try {
+    await orm.request(setEventEndedAt, {
+      id: eventId,
+      ended_at: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
+
+  try {
+    await orm.request(updateEventStatus, {
+      eventId,
+      newStatus: 'complete',
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
+
+  clearTimeout(betweenRoundsTimeout)
+  clearTimeout(roundsTimeout)
+  console.log('EVENT FINISHED')
 }
 
 export const createNewRooms = async (currentRoundData, eventId) => {

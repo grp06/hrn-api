@@ -4,9 +4,8 @@ import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
-import { omniFinishRounds } from './runEventHelpers'
+import { omniFinishRounds, endEvent } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
-import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
 import setRoomsCompleted from './set-rooms-completed'
 
@@ -15,9 +14,9 @@ let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
   const eventId = req.params.id
-  const numRounds = req.body.num_rounds || 4 // default ten rounds
-  const roundLength = req.body.round_length || 20000 // default 5 minute rounds
-  const roundInterval = req.body.round_interval || 20000 // default 15 second interval
+  const numRounds = req.body.num_rounds || 10 // default ten rounds
+  const roundLength = req.body.round_length || 15000 // default 5 minute rounds
+  const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
@@ -35,32 +34,9 @@ const runEvent = async (req, res) => {
     console.log(e)
   }
 
-  console.log('runEvent -> numRounds', numRounds)
-  console.log('runEvent -> currentRound', currentRound)
-
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
-    try {
-      await orm.request(setEventEndedAt, {
-        id: eventId,
-        ended_at: new Date().toISOString(),
-      })
-    } catch (error) {
-      console.log('error = ', error)
-    }
-
-    try {
-      await orm.request(updateEventStatus, {
-        eventId,
-        newStatus: 'complete',
-      })
-    } catch (error) {
-      console.log('error = ', error)
-    }
-
-    clearTimeout(betweenRoundsTimeout)
-    clearTimeout(roundsTimeout)
-    console.log('EVENT FINISHED')
+    endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
     return
   }
 
@@ -68,6 +44,7 @@ const runEvent = async (req, res) => {
   const delayBetweenRounds = currentRound === 0 ? 0 : roundInterval
 
   // big function defining what to do during each round
+  // first round it executes immediately. Otherwise its every ${roundInterval} secs
   betweenRoundsTimeout = setTimeout(async () => {
     let onlineEventUsers
 
@@ -107,9 +84,23 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
+    console.log('betweenRoundsTimeout -> newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
+
+    const numNullPairings = newPairings.reduce((all, item, index) => {
+      if (item.indexOf(null) > -1) {
+        all += 1
+      }
+      return all
+    }, 0)
+    console.log('numNullPairings = ', numNullPairings)
+
+    if (numNullPairings > 2 || newPairings.length === 0) {
+      endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+      return
+    }
 
     // insert data for given round
     // maybe a .map would be cleaner here?
@@ -157,7 +148,6 @@ const runEvent = async (req, res) => {
     }
 
     if (currentRound > 0) {
-      console.log(currentRound, 'in last If block')
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
