@@ -13,7 +13,6 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 
 const app = express()
-
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 app.use(

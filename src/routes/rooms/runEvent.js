@@ -1,27 +1,27 @@
-import { getEventUsers } from '../../gql/queries/users/getEventUsers'
+import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
-import { omniFinishRounds, createNewRooms } from './runEventHelpers'
+import { omniFinishRounds, endEvent } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
-import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
 import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import setRoomsCompleted from './set-rooms-completed'
 
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
 const runEvent = async (req, res) => {
-  console.log('runEvent ran')
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
-  const roundLength = req.body.round_length || 300000 // default 5 minute rounds
-  const roundInterval = req.body.round_interval || 30000 // default 15 second interval
+  const roundLength = req.body.round_length || 45000 // default 5 minute rounds
+  const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
-
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    await Promise.all(completedRoomsPromises)
     currentRound = 0
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
@@ -34,34 +34,9 @@ const runEvent = async (req, res) => {
     console.log(e)
   }
 
-  console.log('runEvent -> numRounds', numRounds)
-  console.log('runEvent -> currentRound', currentRound)
-
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
-    try {
-      const eventEndedResult = await orm.request(setEventEndedAt, {
-        id: eventId,
-        ended_at: new Date().toISOString(),
-      })
-      console.log('eventEndedResult = ', eventEndedResult)
-    } catch (error) {
-      console.log('error = ', error)
-    }
-
-    try {
-      const updatedEventStatus = await orm.request(updateEventStatus, {
-        eventId,
-        newStatus: 'complete',
-      })
-      console.log('runEvent -> updatedEventStatus', updatedEventStatus)
-    } catch (error) {
-      console.log('error = ', error)
-    }
-
-    clearTimeout(betweenRoundsTimeout)
-    clearTimeout(roundsTimeout)
-    console.log('EVENT FINISHED')
+    endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
     return
   }
 
@@ -69,33 +44,29 @@ const runEvent = async (req, res) => {
   const delayBetweenRounds = currentRound === 0 ? 0 : roundInterval
 
   // big function defining what to do during each round
+  // first round it executes immediately. Otherwise its every ${roundInterval} secs
   betweenRoundsTimeout = setTimeout(async () => {
-    let eventUsers
+    let onlineEventUsers
 
-    // get the users for a given event
+    // get the online users for a given event by checking last_seen
     try {
-      const eventUsersResponse = await orm.request(getEventUsers, { event_id: eventId })
-      eventUsers = eventUsersResponse.data.event_users
-      console.log('betweenRoundsTimeout -> eventUsers', eventUsers)
+      // make the last seen a bit longer to accomodate buffer/lag between clients/server?
+      const now = Date.now() // Unix timestamp
+      const millisecondsAgo = 60000 // 60 seconds
+      const timeDiff = now - millisecondsAgo // Unix timestamp
+      const seenBefore = new Date(timeDiff)
+
+      const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
+        later_than: seenBefore,
+        event_id: eventId,
+      })
+
+      onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
+      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
-
       clearTimeout(roundsTimeout)
     }
-
-    // see which users are online
-    // try this same idea with a better online_users table in Hasura
-    const onlineEventUsers =
-      eventUsers &&
-      eventUsers
-        .filter((user) => {
-          const lastSeen = new Date(user.user.last_seen).getTime()
-          const now = Date.now()
-          const seenInLast60secs = now - lastSeen < 30000
-          return seenInLast60secs
-        })
-        .map((user) => user.user.id)
-    console.log('onlineEventUsers', onlineEventUsers)
 
     // get data for rounds
     let roundsData
@@ -111,14 +82,25 @@ const runEvent = async (req, res) => {
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
-    console.log('roundsMap', roundsMap)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
-
-    console.log('newPairings', newPairings)
+    console.log('betweenRoundsTimeout -> newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
+
+    const numNullPairings = newPairings.reduce((all, item, index) => {
+      if (item.indexOf(null) > -1) {
+        all += 1
+      }
+      return all
+    }, 0)
+    console.log('numNullPairings = ', numNullPairings)
+
+    if (numNullPairings > 2 || newPairings.length === 0) {
+      endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+      return
+    }
 
     // insert data for given round
     // maybe a .map would be cleaner here?
@@ -132,9 +114,8 @@ const runEvent = async (req, res) => {
     })
 
     // insert new pairings result into db
-    let insertedRounds
     try {
-      insertedRounds = await orm.request(bulkInsertRounds, {
+      await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
     } catch (e) {
@@ -142,7 +123,6 @@ const runEvent = async (req, res) => {
       console.log('getRounds error = ', e)
       clearTimeout(roundsTimeout)
     }
-    const currentRoundData = insertedRounds.data.insert_rounds.returning
 
     // increment current round in events table
     try {
@@ -157,14 +137,6 @@ const runEvent = async (req, res) => {
       console.log(e, 'Error incrementing round_number in db')
     }
 
-    // create new rooms
-    try {
-      console.log('trying to create new rooms')
-      await createNewRooms(currentRoundData)
-    } catch (e) {
-      console.log(e)
-    }
-
     try {
       await orm.request(updateEventStatus, {
         eventId,
@@ -176,7 +148,6 @@ const runEvent = async (req, res) => {
     }
 
     if (currentRound > 0) {
-      console.log(currentRound, 'in last If block')
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
     }
