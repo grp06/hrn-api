@@ -38,8 +38,9 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
         error: 'Incorrect user_name or password',
       })
     }
-  } catch {
-    console.log('Error logging in')
+  } catch (error) {
+    console.log('Error logging in', error)
+    Sentry.captureException(error)
     return res.status(500).json({
       error: 'There was an error logging in'
     })

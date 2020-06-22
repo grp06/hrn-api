@@ -30,8 +30,9 @@ const runEvent = async (req, res) => {
   // ensures that rooms are closed before next round
   try {
     await omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
-  } catch (e) {
-    console.log(e)
+  } catch (error) {
+    Sentry.captureException(error)
+    console.log(error)
   }
 
   // end event if numRounds reached
@@ -64,6 +65,7 @@ const runEvent = async (req, res) => {
       onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
       console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
+      Sentry.captureException(error)
       console.log('error = ', error)
       clearTimeout(roundsTimeout)
     }
@@ -75,6 +77,7 @@ const runEvent = async (req, res) => {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
     } catch (error) {
+      Sentry.captureException(error)
       console.log('getRounds error = ', error)
       clearTimeout(roundsTimeout)
     }
@@ -118,9 +121,10 @@ const runEvent = async (req, res) => {
       await orm.request(bulkInsertRounds, {
         objects: variablesArr,
       })
-    } catch (e) {
+    } catch (error) {
       // if theres an error here, we should send a response to the client and display a warning
-      console.log('getRounds error = ', e)
+      Sentry.captureException(error)
+      console.log('error inserting rounds data = ', error)
       clearTimeout(roundsTimeout)
     }
 
@@ -133,8 +137,9 @@ const runEvent = async (req, res) => {
         newCurrentRound: currentRound,
       })
       console.log('betweenRoundsTimeout -> roundUpdated', roundUpdated)
-    } catch (e) {
-      console.log(e, 'Error incrementing round_number in db')
+    } catch (error) {
+      Sentry.captureException(error)
+      console.log(error, 'Error incrementing round_number in db')
     }
 
     try {
@@ -144,7 +149,8 @@ const runEvent = async (req, res) => {
       })
       console.log('set room to in-progress')
     } catch (error) {
-      console.log('error = ', error)
+      Sentry.captureException(error)
+      console.log('error updating room-in-progress = ', error)
     }
 
     if (currentRound > 0) {

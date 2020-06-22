@@ -46,7 +46,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       return res.status(400).json({ error: message })
     }
   } catch (error) {
-    Sentry.captureMessage(error)
+    Sentry.captureException(error)
     return res.status(500).json({
       error,
     })
@@ -57,7 +57,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   try {
     hashedPassword = await hashPassword(password)
   } catch (error) {
-    Sentry.captureMessage(error)
+    Sentry.captureException(error)
     return res.status(500).json({
       error,
     })
@@ -75,7 +75,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
     newUser = insertUserResult.data.insert_users.returning[0]
   } catch (error) {
-    Sentry.captureMessage(error)
+    Sentry.captureException(error)
     return res.status(500).json({
       error,
     })
@@ -91,7 +91,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       ...UsersService.serializeUser(newUser),
     })
   } catch (error) {
-    Sentry.captureMessage(error)
+    Sentry.captureException(error)
     return res.status(500).json({
       error,
     })

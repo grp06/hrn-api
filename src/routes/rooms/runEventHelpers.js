@@ -20,7 +20,8 @@ export const omniFinishRounds = async (req, currentRound, eventId) => {
       })
       console.log('set room to in-between-rounds')
     } catch (error) {
-      console.log('error = ', error)
+      Sentry.captureException(error)
+      console.log('error setting ended_at for event = ', error)
     }
   }
 }
@@ -32,6 +33,7 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
       ended_at: new Date().toISOString(),
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 
@@ -41,6 +43,7 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
       newStatus: 'complete',
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 
@@ -63,6 +66,7 @@ export const createNewRooms = async (currentRoundData, eventId) => {
     const res = await Promise.all(createdRoomsPromises)
     console.log('just created these guys -> res', res)
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 }

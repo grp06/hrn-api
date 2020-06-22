@@ -31,6 +31,7 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
       newStatus: 'pre-event',
     })
   } catch (error) {
+    Sentry.captureException(error)
     return res.status(500).json({ message: 'pre-event failed' })
   }
 
