@@ -84,7 +84,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // send token and user details
   __logger.info(`User with email ${email} created`)
-  console.log('last');
   try {
     return res.status(201).json({
       token: await createToken(newUser, process.env.SECRET),

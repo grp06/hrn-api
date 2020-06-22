@@ -1,7 +1,7 @@
 import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './runEvent'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import client from '../../extensions/twilioClient'
 
 const express = require('express')

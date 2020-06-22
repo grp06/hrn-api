@@ -29,7 +29,7 @@ describe('Users Endpoints', function () {
         })
       })
 
-      it.only(`responds 400 'Please use a different name' when profanity filter triggered`, () => {
+      it(`responds 400 'Please use a different name' when profanity filter triggered`, () => {
         const badName = {
           name: 'fuck',
           password: '1!Password',
@@ -135,10 +135,11 @@ describe('Users Endpoints', function () {
   })
 
   context(`Happy path`, () => {
-    it.skip(`responds 201, returning a jwt, storing bcrypted password`, () => {
+    const helperNum = Math.floor(Math.random() * 1000)
+    it(`responds 201, returning a jwt, storing bcrypted password`, () => {
       const newUser = {
         name: 'sadsadsadsad',
-        email: 'tasdsdaestasdasdsadasdsad@test.com',
+        email: `test${helperNum}@test.com`,
         password: '11AAaa!!',
         role: 'user',
       }

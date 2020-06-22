@@ -2,13 +2,17 @@ const jwt = require('jsonwebtoken')
 const app = require('../src/app')
 const helpers = require('./test-helpers')
 
-describe.only('Auth Endpoints', () => {
+describe('Auth Endpoints', () => {
   describe(`POST /api/auth/login`, () => {
-    const requiredFields = ['user_name', 'password']
+    const requiredFields = ['email', 'password']
 
+    const testUser = {
+      email: "joe@joe.com",
+      password: "joe"
+    }
     requiredFields.forEach((field) => {
       const loginAttemptBody = {
-        user_name: testUser.user_name,
+        email: testUser.email,
         password: testUser.password,
       }
 
