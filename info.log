@@ -22,3 +22,6 @@
 {"message":"Event with id 39 started.","level":"info"}
 {"message":"Event with id 39 started.","level":"info"}
 {"message":"Event with id 39 started.","level":"info"}
+{"message":"User with email asdfasdf@a.com created","level":"info"}
+{"message":"User with email asdfasdfasd@asdf.com created","level":"info"}
+{"message":"User with email gagagag@aol.com created","level":"info"}
