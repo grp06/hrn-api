@@ -14,3 +14,11 @@
 {"message":"User with email test479@test.com created","level":"info"}
 {"message":"User with email test132@test.com created","level":"info"}
 {"message":"User with email test201@test.com created","level":"info"}
+{"message":"User with email one@aol.com created","level":"info"}
+{"message":"User with email two@aol.com created","level":"info"}
+{"message":"User with email three@aol.com created","level":"info"}
+{"message":"User with email four@aol.com created","level":"info"}
+{"message":"Event with id 39 started.","level":"info"}
+{"message":"Event with id 39 started.","level":"info"}
+{"message":"Event with id 39 started.","level":"info"}
+{"message":"Event with id 39 started.","level":"info"}

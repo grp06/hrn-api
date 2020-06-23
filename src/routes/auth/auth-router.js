@@ -3,6 +3,7 @@ import orm from '../../services/orm'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import { createToken } from '../../extensions/jwtHelper'
 import { comparePasswords } from '../../services/auth-service'
+import * as Sentry from '@sentry/node'
 
 const authRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -42,12 +43,11 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     console.log('Error logging in', error)
     Sentry.captureException(error)
     return res.status(500).json({
-      error: 'There was an error logging in'
+      error: 'There was an error logging in',
     })
-
   }
 
-  console.log(dbUser);
+  console.log(dbUser)
   return res.send({
     token: await createToken(dbUser, process.env.SECRET),
     role: dbUser.role,
