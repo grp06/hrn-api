@@ -1,9 +1,11 @@
 {
   "extends": ["airbnb", "prettier"],
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "mocha"],
   "rules": {
     "prettier/prettier": ["error"],
-    "no-unused-vars": "warn",
+    "no-unused-vars": ["warn", {
+      "varsIgnorePattern": "should|expect"
+    }],
     "no-console": "off",
     "func-names": "off",
     "no-process-exit": "off",
@@ -14,7 +16,16 @@
     "react-hooks/exhaustive-deps": "off",
     "camelcase": "off",
     "import/prefer-default-export": "off",
-    "react/prop-types": "off"
+    "react/prop-types": "off",
+    "globals": {
+      "__logger": "readonly"
+    },
+    "no-underscore-dangle": [
+      "error",
+      {
+        "allow": ["__logger"]
+      }
+    ]
     // "import/order": [
     //   "error",
     //   {

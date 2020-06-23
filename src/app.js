@@ -1,4 +1,6 @@
+import * as Sentry from '@sentry/node'
 import { startServer } from './server-graphql'
+import logger from './logger'
 
 require('dotenv').config()
 const cors = require('cors')
@@ -13,7 +15,14 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 
 const app = express()
+
+Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sentry.io/5279031' })
+
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
+
+global.__logger = logger
+// The request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler())
 
 app.use(
   bodyParser.urlencoded({
@@ -30,6 +39,16 @@ app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/password_reset', emailRouter)
+app.get('/', (req, res) => {
+  res.send('Looks like the HiRightNow API is working!')
+})
+
+app.get('/debug-sentry', () => {
+  throw new Error('My first Sentry error!')
+})
+
+// The error handler must be before any other error middleware
+app.use(Sentry.Handlers.errorHandler())
 
 app.use(function errorHandler(error, req, res, next) {
   let response
@@ -41,20 +60,5 @@ app.use(function errorHandler(error, req, res, next) {
   }
   res.status(500).json(response)
 })
-
-// app.use((req, res, next) => {
-//   const error = new Error('Not Found!')
-//   error.status = 404
-//   next(error)
-// })
-
-// app.use((error, req, res, next) => {
-//   res.status(error.status || 500)
-//   res.json({
-//     error: {
-//       message: error.message,
-//     },
-//   })
-// })
 
 module.exports = app

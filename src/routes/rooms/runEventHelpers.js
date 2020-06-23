@@ -1,8 +1,8 @@
 import setRoomsCompleted from './set-rooms-completed'
 import createRooms from './create-rooms'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
-import setEventEndedAt from '../../gql/mutations/users/setEventEndedAt'
+import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
+import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (req, currentRound, eventId) => {
@@ -20,7 +20,8 @@ export const omniFinishRounds = async (req, currentRound, eventId) => {
       })
       console.log('set room to in-between-rounds')
     } catch (error) {
-      console.log('error = ', error)
+      Sentry.captureException(error)
+      console.log('error setting ended_at for event = ', error)
     }
   }
 }
@@ -32,6 +33,7 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
       ended_at: new Date().toISOString(),
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 
@@ -41,6 +43,7 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
       newStatus: 'complete',
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 
@@ -63,6 +66,7 @@ export const createNewRooms = async (currentRoundData, eventId) => {
     const res = await Promise.all(createdRoomsPromises)
     console.log('just created these guys -> res', res)
   } catch (error) {
+    Sentry.captureException(error)
     console.log('error = ', error)
   }
 }

@@ -1,0 +1,9 @@
+extends: '../.eslintrc'
+
+globals: 
+    supertest: readonly
+
+env: 
+    jest: true
+    mocha: true
+    supertest: true

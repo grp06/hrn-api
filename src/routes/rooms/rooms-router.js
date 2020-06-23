@@ -1,7 +1,7 @@
 import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './runEvent'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/users/updateEventStatus'
+import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import client from '../../extensions/twilioClient'
 
 const express = require('express')
@@ -11,6 +11,8 @@ const jsonBodyParser = express.json()
 
 // endpoint needs an auth check
 roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
+
+  __logger.info(`Event with id ${req.params.id} started.`)
   runEvent(req, res)
 
   return res.status(200).json({ message: 'runEvent started' })
@@ -29,6 +31,7 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
       newStatus: 'pre-event',
     })
   } catch (error) {
+    Sentry.captureException(error)
     return res.status(500).json({ message: 'pre-event failed' })
   }
 

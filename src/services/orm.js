@@ -11,7 +11,7 @@ const request = async (gqlQuery, variables = {}, token) => {
   if (token) {
     headers.Authorization = `Bearer ${token}`
   } else {
-    headers[constants.adminSecret] = process.env.HASURA_GRAPHQL_ACCESS_KEY
+    headers[constants.adminSecret] = process.env.HASURA_GRAPHQL_ADMIN_SECRET
   }
 
   try {

@@ -7,7 +7,7 @@ const query = gql`
         id
         name
         email
-        password
+        created_at
         role
       }
     }

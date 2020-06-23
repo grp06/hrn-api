@@ -5,18 +5,21 @@
   "main": "src/index.js",
   "scripts": {
     "start": "nodemon --exec \"babel-node --root-mode upward --ignore=\"hasura\" --ignore=\"**node_modules**\"\" src/app.js",
+    "test": "mocha --require @babel/register --require test/setup.js --exit",
     "lint": "estlint"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^7.1.1",
+    "@sentry/node": "5.17.0",
     "apollo-server": "^2.12.0",
     "apollo-server-express": "^2.12.0",
     "axios": "^0.19.2",
     "babel-loader": "^8.1.0",
     "babel-node": "^0.0.1-security",
     "babel-plugin-module-resolver": "^4.0.0",
+    "bad-words": "^3.0.3",
     "bcrypt": "^4.0.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
@@ -24,6 +27,7 @@
     "dotenv": "^8.2.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",
+    "express-winston": "^4.0.3",
     "graphql": "^15.0.0",
     "graphql-iso-date": "^3.6.1",
     "graphql-resolvers": "^0.4.2",
@@ -35,23 +39,31 @@
     "nodemon": "^2.0.4",
     "passport": "^0.4.1",
     "twilio": "^3.43.1",
+    "validator": "^13.1.1",
     "webpack": "^4.43.0",
-    "webpack-node-externals": "^1.7.2"
+    "webpack-node-externals": "^1.7.2",
+    "winston": "^3.2.1",
+    "xss": "^1.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@babel/node": "^7.8.7",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/preset-env": "^7.9.6",
+    "@babel/register": "^7.10.1",
+    "chai": "^4.2.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.1.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-mocha": "^7.0.1",
     "eslint-plugin-prettier": "^3.1.3",
     "eslint-plugin-react": "^7.19.0",
     "eslint-plugin-react-hooks": "^2.5.0",
-    "prettier": "^2.0.5"
+    "mocha": "^8.0.1",
+    "prettier": "^2.0.5",
+    "supertest": "^4.0.2"
   },
   "engines": {
     "node": "12.18.0"
