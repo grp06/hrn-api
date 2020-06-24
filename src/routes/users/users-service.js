@@ -4,7 +4,7 @@ import validator from 'validator'
 
 const profanityFilter = new Filter()
 
-const REGEX_UPPER_LOWER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[\+\=\/!@#\$%\^&*\?_-])[\S]+/
+const REGEX_UPPER_LOWER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[\+\=\/!@#\$%\^&*\?_-{}])[\S]+/
 
 const UsersService = {
   validateEmail(email) {
