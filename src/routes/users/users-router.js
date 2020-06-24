@@ -26,7 +26,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // add logging for these errors?
 
   const nameError = UsersService.validateName(name)
-  if (nameError) return res.status(400).json({ error: nameError})
+  if (nameError) return res.status(400).json({ error: nameError })
 
   const emailError = UsersService.validateEmail(email)
   if (emailError) return res.status(400).json({ error: emailError })
@@ -47,6 +47,8 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     }
   } catch (error) {
     Sentry.captureException(error)
+    console.log('error: ', error)
+
     return res.status(500).json({
       error,
     })
@@ -80,7 +82,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
       error,
     })
   }
-
 
   // send token and user details
   __logger.info(`User with email ${email} created`)
