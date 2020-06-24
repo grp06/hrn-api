@@ -49,6 +49,8 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     }
   } catch (error) {
     Sentry.captureException(error)
+    console.log('error: ', error)
+
     return res.status(500).json({
       error,
     })
