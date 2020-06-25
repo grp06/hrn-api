@@ -21,7 +21,6 @@ export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId,
 
 export const sendPasswordResetEmail = async (req, res) => {
   const { email } = req.params
-  console.log('email = ', email)
 
   let user
 
@@ -51,10 +50,6 @@ export const sendPasswordResetEmail = async (req, res) => {
 
     return res.send('email template sent')
   } catch (error) {
-    /// maybe we shouldn't actually return this error to the frontend
-    // security ?
-    // send this regardless: "If we found an account associated with that username, we've sent password reset instructions
-    // to the primary email address on the account."`
     return res.status(400).json({ error: error.response.body.errors[0].message })
   }
   return res.send('template sent')
