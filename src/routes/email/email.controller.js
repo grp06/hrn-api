@@ -20,6 +20,8 @@ export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId,
 
 export const sendPasswordResetEmail = async (req, res) => {
   const { email } = req.params
+  console.log('email = ', email)
+
   let user
 
   //find user
@@ -27,7 +29,7 @@ export const sendPasswordResetEmail = async (req, res) => {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
 
     user = checkEmailRequest.data.users[0]
-    console.log('user sendPasswordResetEmail', user)
+
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -40,20 +42,25 @@ export const sendPasswordResetEmail = async (req, res) => {
   const url = getPasswordResetURL(user, token)
   const emailTemplate = resetPasswordTemplate(user, url)
 
-  console.log(emailTemplate)
-
   //send email
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    await sgMail.send(emailTemplate)
+
+    const sendRes = await sgMail.send(emailTemplate)
+
     return res.send('email template sent')
-  } catch {
-    console.log('Something went wrong sending the password reset email')
+  } catch (error) {
+    /// maybe we shouldn't actually return this error to the frontend
+    // security ?
+    // send this regardless: "If we found an account associated with that username, we've sent password reset instructions
+    // to the primary email address on the account."
+    return res.status(400).json({ error: error.response.body.errors[0].message })
   }
   return res.send('template sent')
 }
 
 export const receiveNewPassword = async (req, res) => {
+  console.log('receiveNewPassword -> receiveNewPassword', receiveNewPassword)
   const { userId, token } = req.params
 
   const { password } = req.body
@@ -67,7 +74,7 @@ export const receiveNewPassword = async (req, res) => {
       return res.status(400).json({ error: 'No user with that email' })
     }
   } catch (err) {
-    return res.status(404).json({error: 'Error finding user'})
+    return res.status(404).json({ error: 'Error finding user' })
   }
 
   let payload

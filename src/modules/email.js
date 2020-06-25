@@ -11,7 +11,6 @@ const endpoint =
   process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
-  console.log('user in getPasswordResetURL', user)
   // this should point to front end code, which will have a POST request to the /password_reset/receive_new_password endpoint
   // return `http://hrn.com/password/reset/${user.id}/${token}`
   return `${endpoint}/api/receive_new_password/${user.id}/${token}`
