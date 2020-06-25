@@ -7,6 +7,7 @@ import findUserById from '../../gql/queries/users/findUserById'
 import { hashPassword, verifyJwt } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 const sgMail = require('@sendgrid/mail')
+import UsersService from '../users/users-service'
 
 // `secret` is passwordHash concatenated with user's createdAt,
 // so if someones gets a user token they still need a timestamp to intercept.
@@ -53,7 +54,7 @@ export const sendPasswordResetEmail = async (req, res) => {
     /// maybe we shouldn't actually return this error to the frontend
     // security ?
     // send this regardless: "If we found an account associated with that username, we've sent password reset instructions
-    // to the primary email address on the account."
+    // to the primary email address on the account."`
     return res.status(400).json({ error: error.response.body.errors[0].message })
   }
   return res.send('template sent')
@@ -64,6 +65,9 @@ export const receiveNewPassword = async (req, res) => {
   const { userId, token } = req.params
 
   const { password } = req.body
+
+  const passwordError = UsersService.validatePassword(password)
+  if (passwordError) return res.status(400).json({ error: passwordError })
 
   //find user by ID
   let user

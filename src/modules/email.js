@@ -7,13 +7,25 @@ export const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD,
   },
 })
-const endpoint =
-  process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
-  // this should point to front end code, which will have a POST request to the /password_reset/receive_new_password endpoint
-  // return `http://hrn.com/password/reset/${user.id}/${token}`
-  return `${endpoint}/api/receive_new_password/${user.id}/${token}`
+  let frontendUrl
+
+  switch (process.env.DEPLOYED_ENV) {
+    case 'local':
+      frontendUrl = 'http://localhost:3000'
+      break
+    case 'staging':
+      frontendUrl = 'https://staging.launch.hirightnow.co'
+      break
+    case 'production':
+      frontendUrl = 'https://launch.hirightnow.co'
+      break
+    default:
+      frontendUrl = 'http://localhost:3000'
+  }
+
+  return `${frontendUrl}/set-new-password/${user.id}/${token}`
 }
 
 export const resetPasswordTemplate = (user, url) => {
