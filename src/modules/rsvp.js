@@ -26,17 +26,3 @@ event.summary('My Super Mega Awesome Event')
 
 // get the iCal string
 export const iCalString = cal.toString() // --> "BEGIN:VCALENDAR…"
-
-export const cool = ical({
-  domain: 'sebbo.net',
-  prodId: '//superman-industries.com//ical-generator//EN',
-  events: [
-    {
-      start: new Date(),
-      end: new Date(),
-      timestamp: new Date(),
-      summary: 'My Event',
-      organizer: 'Sebastian Pekarek <mail@example.com>',
-    },
-  ],
-}).toString()

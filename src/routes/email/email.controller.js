@@ -25,9 +25,7 @@ export const sendPasswordResetEmail = async (req, res) => {
   //find user
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-
     user = checkEmailRequest.data.users[0]
-    console.log('user sendPasswordResetEmail', user)
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -39,8 +37,6 @@ export const sendPasswordResetEmail = async (req, res) => {
   const token = usePasswordHashToMakeToken(user)
   const url = getPasswordResetURL(user, token)
   const emailTemplate = resetPasswordTemplate(user, url)
-
-  console.log(emailTemplate)
 
   //send email
   try {

@@ -1,6 +1,6 @@
 import { iCalString } from './rsvp'
-const path = require('path');
-const ejs = require('ejs');
+const path = require('path')
+const ejs = require('ejs')
 
 const endpoint =
   process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
@@ -29,19 +29,18 @@ export const resetPasswordTemplate = (user, url) => {
   return { from, to, subject, html }
 }
 
-export const rsvpTemplate =  async () => {
-
+export const rsvpTemplate = async () => {
   let htmlTemplate
   try {
-    const ejsResponse = await ejs.renderFile(path.join(__dirname, "/views/rsvp-email.ejs"), {
-      user_firstname: "Kevin",
-      confirm_link: "www.google.com"
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
+      user_firstname: 'Kevin',
+      confirm_link: 'www.google.com',
     })
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    console.log('error creating rsvp ejs file', error);
-    return "ejs error"
+    console.log('error creating rsvp ejs file', error)
+    return 'ejs error'
   }
 
   const from = process.env.EMAIL_LOGIN
@@ -50,8 +49,7 @@ export const rsvpTemplate =  async () => {
   const content = [
     {
       type: 'text/html',
-      value: htmlTemplate
-
+      value: htmlTemplate,
     },
     {
       type: 'text/calendar',
