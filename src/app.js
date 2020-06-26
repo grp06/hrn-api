@@ -7,6 +7,7 @@ const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
+const ejs = require("ejs");
 const { NODE_ENV, PORT } = require('./config.js')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
@@ -50,6 +51,7 @@ app.get('/debug-sentry', () => {
 
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
+app.set("view engine", "ejs");
 
 app.use(function errorHandler(error, req, res, next) {
   let response

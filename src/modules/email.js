@@ -1,15 +1,7 @@
-import nodemailer from 'nodemailer'
 import { iCalString } from './rsvp'
+const path = require('path');
+const ejs = require('ejs');
 
-console.log(process.env.EMAIL_LOGIN)
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
-
-  auth: {
-    user: process.env.EMAIL_LOGIN,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-})
 const endpoint =
   process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
 // API endpoint
@@ -33,24 +25,32 @@ export const resetPasswordTemplate = (user, url) => {
   <p>Do something outside today! </p>
   <p>–Your friends at HiRightNow</p>
   `
-  const icalEvent = {
-    filename: 'invitation.ics',
-    method: 'request',
-    content: iCalString,
-  }
 
-  return { from, to, subject, html, icalEvent }
+  return { from, to, subject, html }
 }
 
-export const rsvpTemplate = () => {
-  const recipient = process.env.EMAIL_RECIPIENT
+export const rsvpTemplate =  async () => {
+
+  let htmlTemplate
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, "/views/rsvp-email.ejs"), {
+      user_firstname: "Kevin",
+      confirm_link: "www.google.com"
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    console.log('error creating rsvp ejs file', error);
+    return "ejs error"
+  }
+
   const from = process.env.EMAIL_LOGIN
-  const to = recipient
+  const to = process.env.EMAIL_RECIPIENT
   const subject = 'RSVP to HRN!!!'
   const content = [
     {
-      type: 'text/plain',
-      value: 'Thanks for signing up to EVENT, look forward to seeing you!'
+      type: 'text/html',
+      value: htmlTemplate
 
     },
     {

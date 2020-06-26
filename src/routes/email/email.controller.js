@@ -1,9 +1,5 @@
 import jwt from 'jsonwebtoken'
-import {
-  getPasswordResetURL,
-  resetPasswordTemplate,
-  rsvpTemplate
-} from '../../modules/email'
+import { getPasswordResetURL, resetPasswordTemplate, rsvpTemplate } from '../../modules/email'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import updatePasswordByUserId from '../../gql/mutations/users/updatePasswordByUserId'
 import orm from '../../services/orm'
@@ -113,10 +109,15 @@ export const receiveNewPassword = async (req, res) => {
 }
 
 export const icalSend = async (req, res) => {
+  let message
   try {
-    const message = rsvpTemplate()
+    message = await rsvpTemplate()
+  } catch (error) {
+    console.log('error making rsvp template', error)
+  }
+
+  try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    console.log(message);
     await sgMail.send(message)
     return res.send('rsvp message sent')
   } catch (error) {
