@@ -1,5 +1,9 @@
 import jwt from 'jsonwebtoken'
-import { getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
+import {
+  getPasswordResetURL,
+  resetPasswordTemplate,
+  rsvpTemplate
+} from '../../modules/email'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import updatePasswordByUserId from '../../gql/mutations/users/updatePasswordByUserId'
 import orm from '../../services/orm'
@@ -67,7 +71,7 @@ export const receiveNewPassword = async (req, res) => {
       return res.status(400).json({ error: 'No user with that email' })
     }
   } catch (err) {
-    return res.status(404).json({error: 'Error finding user'})
+    return res.status(404).json({ error: 'Error finding user' })
   }
 
   let payload
@@ -105,5 +109,17 @@ export const receiveNewPassword = async (req, res) => {
     })
   } else {
     return res.status(404).json({ error: 'Something went wrong with the link you used.' })
+  }
+}
+
+export const icalSend = async (req, res) => {
+  try {
+    const message = rsvpTemplate()
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    console.log(message);
+    await sgMail.send(message)
+    return res.send('rsvp message sent')
+  } catch (error) {
+    console.log('Something went wrong sending the iCal email', error)
   }
 }

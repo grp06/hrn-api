@@ -1,7 +1,10 @@
 import nodemailer from 'nodemailer'
+import { iCalString } from './rsvp'
 
+console.log(process.env.EMAIL_LOGIN)
 export const transporter = nodemailer.createTransport({
   service: 'gmail',
+
   auth: {
     user: process.env.EMAIL_LOGIN,
     pass: process.env.EMAIL_PASSWORD,
@@ -30,6 +33,31 @@ export const resetPasswordTemplate = (user, url) => {
   <p>Do something outside today! </p>
   <p>–Your friends at HiRightNow</p>
   `
+  const icalEvent = {
+    filename: 'invitation.ics',
+    method: 'request',
+    content: iCalString,
+  }
 
-  return { from, to, subject, html }
+  return { from, to, subject, html, icalEvent }
+}
+
+export const rsvpTemplate = () => {
+  const recipient = process.env.EMAIL_RECIPIENT
+  const from = process.env.EMAIL_LOGIN
+  const to = recipient
+  const subject = 'RSVP to HRN!!!'
+  const content = [
+    {
+      type: 'text/plain',
+      value: 'Thanks for signing up to EVENT, look forward to seeing you!'
+
+    },
+    {
+      type: 'text/calendar',
+      value: iCalString,
+    },
+  ]
+
+  return { from, to, subject, content }
 }
