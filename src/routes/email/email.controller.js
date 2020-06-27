@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
+import { getPasswordResetURL, resetPasswordTemplate, rsvpTemplate } from '../../modules/email'
 import findUserByEmail from '../../gql/queries/users/findUserByEmail'
 import updatePasswordByUserId from '../../gql/mutations/users/updatePasswordByUserId'
 import orm from '../../services/orm'
@@ -27,9 +27,7 @@ export const sendPasswordResetEmail = async (req, res) => {
   //find user
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-
     user = checkEmailRequest.data.users[0]
-
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -111,5 +109,24 @@ export const receiveNewPassword = async (req, res) => {
     })
   } else {
     return res.status(404).json({ error: 'Something went wrong with the link you used.' })
+  }
+}
+
+export const sendCalendarInvite = async (req, res) => {
+
+  
+  let message
+  try {
+    message = await rsvpTemplate(req.body)
+  } catch (error) {
+    console.log('error making rsvp template', error)
+  }
+
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    await sgMail.send(message)
+    return res.send('rsvp message sent')
+  } catch (error) {
+    console.log('Something went wrong sending the iCal email', error)
   }
 }
