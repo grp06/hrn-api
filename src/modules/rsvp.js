@@ -1,28 +1,25 @@
 const ical = require('ical-generator')
 const moment = require('moment')
 
+export const makeCalendarInvite = (description, host_name, event_id, event_start_time) => {
+  const cal = ical({
+    domain: 'https://launch.hirightnow.co',
+    prodId: { company: 'HiRightNow', product: 'ical-generator' },
+    timezone: 'UTC',
+  })
+  
+  // create a new event
+  const event = cal.createEvent({
+    start: moment(event_start_time),
+    end: moment(event_start_time).add(1, 'hour'),
+    timestamp: moment(),
+    summary: description,
+    organizer: `${host_name} <info@hirightnow.co>`,
+    location: `https://launch.hirightnow.co/events/${event_id}`
+  })
+  
+  // get the iCal string
+  const iCalString = cal.toString() // --> "BEGIN:VCALENDAR…"
+  return iCalString
+}
 // Create new Calendar and set optional fields
-export const cal = ical({
-  domain: 'sebbo.net',
-  prodId: { company: 'superman-industries.com', product: 'ical-generator' },
-  name: 'My Testfeed',
-  timezone: 'Europe/Berlin',
-})
-
-// You can also set values like this…
-cal.domain('sebbo.net')
-
-// create a new event
-const event = cal.createEvent({
-  start: moment(),
-  end: moment().add(1, 'hour'),
-  timestamp: moment(),
-  summary: 'My Event',
-  organizer: 'Sebastian Pekarek <mail@example.com>',
-})
-
-// like above, you can also set/change values like this…
-event.summary('My Super Mega Awesome Event')
-
-// get the iCal string
-export const iCalString = cal.toString() // --> "BEGIN:VCALENDAR…"
