@@ -49,7 +49,8 @@ export const rsvpTemplate = async (fields) => {
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
       user_firstname: name,
-      confirm_link: eventLink,
+      event_link: eventLink,
+      event_name: event_name
     })
 
     htmlTemplate = ejsResponse
@@ -60,7 +61,7 @@ export const rsvpTemplate = async (fields) => {
 
   let iCalString
   try {
-    iCalString = await makeCalendarInvite(description, host_name, event_id, event_start_time)
+    iCalString = await makeCalendarInvite(event_name, host_name, event_id, event_start_time)
   } catch (error) {
     console.log('error making calendar invite', error);
     return 'calendar invite error'
