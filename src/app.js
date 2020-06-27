@@ -40,7 +40,7 @@ app.use('/api/rooms', roomsRouter)
 app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/password_reset', emailRouter)
+app.use('/api/email', emailRouter)
 app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
