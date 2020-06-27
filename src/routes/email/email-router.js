@@ -2,7 +2,7 @@ const express = require('express')
 import * as emailController from './email.controller'
 
 const emailRouter = express.Router()
-emailRouter.route('/ical').get(emailController.icalSend)
+emailRouter.route('/send-calendar-invite').post(emailController.sendCalendarInvite)
 
 emailRouter.route('/user/:email').post(emailController.sendPasswordResetEmail)
 

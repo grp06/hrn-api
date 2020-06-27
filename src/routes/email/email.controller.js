@@ -112,10 +112,12 @@ export const receiveNewPassword = async (req, res) => {
   }
 }
 
-export const icalSend = async (req, res) => {
+export const sendCalendarInvite = async (req, res) => {
+
+  
   let message
   try {
-    message = await rsvpTemplate()
+    message = await rsvpTemplate(req.body)
   } catch (error) {
     console.log('error making rsvp template', error)
   }

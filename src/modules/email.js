@@ -2,13 +2,6 @@ import { iCalString } from './rsvp'
 const path = require('path')
 const ejs = require('ejs')
 
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_LOGIN,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-})
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
   let frontendUrl
@@ -47,12 +40,16 @@ export const resetPasswordTemplate = (user, url) => {
   return { from, to, subject, html }
 }
 
-export const rsvpTemplate = async () => {
+export const rsvpTemplate = async (fields) => {
   let htmlTemplate
+  console.log(fields);
+
+  const { name, email, event_name, event_id } = fields
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
-      user_firstname: 'Kevin',
-      confirm_link: 'www.google.com',
+      user_firstname: name,
+      confirm_link: eventLink,
     })
 
     htmlTemplate = ejsResponse
@@ -62,8 +59,8 @@ export const rsvpTemplate = async () => {
   }
 
   const from = process.env.EMAIL_LOGIN
-  const to = process.env.EMAIL_RECIPIENT
-  const subject = 'RSVP to HRN!!!'
+  const to = email
+  const subject = `HiRightNow - ${event_name} confirmation`
   const content = [
     {
       type: 'text/html',
