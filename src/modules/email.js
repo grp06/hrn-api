@@ -1,20 +1,26 @@
-import nodemailer from 'nodemailer'
+import { makeCalendarInvite } from './rsvp'
+const path = require('path')
+const ejs = require('ejs')
 
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_LOGIN,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-})
-const endpoint =
-  process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://api.hirightnow.co'
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
-  console.log('user in getPasswordResetURL', user)
-  // this should point to front end code, which will have a POST request to the /password_reset/receive_new_password endpoint
-  // return `http://hrn.com/password/reset/${user.id}/${token}`
-  return `${endpoint}/api/receive_new_password/${user.id}/${token}`
+  let frontendUrl
+
+  switch (process.env.DEPLOYED_ENV) {
+    case 'local':
+      frontendUrl = 'http://localhost:3000'
+      break
+    case 'staging':
+      frontendUrl = 'https://staging.launch.hirightnow.co'
+      break
+    case 'production':
+      frontendUrl = 'https://launch.hirightnow.co'
+      break
+    default:
+      frontendUrl = 'http://localhost:3000'
+  }
+
+  return `${frontendUrl}/set-new-password/${user.id}/${token}`
 }
 
 export const resetPasswordTemplate = (user, url) => {
@@ -32,4 +38,48 @@ export const resetPasswordTemplate = (user, url) => {
   `
 
   return { from, to, subject, html }
+}
+
+export const rsvpTemplate = async (fields) => {
+  let htmlTemplate
+  console.log(fields);
+
+  const { name, email, event_name, event_id, description, host_name, event_start_time } = fields
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
+      user_firstname: name,
+      event_link: eventLink,
+      event_name: event_name
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    console.log('error creating rsvp ejs file', error)
+    return 'ejs error'
+  }
+
+  let iCalString
+  try {
+    iCalString = await makeCalendarInvite(event_name, host_name, event_id, event_start_time)
+  } catch (error) {
+    console.log('error making calendar invite', error);
+    return 'calendar invite error'
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `HiRightNow - ${event_name} confirmation`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+    {
+      type: 'text/calendar',
+      value: iCalString,
+    },
+  ]
+
+  return { from, to, subject, content }
 }
