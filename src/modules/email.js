@@ -83,3 +83,23 @@ export const rsvpTemplate = async (fields) => {
 
   return { from, to, subject, content }
 }
+
+export const oneHourReminderTemplate = (email, event_name, event_id) => {
+
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `HiRightNow - ${event_name} starts in one hour!`
+  const content = [
+    // {
+    //   type: 'text/html',
+    //   value: htmlTemplate,
+    // },
+    {
+      type: 'text/plain',
+      value: eventLink
+    }
+  ]
+  return { from, to, subject, content }
+}
