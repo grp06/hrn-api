@@ -31,6 +31,10 @@ const checkForUpcomingEvents = cron.schedule('*/1 * * * *', async () => {
       console.log(`error getting event users for event ${event.id}`, error)
     }
 
-    // sendOneHourEmailReminder(event)
+    eventUsers.forEach(eventUser => {
+
+      sendOneHourEmailReminder(event, eventUser)
+    })
+    
   })
 })

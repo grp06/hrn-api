@@ -84,9 +84,21 @@ export const rsvpTemplate = async (fields) => {
   return { from, to, subject, content }
 }
 
-export const oneHourReminderTemplate = (email, event_name, event_id) => {
+export const oneHourReminderTemplate = (event, eventUser) => {
+
+  const { name, email } = eventUser.user
+  console.log('eventUser: ', eventUser);
+
+  const { event_name, id: event_id } = event
 
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+
+  const html = `
+  <p>Hey ${name || email},</p>
+  <p>Your event is about to start!</p>
+  <a href=${eventLink}>${eventLink}</a>
+  <p>–Your friends at HiRightNow</p>
+  `
 
   const from = process.env.EMAIL_LOGIN
   const to = email
@@ -97,8 +109,8 @@ export const oneHourReminderTemplate = (email, event_name, event_id) => {
     //   value: htmlTemplate,
     // },
     {
-      type: 'text/plain',
-      value: eventLink
+      type: 'text/html',
+      value: html
     }
   ]
   return { from, to, subject, content }

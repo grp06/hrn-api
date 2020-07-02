@@ -7,6 +7,7 @@ export const getEventUsers = gql`
         id
         last_seen
         name
+        email
       }
     }
   }
