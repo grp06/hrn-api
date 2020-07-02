@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-const query = gql`
+const insertUser = gql`
   mutation insertUser($objects: [users_insert_input!]!) {
     insert_users(objects: $objects) {
       returning {
@@ -14,4 +14,4 @@ const query = gql`
   }
 `
 
-export default query
+export default insertUser
