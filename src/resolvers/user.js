@@ -74,9 +74,7 @@ export default {
     insertUser: async (parent, { name, email, password, role }, { secret }) => {
       const userObject = { name, email, password, role }
       const variables = { objects: [userObject] }
-      console.log('userObject', userObject)
 
-      console.log('variables', variables)
       let newUser
       const signUpResult = await orm.request(signUp, variables)
 
