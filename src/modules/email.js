@@ -55,7 +55,7 @@ export const rsvpTemplate = async (fields) => {
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    return 'ejs error'
+    return error
   }
 
   let iCalString
@@ -83,16 +83,12 @@ export const rsvpTemplate = async (fields) => {
 }
 
 export const oneHourReminderTemplate = async (event, eventUser) => {
-
   const { name, email } = eventUser.user
-  console.log('eventUser: ', eventUser);
-
   const { event_name, id: event_id, start_at } = event
-
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
 
   // need to get local time
-  const eventTime = moment(start_at).format("h:mm")
+  const eventTime = moment(start_at).format('h:mm')
 
   let htmlTemplate
   try {
@@ -100,21 +96,13 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
       user_firstname: name,
       event_link: eventLink,
       event_name: event_name,
-      event_start_time: eventTime
+      event_start_time: eventTime,
     })
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    console.log(error);
     return error
   }
-
-  // const html = `
-  // <p>Hey ${name || email},</p>
-  // <p>Your event is about to start!</p>
-  // <a href=${eventLink}>${eventLink}</a>
-  // <p>–Your friends at HiRightNow</p>
-  // `
 
   const from = process.env.EMAIL_LOGIN
   const to = email
@@ -122,8 +110,8 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
   const content = [
     {
       type: 'text/html',
-      value: htmlTemplate
-    }
+      value: htmlTemplate,
+    },
   ]
 
   return { from, to, subject, content }
