@@ -17,3 +17,17 @@ export const getEventsByStartTime = gql`
 `
 
 export default getEventsByStartTime
+
+// query MyQuery($oneHourFromNow: timestamptz, $fiftyFive: timestamptz) {
+//   events(where: {start_at: {_lte: $oneHourFromNow, _gte: $fiftyFive}}) {
+//     event_name
+//     ended_at
+//     description
+//     current_round
+//     host_id
+//     id
+//     round_length
+//     start_at
+//     status
+//   }
+// }

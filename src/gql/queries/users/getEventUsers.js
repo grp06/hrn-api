@@ -14,3 +14,4 @@ export const getEventUsers = gql`
 `
 
 export default getEventUsers
+
