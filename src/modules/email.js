@@ -42,7 +42,6 @@ export const resetPasswordTemplate = (user, url) => {
 
 export const rsvpTemplate = async (fields) => {
   let htmlTemplate
-  console.log(fields);
 
   const { name, email, event_name, event_id, description, host_name, event_start_time } = fields
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
@@ -50,12 +49,11 @@ export const rsvpTemplate = async (fields) => {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
       user_firstname: name,
       event_link: eventLink,
-      event_name: event_name
+      event_name: event_name,
     })
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    console.log('error creating rsvp ejs file', error)
     return 'ejs error'
   }
 
@@ -63,7 +61,6 @@ export const rsvpTemplate = async (fields) => {
   try {
     iCalString = await makeCalendarInvite(event_name, host_name, event_id, event_start_time)
   } catch (error) {
-    console.log('error making calendar invite', error);
     return 'calendar invite error'
   }
 

@@ -13,6 +13,7 @@ const jsonBodyParser = express.json()
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
   const { name, email, password, role } = req.body
+  console.log('req.body at root /signup', req.body)
 
   for (const field of ['name', 'email', 'password', 'role'])
     if (!req.body[field]) {
@@ -39,6 +40,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
     existingUser = checkEmailRequest.data.users[0]
+    console.log('checkEmailRequest', checkEmailRequest)
 
     if (existingUser) {
       const message = 'Email already in use'
@@ -67,8 +69,10 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   const userObject = { name, email, password: hashedPassword, role }
 
+  console.log('userObject urouter 52', userObject)
   const variables = { objects: [userObject] }
   let newUser
+  console.log('variables urouter 55', variables)
 
   // insert user into db
   try {
