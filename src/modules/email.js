@@ -1,6 +1,7 @@
 import { makeCalendarInvite } from './rsvp'
 const path = require('path')
 const ejs = require('ejs')
+const moment = require('moment')
 
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
@@ -90,7 +91,8 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
 
-  const niceDate = start_at.toLocaleString()
+  // need to get local time
+  const eventTime = moment(start_at).format("h:mm")
 
   let htmlTemplate
   try {
@@ -98,12 +100,13 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
       user_firstname: name,
       event_link: eventLink,
       event_name: event_name,
-      event_start_time: start_at
+      event_start_time: eventTime
     })
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    return 'ejs error'
+    console.log(error);
+    return error
   }
 
   // const html = `
@@ -122,5 +125,6 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
       value: htmlTemplate
     }
   ]
+
   return { from, to, subject, content }
 }

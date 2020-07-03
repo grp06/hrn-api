@@ -22,6 +22,7 @@ Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sent
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 global.__logger = logger
+global.__Sentry = Sentry
 // The request handler must be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler())
 
