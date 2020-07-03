@@ -7,7 +7,7 @@ import { getEventUsers } from '../gql/queries/users/getEventUsers'
 
 // Every 5 minutes
 // Checked for events that need to send out an email reminder
-const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
+const checkForUpcomingEvents = cron.schedule('*/1 * * * *', async () => {
   let eventsInNextHour
   try {
     const oneHourAgo = moment().subtract(1, 'hour')

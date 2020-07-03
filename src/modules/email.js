@@ -26,7 +26,7 @@ export const getPasswordResetURL = (user, token) => {
 export const resetPasswordTemplate = (user, url) => {
   const from = process.env.EMAIL_LOGIN
   const to = user.email
-  const subject = '🌻 HiRightNow Password Reset 🌻'
+  const subject = '🌻 Hi Right Now Password Reset 🌻'
   const html = `
   <p>Hey ${user.name || user.email},</p>
   <p>We heard that you lost your HiRightNow password. Sorry about that!</p>
@@ -66,7 +66,7 @@ export const rsvpTemplate = async (fields) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `HiRightNow - ${event_name} confirmation`
+  const subject = `Hi Right Now - ${event_name} confirmation`
   const content = [
     {
       type: 'text/html',
@@ -81,33 +81,45 @@ export const rsvpTemplate = async (fields) => {
   return { from, to, subject, content }
 }
 
-export const oneHourReminderTemplate = (event, eventUser) => {
+export const oneHourReminderTemplate = async (event, eventUser) => {
 
   const { name, email } = eventUser.user
   console.log('eventUser: ', eventUser);
 
-  const { event_name, id: event_id } = event
+  const { event_name, id: event_id, start_at } = event
 
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
 
-  const html = `
-  <p>Hey ${name || email},</p>
-  <p>Your event is about to start!</p>
-  <a href=${eventLink}>${eventLink}</a>
-  <p>–Your friends at HiRightNow</p>
-  `
+  const niceDate = start_at.toLocaleString()
+
+  let htmlTemplate
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
+      user_firstname: name,
+      event_link: eventLink,
+      event_name: event_name,
+      event_start_time: start_at
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    return 'ejs error'
+  }
+
+  // const html = `
+  // <p>Hey ${name || email},</p>
+  // <p>Your event is about to start!</p>
+  // <a href=${eventLink}>${eventLink}</a>
+  // <p>–Your friends at HiRightNow</p>
+  // `
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `HiRightNow - ${event_name} starts in one hour!`
+  const subject = `Hi Right Now - ${event_name} starts in one hour!`
   const content = [
-    // {
-    //   type: 'text/html',
-    //   value: htmlTemplate,
-    // },
     {
       type: 'text/html',
-      value: html
+      value: htmlTemplate
     }
   ]
   return { from, to, subject, content }
