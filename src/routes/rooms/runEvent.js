@@ -16,7 +16,7 @@ const runEvent = async (req, res) => {
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
-  const roundLength = req.body.roundLength * oneMinuteInMs || 300000 // default 5 minute rounds
+  const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
 
   const roundInterval = req.body.round_interval || 15000 // default 15 second interval
 
@@ -158,7 +158,7 @@ const runEvent = async (req, res) => {
 
     if (currentRound > 0) {
       clearTimeout(roundsTimeout)
-      roundsTimeout = setTimeout(() => runEvent(req, res), roundLength)
+      roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
     }
   }, delayBetweenRounds)
 }
