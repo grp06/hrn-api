@@ -1,6 +1,7 @@
 import { makeCalendarInvite } from './rsvp'
 const path = require('path')
 const ejs = require('ejs')
+const moment = require('moment')
 
 // API endpoint
 export const getPasswordResetURL = (user, token) => {
@@ -26,7 +27,7 @@ export const getPasswordResetURL = (user, token) => {
 export const resetPasswordTemplate = (user, url) => {
   const from = process.env.EMAIL_LOGIN
   const to = user.email
-  const subject = '🌻 HiRightNow Password Reset 🌻'
+  const subject = '🌻 Hi Right Now Password Reset 🌻'
   const html = `
   <p>Hey ${user.name || user.email},</p>
   <p>We heard that you lost your HiRightNow password. Sorry about that!</p>
@@ -54,7 +55,7 @@ export const rsvpTemplate = async (fields) => {
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    return 'ejs error'
+    return error
   }
 
   let iCalString
@@ -66,7 +67,7 @@ export const rsvpTemplate = async (fields) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `HiRightNow - ${event_name} confirmation`
+  const subject = `Hi Right Now - ${event_name} confirmation`
   const content = [
     {
       type: 'text/html',
@@ -75,6 +76,41 @@ export const rsvpTemplate = async (fields) => {
     {
       type: 'text/calendar',
       value: iCalString,
+    },
+  ]
+
+  return { from, to, subject, content }
+}
+
+export const oneHourReminderTemplate = async (event, eventUser) => {
+  const { name, email } = eventUser.user
+  const { event_name, id: event_id, start_at } = event
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+
+  // need to get local time
+  const eventTime = moment(start_at).format('h:mm')
+
+  let htmlTemplate
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
+      user_firstname: name,
+      event_link: eventLink,
+      event_name: event_name,
+      event_start_time: eventTime,
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    return error
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `Hi Right Now - ${event_name} starts in one hour!`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
     },
   ]
 

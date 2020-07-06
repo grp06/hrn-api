@@ -7,14 +7,13 @@ const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
-const ejs = require("ejs");
 const { NODE_ENV, PORT } = require('./config.js')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
-
+import './services/cron-service'
 
 const app = express()
 
@@ -23,6 +22,7 @@ Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sent
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 global.__logger = logger
+global.__Sentry = Sentry
 // The request handler must be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler())
 
@@ -51,7 +51,7 @@ app.get('/debug-sentry', () => {
 
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
-app.set("view engine", "ejs");
+app.set('view engine', 'ejs')
 
 app.use(function errorHandler(error, req, res, next) {
   let response
