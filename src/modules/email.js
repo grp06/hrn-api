@@ -116,3 +116,7 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 
   return { from, to, subject, content }
 }
+
+export const postEventTemplate = async() => {
+  return
+}

@@ -2,6 +2,7 @@ const cron = require('node-cron')
 const moment = require('moment')
 import orm from './orm'
 import { getEventsByStartTime } from '../gql/queries/events/getEventsByStartTime'
+import { getEventsByEndTime } from '../gql/queries/events/getEventsByEndTime'
 import { sendOneHourEmailReminder } from './email-service'
 import { getEventUsers } from '../gql/queries/users/getEventUsers'
 
@@ -46,3 +47,28 @@ const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
     // await Promise.all
   })
 })
+
+// check for finished events every 5 minutes
+cron.schedule('*/1 * * * *', async () => {
+
+  let eventsRecentlyFinished
+  try {
+    const thirtyMinutesAgo = moment().subtract(30, 'minutes')
+    console.log('thirtyMinutesAgo: ', thirtyMinutesAgo);
+    const twentyFiveMinutesAgo = moment().subtract(25, 'minutes')
+    console.log('twentyFiveMinutesAgo: ', twentyFiveMinutesAgo);
+
+    const getEventsResponse = await orm.request(getEventsByEndTime, {
+
+      less_than: twentyFiveMinutesAgo,
+      greater_than: thirtyMinutesAgo,
+    })
+    eventsRecentlyFinished = getEventsResponse.data.events
+  } catch (error) {
+    __Sentry.captureException(error)
+    console.log('error checking for upcoming events', error)
+  }
+
+  console.log(eventsRecentlyFinished);
+})
+
