@@ -3,7 +3,7 @@ const moment = require('moment')
 import orm from './orm'
 import { getEventsByStartTime } from '../gql/queries/events/getEventsByStartTime'
 import { getEventsByEndTime } from '../gql/queries/events/getEventsByEndTime'
-import { sendOneHourEmailReminder } from './email-service'
+import { sendOneHourEmailReminder, sendEmail } from './email-service'
 import { getEventUsers } from '../gql/queries/users/getEventUsers'
 
 // Every 5 minutes
@@ -49,7 +49,7 @@ const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
 })
 
 // check for finished events every 5 minutes
-cron.schedule('*/1 * * * *', async () => {
+cron.schedule('*/5 * * * *', async () => {
 
   let eventsRecentlyFinished
   try {
@@ -69,6 +69,30 @@ cron.schedule('*/1 * * * *', async () => {
     console.log('error checking for upcoming events', error)
   }
 
-  console.log(eventsRecentlyFinished);
+  eventsRecentlyFinished.forEach(async (event) => {
+    let eventUsers
+
+    // query the event users and send emails from response
+    try {
+      const getEventUsersResponse = await orm.request(getEventUsers, { event_id: event.id })
+
+      eventUsers = getEventUsersResponse.data.event_users
+    } catch (error) {
+      __Sentry.captureException(error)
+      console.log(`error getting event users for event ${event.id}`, error)
+    }
+
+    console.log('event users, about to send emails', eventUsers);
+    // create an array and make a Promise.all with the array with .map (see set-rooms-completed)
+    // const promiseArray =
+    eventUsers.forEach((eventUser) => {
+      // more async code needed?
+      const fields = { event, eventUser}
+      sendEmail(fields)
+    })
+
+    // await Promise.all
+  })
+
 })
 

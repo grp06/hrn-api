@@ -93,7 +93,7 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
   let htmlTemplate
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
-      user_firstname: name,
+      user_first_name: name,
       event_link: eventLink,
       event_name: event_name,
       event_start_time: eventTime,
@@ -117,6 +117,35 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
   return { from, to, subject, content }
 }
 
-export const postEventTemplate = async() => {
-  return
+export const postEventTemplate = async(fields) => {
+  const {event, eventUser} = fields
+  const { name, email } = eventUser.user
+  const { event_name, id: event_id } = event
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+
+  let htmlTemplate
+
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/post-event-email.ejs'), {
+      user_first_name: name,
+      event_link: eventLink,
+      event_name: event_name,
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    return error
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `Hi Right Now - Event Summary for ${event_name} `
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+  ]
+
+  return { from, to, subject, content }
 }
