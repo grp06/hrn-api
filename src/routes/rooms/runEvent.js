@@ -8,6 +8,7 @@ import { omniFinishRounds, endEvent } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import setRoomsCompleted from './set-rooms-completed'
+import * as Sentry from '@sentry/node'
 
 let betweenRoundsTimeout
 let roundsTimeout
