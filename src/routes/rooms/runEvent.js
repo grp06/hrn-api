@@ -59,7 +59,6 @@ const runEvent = async (req, res) => {
       const xMsAgo = 20000 // 20 seconds
       const timestampXMsAgo = now - xMsAgo // Unix timestamp
       const seenAfter = new Date(timestampXMsAgo)
-      console.log('betweenRoundsTimeout -> seenAfter', seenAfter)
 
       const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
         later_than: seenAfter,
