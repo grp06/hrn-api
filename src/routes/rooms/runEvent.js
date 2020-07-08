@@ -19,7 +19,7 @@ const runEvent = async (req, res) => {
   const numRounds = req.body.num_rounds || 10 // default ten rounds
   const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
 
-  const roundInterval = req.body.round_interval || 15000 // default 15 second interval
+  const roundInterval = req.body.round_interval || 20000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
@@ -40,7 +40,9 @@ const runEvent = async (req, res) => {
 
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
-    endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+    setTimeout(() => {
+      endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+    }, roundInterval / 2)
     return
   }
 
@@ -66,7 +68,6 @@ const runEvent = async (req, res) => {
       })
 
       onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
-      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
       Sentry.captureException(error)
       console.log('error = ', error)
@@ -90,7 +91,6 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
-    console.log('betweenRoundsTimeout -> newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -101,12 +101,13 @@ const runEvent = async (req, res) => {
       }
       return all
     }, 0)
-    console.log('numNullPairings = ', numNullPairings)
 
-    if (numNullPairings > 2 || newPairings.length === 0) {
-      endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
-      return
-    }
+    // if (numNullPairings > pairingsArray.length / 2 || newPairings.length === 0) {
+    //   setTimeout(() => {
+    //     endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+    //   }, roundInterval / 2)
+    //   return
+    // }
 
     // insert data for given round
     // maybe a .map would be cleaner here?

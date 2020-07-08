@@ -21,7 +21,6 @@ roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
 
 roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
-  console.log('eventId', eventId)
 
   let onlineEventUsers
   // get the online users for a given event by checking updated_at
@@ -48,10 +47,6 @@ roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res)
 
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
-  // const createdRoom = await client.video.rooms.create({
-  //   uniqueName: `${eventId}-pre-event`,
-  //   type: 'group',
-  // })
 
   try {
     await orm.request(updateEventStatus, {
