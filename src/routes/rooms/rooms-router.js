@@ -37,7 +37,6 @@ roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res)
     })
 
     onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
-    console.log('onlineEventUsers', onlineEventUsers)
   } catch (error) {
     console.log('error = ', error)
     Sentry.captureException(error)

@@ -6,7 +6,9 @@ import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
 import * as Sentry from '@sentry/node'
 
 // ensures that rooms are closed before next round
-export const omniFinishRounds = async (req, currentRound, eventId) => {
+export const omniFinishRounds = async (currentRound, eventId) => {
+  console.log('omniFinishRounds -> eventId', eventId)
+  console.log('omniFinishRounds -> currentRound', currentRound)
   console.log('in OMNI')
   const completedRoomsPromises = await setRoomsCompleted(eventId)
 
@@ -44,6 +46,7 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
       eventId,
       newStatus: 'complete',
     })
+    console.log('event set to complete')
   } catch (error) {
     Sentry.captureException(error)
     console.log('error = ', error)

@@ -32,7 +32,7 @@ const runEvent = async (req, res) => {
   }
   // ensures that rooms are closed before next round
   try {
-    await omniFinishRounds(req, currentRound, eventId, betweenRoundsTimeout, roundsTimeout)
+    await omniFinishRounds(currentRound, eventId)
   } catch (error) {
     Sentry.captureException(error)
     console.log(error)
