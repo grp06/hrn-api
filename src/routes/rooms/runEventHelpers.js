@@ -3,6 +3,7 @@ import createRooms from './create-rooms'
 import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
+import * as Sentry from '@sentry/node'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (req, currentRound, eventId) => {
