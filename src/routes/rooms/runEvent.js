@@ -41,10 +41,10 @@ const runEvent = async (req, res) => {
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
     console.log('runEvent -> numRounds', numRounds)
-    console.log('runEvent -> currentRound', currentRound)
     console.log('reached last round, going to end event')
 
     setTimeout(() => {
+      currentRound = 0
       endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
     }, roundInterval / 2)
     return
@@ -84,7 +84,6 @@ const runEvent = async (req, res) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
-      console.log('roundsData', roundsData)
     } catch (error) {
       Sentry.captureException(error)
       console.log('getRounds error = ', error)
@@ -96,7 +95,6 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
-    console.log('newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -108,12 +106,14 @@ const runEvent = async (req, res) => {
       return all
     }, 0)
 
-    // if (numNullPairings > pairingsArray.length / 2 || newPairings.length === 0) {
-    //   setTimeout(() => {
-    //     endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
-    //   }, roundInterval / 2)
-    //   return
-    // }
+    if (newPairings.length === 0) {
+      console.log('betweenRoundsTimeout -> newPairings.length', newPairings.length)
+      setTimeout(() => {
+        currentRound = 0
+        endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+      }, roundInterval / 2)
+      return
+    }
 
     // insert data for given round
     // maybe a .map would be cleaner here?
@@ -146,7 +146,6 @@ const runEvent = async (req, res) => {
         id: eventId,
         newCurrentRound: currentRound,
       })
-      console.log('roundUpdated', roundUpdated)
     } catch (error) {
       Sentry.captureException(error)
       console.log(error, 'Error incrementing round_number in db')
