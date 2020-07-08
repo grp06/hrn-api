@@ -19,6 +19,7 @@ export const omniFinishRounds = async (req, currentRound, eventId) => {
         eventId,
         newStatus: 'in-between-rounds',
       })
+
       console.log('set room to in-between-rounds')
     } catch (error) {
       Sentry.captureException(error)

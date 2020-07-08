@@ -40,6 +40,10 @@ const runEvent = async (req, res) => {
 
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
+    console.log('runEvent -> numRounds', numRounds)
+    console.log('runEvent -> currentRound', currentRound)
+    console.log('reached last round, going to end event')
+
     setTimeout(() => {
       endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
     }, roundInterval / 2)
@@ -80,6 +84,7 @@ const runEvent = async (req, res) => {
     try {
       const getRoundsResponse = await orm.request(getRoundsByEventId, { event_id: eventId })
       roundsData = getRoundsResponse.data
+      console.log('roundsData', roundsData)
     } catch (error) {
       Sentry.captureException(error)
       console.log('getRounds error = ', error)
@@ -91,6 +96,7 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
+    console.log('newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -140,7 +146,7 @@ const runEvent = async (req, res) => {
         id: eventId,
         newCurrentRound: currentRound,
       })
-      console.log('betweenRoundsTimeout -> roundUpdated', roundUpdated)
+      console.log('roundUpdated', roundUpdated)
     } catch (error) {
       Sentry.captureException(error)
       console.log(error, 'Error incrementing round_number in db')
