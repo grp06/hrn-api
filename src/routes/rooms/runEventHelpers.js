@@ -1,5 +1,5 @@
 import setRoomsCompleted from './set-rooms-completed'
-import createRooms from './create-rooms'
+import createRooms from './createPreEventRooms'
 import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'

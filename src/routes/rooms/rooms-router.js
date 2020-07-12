@@ -4,7 +4,8 @@ import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import client from '../../extensions/twilioClient'
 import * as Sentry from '@sentry/node'
-import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
+import getOnlineUsers from './getOnlineUsers'
+import createPreEventRooms from './createPreEventRooms'
 
 const express = require('express')
 
@@ -21,31 +22,24 @@ roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
 
 roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
-
-  let onlineEventUsers
-  // get the online users for a given event by checking updated_at
-  try {
-    // make the last seen a bit longer to accomodate buffer/lag between clients/server?
-    const now = Date.now() // Unix timestamp
-    const xMsAgo = 20000 // 20 seconds
-    const timestampXMsAgo = now - xMsAgo // Unix timestamp
-    const seenAfter = new Date(timestampXMsAgo)
-
-    let eventUsersResponse
-
-    eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
-      later_than: seenAfter,
-      event_id: eventId,
-    })
-    onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
-  } catch (error) {
-    Sentry.captureException(error)
-  }
+  const onlineEventUsers = await getOnlineUsers(eventId)
   return res.status(200).json({ data: onlineEventUsers })
 })
 
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
+  const onlineEventUsers = await getOnlineUsers(eventId)
+  const maxNumUsersPerRoom = 40
+  const numOnlineUsers = onlineEventUsers.length
+  console.log('numOnlineUsers', numOnlineUsers)
+  const numRooms = Math.ceil(numOnlineUsers / maxNumUsersPerRoom)
+
+  try {
+    const res = await createPreEventRooms(numRooms, eventId)
+  } catch (error) {
+    Sentry.captureException(error)
+    console.log('error = ', error)
+  }
 
   try {
     await orm.request(updateEventStatus, {
