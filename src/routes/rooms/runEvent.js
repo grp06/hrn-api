@@ -9,6 +9,7 @@ import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrent
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import setRoomsCompleted from './set-rooms-completed'
 import * as Sentry from '@sentry/node'
+import getOnlineUsers from './getOnlineUsers'
 
 let betweenRoundsTimeout
 let roundsTimeout
@@ -70,25 +71,13 @@ const runEvent = async (req, res) => {
   // first round it executes immediately. Otherwise its every ${roundInterval} secs
   betweenRoundsTimeout = setTimeout(async () => {
     let onlineEventUsers
-
-    // get the online users for a given event by checking updated_at
     try {
-      // make the last seen a bit longer to accomodate buffer/lag between clients/server?
-      const now = Date.now() // Unix timestamp
-      const xMsAgo = 20000 // 20 seconds
-      const timestampXMsAgo = now - xMsAgo // Unix timestamp
-      const seenAfter = new Date(timestampXMsAgo)
-
-      const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
-        later_than: seenAfter,
-        event_id: eventId,
-      })
-
-      onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
-      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers.length)
+      onlineEventUsers = await getOnlineUsers(eventId)
+      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
-      Sentry.captureException(error)
+      console.log('error = ', error)
       clearTimeout(roundsTimeout)
+      Sentry.captureException(error)
     }
 
     // get data for rounds

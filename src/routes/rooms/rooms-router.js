@@ -28,7 +28,15 @@ roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res)
 
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
-  const onlineEventUsers = await getOnlineUsers(eventId)
+
+  let onlineEventUsers
+  try {
+    onlineEventUsers = await getOnlineUsers(eventId)
+  } catch (error) {
+    Sentry.captureException(error)
+    console.log('error = ', error)
+  }
+
   const maxNumUsersPerRoom = 40
   const numOnlineUsers = onlineEventUsers.length
   console.log('numOnlineUsers', numOnlineUsers)
