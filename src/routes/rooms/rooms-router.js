@@ -31,14 +31,14 @@ roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res)
     const timestampXMsAgo = now - xMsAgo // Unix timestamp
     const seenAfter = new Date(timestampXMsAgo)
 
-    const eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
+    let eventUsersResponse
+
+    eventUsersResponse = await orm.request(getOnlineUsersByEventId, {
       later_than: seenAfter,
       event_id: eventId,
     })
-
     onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
   } catch (error) {
-    console.log('error = ', error)
     Sentry.captureException(error)
   }
   return res.status(200).json({ data: onlineEventUsers })

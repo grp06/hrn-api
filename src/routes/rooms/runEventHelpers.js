@@ -7,12 +7,18 @@ import * as Sentry from '@sentry/node'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
-  console.log('omniFinishRounds -> eventId', eventId)
-  console.log('omniFinishRounds -> currentRound', currentRound)
-  console.log('in OMNI')
-  const completedRoomsPromises = await setRoomsCompleted(eventId)
+  let completedRoomsPromises
+  try {
+    completedRoomsPromises = await setRoomsCompleted(eventId)
+  } catch (error) {
+    Sentry.captureException(error)
+  }
 
-  await Promise.all(completedRoomsPromises)
+  try {
+    await Promise.all(completedRoomsPromises)
+  } catch (error) {
+    Sentry.captureException(error)
+  }
 
   // set ended_at in db for the round we just completed
   if (currentRound > 0) {

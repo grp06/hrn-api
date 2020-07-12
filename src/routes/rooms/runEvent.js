@@ -13,7 +13,9 @@ import * as Sentry from '@sentry/node'
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
+console.log('global currentRound', currentRound)
 const runEvent = async (req, res) => {
+  console.log('currentROund = ', currentRound)
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
@@ -23,8 +25,20 @@ const runEvent = async (req, res) => {
 
   if (req.body.reset) {
     console.log('resetting event')
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
-    await Promise.all(completedRoomsPromises)
+    try {
+      await setRoomsCompleted(eventId)
+      console.log('runEvent -> completedRoomsPromises', completedRoomsPromises)
+    } catch (error) {
+      Sentry.captureException(error)
+    }
+
+    try {
+      await Promise.all(completedRoomsPromises)
+      console.log('runEvent -> completedRoomsResponse', completedRoomsResponse)
+    } catch (error) {
+      Sentry.captureException(error)
+    }
+    console.log('still clearing timeouts')
     currentRound = 0
     clearTimeout(betweenRoundsTimeout)
     clearTimeout(roundsTimeout)
@@ -40,7 +54,6 @@ const runEvent = async (req, res) => {
 
   // end event if numRounds reached
   if (parseInt(currentRound, 10) === parseInt(numRounds, 10)) {
-    console.log('runEvent -> numRounds', numRounds)
     console.log('reached last round, going to end event')
 
     setTimeout(() => {
@@ -72,9 +85,9 @@ const runEvent = async (req, res) => {
       })
 
       onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id)
+      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers.length)
     } catch (error) {
       Sentry.captureException(error)
-      console.log('error = ', error)
       clearTimeout(roundsTimeout)
     }
 
@@ -86,7 +99,6 @@ const runEvent = async (req, res) => {
       roundsData = getRoundsResponse.data
     } catch (error) {
       Sentry.captureException(error)
-      console.log('getRounds error = ', error)
       clearTimeout(roundsTimeout)
     }
 
@@ -95,6 +107,7 @@ const runEvent = async (req, res) => {
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
+    console.log('betweenRoundsTimeout -> newPairings', newPairings)
 
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
@@ -106,7 +119,7 @@ const runEvent = async (req, res) => {
       return all
     }, 0)
 
-    if (newPairings.length === 0) {
+    if (newPairings.length === 0 || numNullPairings > onlineEventUsers.length / 2) {
       console.log('betweenRoundsTimeout -> newPairings.length', newPairings.length)
       setTimeout(() => {
         currentRound = 0
@@ -148,7 +161,6 @@ const runEvent = async (req, res) => {
       })
     } catch (error) {
       Sentry.captureException(error)
-      console.log(error, 'Error incrementing round_number in db')
     }
 
     try {
@@ -159,7 +171,6 @@ const runEvent = async (req, res) => {
       console.log('set room to in-progress')
     } catch (error) {
       Sentry.captureException(error)
-      console.log('error updating room-in-progress = ', error)
     }
 
     if (currentRound > 0) {
