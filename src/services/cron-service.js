@@ -19,8 +19,8 @@ const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
     })
     eventsInNextHour = getEventsResponse.data.events
   } catch (error) {
-    __Sentry.captureException(error)
     console.log('error checking for upcoming events', error)
+    return __Sentry.captureException(error)
   }
 
   eventsInNextHour.forEach(async (event) => {

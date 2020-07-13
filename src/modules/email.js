@@ -48,13 +48,13 @@ export const rsvpTemplate = async (fields) => {
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
-      user_firstname: name,
       event_link: eventLink,
       event_name: event_name,
     })
 
     htmlTemplate = ejsResponse
   } catch (error) {
+    __Sentry.captureException(error)
     return error
   }
 
@@ -93,7 +93,6 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
   let htmlTemplate
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
-      user_firstname: name,
       event_link: eventLink,
       event_name: event_name,
       event_start_time: eventTime,
@@ -101,6 +100,8 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 
     htmlTemplate = ejsResponse
   } catch (error) {
+    __Sentry.captureException(error)
+    console.log('oneHourReminderTemplate -> error', error)
     return error
   }
 
