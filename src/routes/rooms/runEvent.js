@@ -26,7 +26,9 @@ const runEvent = async (req, res) => {
 
   if (req.body.reset) {
     console.log('resetting event')
+    let completedRoomsPromises
     try {
+      completedRoomsPromises = await setRoomsCompleted(eventId)
       await setRoomsCompleted(eventId)
       console.log('runEvent -> completedRoomsPromises', completedRoomsPromises)
     } catch (error) {
