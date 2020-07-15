@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node'
 import { startServer } from './server-graphql'
 import logger from './logger'
+import './services/cron-service'
 
 require('dotenv').config()
 const cors = require('cors')
@@ -13,7 +14,6 @@ const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
-import './services/cron-service'
 
 const app = express()
 

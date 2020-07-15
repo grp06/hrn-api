@@ -1,4 +1,4 @@
-import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
+import * as Sentry from '@sentry/node'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
@@ -8,7 +8,6 @@ import { omniFinishRounds, endEvent } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
 import setRoomsCompleted from './set-rooms-completed'
-import * as Sentry from '@sentry/node'
 import getOnlineUsers from './getOnlineUsers'
 
 let betweenRoundsTimeout
@@ -29,7 +28,6 @@ const runEvent = async (req, res) => {
     let completedRoomsPromises
     try {
       completedRoomsPromises = await setRoomsCompleted(eventId)
-      await setRoomsCompleted(eventId)
       console.log('runEvent -> completedRoomsPromises', completedRoomsPromises)
     } catch (error) {
       Sentry.captureException(error)
@@ -37,7 +35,6 @@ const runEvent = async (req, res) => {
 
     try {
       await Promise.all(completedRoomsPromises)
-      console.log('runEvent -> completedRoomsResponse', completedRoomsResponse)
     } catch (error) {
       Sentry.captureException(error)
     }
@@ -146,7 +143,7 @@ const runEvent = async (req, res) => {
     try {
       // newCurrentRound = currentRound + 1
       currentRound += 1
-      const roundUpdated = await orm.request(updateCurrentRoundByEventId, {
+      await orm.request(updateCurrentRoundByEventId, {
         id: eventId,
         newCurrentRound: currentRound,
       })

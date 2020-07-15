@@ -3,9 +3,12 @@
   "plugins": ["prettier", "mocha"],
   "rules": {
     "prettier/prettier": ["error"],
-    "no-unused-vars": ["warn", {
-      "varsIgnorePattern": "should|expect"
-    }],
+    "no-unused-vars": [
+      "warn",
+      {
+        "varsIgnorePattern": "should|expect"
+      }
+    ],
     "no-console": "off",
     "func-names": "off",
     "no-process-exit": "off",
@@ -17,9 +20,11 @@
     "camelcase": "off",
     "import/prefer-default-export": "off",
     "react/prop-types": "off",
-    "globals": {
-      "__logger": "readonly"
-    },
+    // "globals": {
+    //   "__logger": "readonly"
+    // },
+
+    "globals": "warn",
     "no-underscore-dangle": [
       "error",
       {

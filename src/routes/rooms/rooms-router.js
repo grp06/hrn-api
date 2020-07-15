@@ -1,9 +1,8 @@
+import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './runEvent'
 import orm from '../../services/orm'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
-import client from '../../extensions/twilioClient'
-import * as Sentry from '@sentry/node'
 import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
 
@@ -43,7 +42,7 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const numRooms = Math.ceil(numOnlineUsers / maxNumUsersPerRoom)
 
   try {
-    const res = await createPreEventRooms(numRooms, eventId)
+    await createPreEventRooms(numRooms, eventId)
   } catch (error) {
     Sentry.captureException(error)
     console.log('error = ', error)
