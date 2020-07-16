@@ -21,7 +21,7 @@ const runEvent = async (req, res) => {
   const numRounds = req.body.num_rounds || 10 // default ten rounds
   const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
 
-  const roundInterval = req.body.round_interval || 20000 // default 15 second interval
+  const roundInterval = req.body.round_interval || 60000 // default 15 second interval
 
   if (req.body.reset) {
     console.log('resetting event')
