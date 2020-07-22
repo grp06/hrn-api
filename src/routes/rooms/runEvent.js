@@ -4,44 +4,31 @@ import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
-import { omniFinishRounds, endEvent } from './runEventHelpers'
+import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
 import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
-import setRoomsCompleted from './set-rooms-completed'
+
 import getOnlineUsers from './getOnlineUsers'
 
 let betweenRoundsTimeout
 let roundsTimeout
 let currentRound = 0
-console.log('global currentRound', currentRound)
+
 const runEvent = async (req, res) => {
   console.log('currentROund = ', currentRound)
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
   const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
+  console.log('runEvent -> round_length', round_length)
 
   const roundInterval = req.body.round_interval || 35000 // default 35 second interval
 
   if (req.body.reset) {
-    console.log('resetting event')
-    let completedRoomsPromises
-    try {
-      completedRoomsPromises = await setRoomsCompleted(eventId)
-      console.log('runEvent -> completedRoomsPromises', completedRoomsPromises)
-    } catch (error) {
-      Sentry.captureException(error)
-    }
+    await resetEvent(eventId, betweenRoundsTimeout, roundsTimeout)
 
-    try {
-      await Promise.all(completedRoomsPromises)
-    } catch (error) {
-      Sentry.captureException(error)
-    }
-    console.log('still clearing timeouts')
     currentRound = 0
-    clearTimeout(betweenRoundsTimeout)
-    clearTimeout(roundsTimeout)
+    console.log('reset event complte,')
     return
   }
   // ensures that rooms are closed before next round
@@ -72,11 +59,10 @@ const runEvent = async (req, res) => {
     let onlineEventUsers
     try {
       onlineEventUsers = await getOnlineUsers(eventId)
-      console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
     } catch (error) {
       console.log('error = ', error)
-      clearTimeout(roundsTimeout)
       Sentry.captureException(error)
+      return clearTimeout(roundsTimeout)
     }
 
     // get data for rounds
@@ -87,12 +73,14 @@ const runEvent = async (req, res) => {
       roundsData = getRoundsResponse.data
     } catch (error) {
       Sentry.captureException(error)
-      clearTimeout(roundsTimeout)
+      return clearTimeout(roundsTimeout)
     }
 
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
+    console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
+    console.log('betweenRoundsTimeout -> roundsMap', roundsMap)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
     console.log('betweenRoundsTimeout -> newPairings', newPairings)
@@ -109,11 +97,10 @@ const runEvent = async (req, res) => {
 
     if (newPairings.length === 0 || numNullPairings > onlineEventUsers.length / 2) {
       console.log('betweenRoundsTimeout -> newPairings.length', newPairings.length)
-      setTimeout(() => {
+      return setTimeout(() => {
         currentRound = 0
         endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
       }, roundInterval / 2)
-      return
     }
 
     // insert data for given round
@@ -146,25 +133,30 @@ const runEvent = async (req, res) => {
       await orm.request(updateCurrentRoundByEventId, {
         id: eventId,
         newCurrentRound: currentRound,
+        newStatus: 'partner-preview',
       })
     } catch (error) {
       Sentry.captureException(error)
     }
+    console.log('set to partner preview, waiting 10 sec')
 
-    try {
-      await orm.request(updateEventStatus, {
-        eventId,
-        newStatus: 'room-in-progress',
-      })
-      console.log('set room to in-progress')
-    } catch (error) {
-      Sentry.captureException(error)
-    }
+    const partnerPreviewDelay = 10000
+    setTimeout(async () => {
+      try {
+        await orm.request(updateEventStatus, {
+          eventId,
+          newStatus: 'room-in-progress',
+        })
+        console.log('set room to in-progress')
+      } catch (error) {
+        Sentry.captureException(error)
+      }
 
-    if (currentRound > 0) {
-      clearTimeout(roundsTimeout)
-      roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
-    }
+      if (currentRound > 0) {
+        clearTimeout(roundsTimeout)
+        roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
+      }
+    }, partnerPreviewDelay)
   }, delayBetweenRounds)
 }
 
