@@ -15,20 +15,20 @@ let roundsTimeout
 let currentRound = 0
 
 const runEvent = async (req, res) => {
-  console.log('currentROund = ', currentRound)
+  console.log('currentRound = ', currentRound)
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
   const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
   console.log('runEvent -> round_length', round_length)
 
-  const roundInterval = req.body.round_interval || 35000 // default 35 second interval
+  const roundInterval = req.body.round_interval || 10000 // default 10 second interval
 
   if (req.body.reset) {
     await resetEvent(eventId, betweenRoundsTimeout, roundsTimeout)
 
     currentRound = 0
-    console.log('reset event complte,')
+    console.log('reset event complete,')
     return
   }
   // ensures that rooms are closed before next round
@@ -79,8 +79,6 @@ const runEvent = async (req, res) => {
     // create an array of pairings for a given round/event for use in algorithm
     const variablesArr = []
     const roundsMap = createRoundsMap(roundsData, onlineEventUsers)
-    console.log('betweenRoundsTimeout -> onlineEventUsers', onlineEventUsers)
-    console.log('betweenRoundsTimeout -> roundsMap', roundsMap)
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
     console.log('betweenRoundsTimeout -> newPairings', newPairings)
@@ -96,7 +94,6 @@ const runEvent = async (req, res) => {
     }, 0)
 
     if (newPairings.length === 0 || numNullPairings > onlineEventUsers.length / 2) {
-      console.log('betweenRoundsTimeout -> newPairings.length', newPairings.length)
       return setTimeout(() => {
         currentRound = 0
         endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
@@ -120,7 +117,6 @@ const runEvent = async (req, res) => {
         objects: variablesArr,
       })
     } catch (error) {
-      // if theres an error here, we should send a response to the client and display a warning
       Sentry.captureException(error)
       console.log('error inserting rounds data = ', error)
       clearTimeout(roundsTimeout)
@@ -128,7 +124,6 @@ const runEvent = async (req, res) => {
 
     // increment current round in events table
     try {
-      // newCurrentRound = currentRound + 1
       currentRound += 1
       await orm.request(updateCurrentRoundByEventId, {
         id: eventId,
@@ -138,7 +133,6 @@ const runEvent = async (req, res) => {
     } catch (error) {
       Sentry.captureException(error)
     }
-    console.log('set to partner preview, waiting 10 sec')
 
     const partnerPreviewDelay = 10000
     setTimeout(async () => {
