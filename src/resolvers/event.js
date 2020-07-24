@@ -1,15 +1,15 @@
 import orm from '../services/orm'
-import updateCurrentRoundByEventId from '../gql/mutations/event/updateCurrentRoundByEventId'
+import updateEventObject from '../gql/mutations/event/updateEventObject'
 
 export default {
   Mutation: {
-    updateCurrentRoundByEventId: async (parent, { id, newCurrentRound }) => {
+    updateEventObject: async (parent, { id, newCurrentRound }) => {
       const eventObject = { id, newCurrentRound }
       const variables = { objects: [eventObject] }
 
       let newEventDetails
       try {
-        const updateCurrentRoundResult = await orm.request(updateCurrentRoundByEventId, variables)
+        const updateCurrentRoundResult = await orm.request(updateEventObject, variables)
         newEventDetails = updateCurrentRoundResult.data.update_events.returning[0]
       } catch (e) {
         console.log(e, 'could not update current round by event id')

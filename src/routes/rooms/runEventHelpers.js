@@ -1,10 +1,11 @@
+import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import createRooms from './createPreEventRooms'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
+import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
-import * as Sentry from '@sentry/node'
-
+import resetEventStatus from '../../gql/mutations/event/resetEventStatus'
+import deleteRounds from '../../gql/mutations/event/deleteRounds'
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
   let completedRoomsPromises
@@ -23,8 +24,8 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   // set ended_at in db for the round we just completed
   if (currentRound > 0) {
     try {
-      const updatedEventStatus = await orm.request(updateEventStatus, {
-        eventId,
+      await orm.request(updateEventObject, {
+        id: eventId,
         newStatus: 'in-between-rounds',
       })
 
@@ -48,8 +49,8 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
   }
 
   try {
-    await orm.request(updateEventStatus, {
-      eventId,
+    await orm.request(updateEventObject, {
+      id: eventId,
       newStatus: 'complete',
     })
     console.log('event set to complete')
@@ -80,4 +81,44 @@ export const createNewRooms = async (currentRoundData, eventId) => {
     Sentry.captureException(error)
     console.log('error = ', error)
   }
+}
+
+export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => {
+  let completedRoomsPromises
+  try {
+    completedRoomsPromises = await setRoomsCompleted(eventId)
+  } catch (error) {
+    Sentry.captureException(error)
+  }
+
+  try {
+    await Promise.all(completedRoomsPromises)
+  } catch (error) {
+    console.log('runEvent -> error', error)
+    Sentry.captureException(error)
+  }
+
+  try {
+    await orm.request(resetEventStatus, {
+      eventId,
+    })
+    console.log('reset event to not-started')
+  } catch (error) {
+    console.log('runEvent -> error', error)
+    Sentry.captureException(error)
+  }
+
+  try {
+    await orm.request(deleteRounds, {
+      eventId,
+    })
+    console.log('deleted round')
+  } catch (error) {
+    console.log('runEvent -> error', error)
+    Sentry.captureException(error)
+  }
+
+  clearTimeout(betweenRoundsTimeout)
+  clearTimeout(roundsTimeout)
+  console.log('cleared timeouts')
 }
