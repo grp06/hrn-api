@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import createRooms from './createPreEventRooms'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
+import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
 import resetEventStatus from '../../gql/mutations/event/resetEventStatus'
 import deleteRounds from '../../gql/mutations/event/deleteRounds'
@@ -24,8 +24,8 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   // set ended_at in db for the round we just completed
   if (currentRound > 0) {
     try {
-      const updatedEventStatus = await orm.request(updateEventStatus, {
-        eventId,
+      await orm.request(updateEventObject, {
+        id: eventId,
         newStatus: 'in-between-rounds',
       })
 
@@ -49,8 +49,8 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
   }
 
   try {
-    await orm.request(updateEventStatus, {
-      eventId,
+    await orm.request(updateEventObject, {
+      id: eventId,
       newStatus: 'complete',
     })
     console.log('event set to complete')

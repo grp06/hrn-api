@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './runEvent'
 import orm from '../../services/orm'
-import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
+import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
 
@@ -49,10 +49,11 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   }
 
   try {
-    await orm.request(updateEventStatus, {
-      eventId,
+    await orm.request(updateEventObject, {
+      id: eventId,
       newStatus: 'pre-event',
     })
+    console.log('started pre event')
   } catch (error) {
     console.log('error', error)
     Sentry.captureException(error)

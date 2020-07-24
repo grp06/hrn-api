@@ -1,7 +1,7 @@
 import gql from 'graphql-tag'
 
-const updateCurrentRoundByEventId = gql`
-  mutation updateCurrentRoundByEventId($id: Int!, $newCurrentRound: Int!, $newStatus: String) {
+const updateEventObject = gql`
+  mutation updateEventObject($id: Int!, $newCurrentRound: Int, $newStatus: String) {
     update_events(
       where: { id: { _eq: $id } }
       _set: { current_round: $newCurrentRound, status: $newStatus }
@@ -16,4 +16,4 @@ const updateCurrentRoundByEventId = gql`
   }
 `
 
-export default updateCurrentRoundByEventId
+export default updateEventObject

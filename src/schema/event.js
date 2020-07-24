@@ -2,7 +2,7 @@ import gql from 'graphql-tag'
 
 export default gql`
   extend type Mutation {
-    updateCurrentRoundByEventId(id: Int!, newCurrentRound: Int!): Event
+    updateEventObject(id: Int!, newCurrentRound: Int!): Event
   }
 
   type Event {

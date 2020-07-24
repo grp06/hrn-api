@@ -5,9 +5,7 @@ import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
-import updateCurrentRoundByEventId from '../../gql/mutations/event/updateCurrentRoundByEventId'
-import updateEventStatus from '../../gql/mutations/event/updateEventStatus'
-
+import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 
 let betweenRoundsTimeout
@@ -125,32 +123,20 @@ const runEvent = async (req, res) => {
     // increment current round in events table
     try {
       currentRound += 1
-      await orm.request(updateCurrentRoundByEventId, {
+      await orm.request(updateEventObject, {
         id: eventId,
         newCurrentRound: currentRound,
-        newStatus: 'partner-preview',
+        newStatus: 'room-in-progress',
       })
+      console.log('set room to in-progress')
     } catch (error) {
       Sentry.captureException(error)
     }
 
-    const partnerPreviewDelay = 10000
-    setTimeout(async () => {
-      try {
-        await orm.request(updateEventStatus, {
-          eventId,
-          newStatus: 'room-in-progress',
-        })
-        console.log('set room to in-progress')
-      } catch (error) {
-        Sentry.captureException(error)
-      }
-
-      if (currentRound > 0) {
-        clearTimeout(roundsTimeout)
-        roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
-      }
-    }, partnerPreviewDelay)
+    if (currentRound > 0) {
+      clearTimeout(roundsTimeout)
+      roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
+    }
   }, delayBetweenRounds)
 }
 
