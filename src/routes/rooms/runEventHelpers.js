@@ -27,6 +27,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
       await orm.request(updateEventObject, {
         id: eventId,
         newStatus: 'in-between-rounds',
+        newCurrentRound: currentRound,
       })
 
       console.log('set room to in-between-rounds')
