@@ -1,6 +1,6 @@
-let tries = 0
+let numberOfRematchTries = 0
 
-console.log('initialize tries to 0')
+console.log('initialize numberOfRematchTries to 0')
 const grabExistingData = (userIds, prevAssignments) => {
   // const map = JSON.parse(allAssignments)
   const map = JSON.parse(JSON.stringify(prevAssignments))
@@ -167,20 +167,22 @@ function SamyakAlgoPro(userIds, prevAssignments) {
     if (idWithNullPairing && Object.keys(prevAssignments).length > 0) {
       const arrOfPartnerIds = prevAssignments[idWithNullPairing]
       if (arrOfPartnerIds.indexOf(null) > -1) {
-        if (tries > 30) {
-          tries = 0
+        if (numberOfRematchTries > 30) {
+          numberOfRematchTries = 0
           return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
         }
         console.log(
-          `${idWithNullPairing} has already been assigned null. This is try ${tries}. Try again`
+          `${idWithNullPairing} has already been assigned null. This is try ${numberOfRematchTries}. Try again`
         )
-        tries += 1
+        numberOfRematchTries += 1
         return SamyakAlgoPro(userIds, prevAssignments)
       }
     }
+
     console.log('DID IT!')
     console.log('final pairings', newArr)
     console.log('finalUserIdsMap', finalUserIdsMap)
+    numberOfRematchTries = 0
     return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
   }
 

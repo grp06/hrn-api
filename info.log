@@ -1065,3 +1065,7 @@
 {"message":"Event with id 7 started.","level":"info"}
 {"message":"Event with id 7 started.","level":"info"}
 {"message":"Event with id 7 started.","level":"info"}
+{"message":"User with email user4@user4.com created","level":"info"}
+{"message":"Event with id 16 started.","level":"info"}
+{"message":"Event with id 16 started.","level":"info"}
+{"message":"Event with id 16 started.","level":"info"}
