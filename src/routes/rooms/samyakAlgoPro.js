@@ -1,3 +1,6 @@
+let tries = 0
+
+console.log('initialize tries to 0')
 const grabExistingData = (userIds, prevAssignments) => {
   // const map = JSON.parse(allAssignments)
   const map = JSON.parse(JSON.stringify(prevAssignments))
@@ -145,8 +148,42 @@ function SamyakAlgoPro(userIds, prevAssignments) {
       newArr.push(item)
     }
   })
+  const checkIfNullPairingTwice = (newArr, prevAssignments) => {
+    console.log('checkIfNullPairingTwice -> prevAssignments', prevAssignments)
+    console.log('checkIfNullPairingTwice -> newArr', newArr)
 
-  return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+    const idWithNullPairing = newArr
+      .find((pairing) => {
+        if (pairing[0] === null) {
+          return pairing[1]
+        }
+        if (pairing[1] === null) {
+          return pairing[0]
+        }
+        return null
+      })
+      .filter((id) => id !== null)[0]
+
+    if (idWithNullPairing && Object.keys(prevAssignments).length > 0) {
+      const arrOfPartnerIds = prevAssignments[idWithNullPairing]
+      if (arrOfPartnerIds.indexOf(null) > -1) {
+        if (tries > 30) {
+          tries = 0
+          return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+        }
+        console.log(
+          `${idWithNullPairing} has already been assigned null. This is try ${tries}. Try again`
+        )
+        tries += 1
+        return SamyakAlgoPro(userIds, prevAssignments)
+      }
+    }
+    console.log('DID IT!')
+    console.log('final pairings', newArr)
+    console.log('finalUserIdsMap', finalUserIdsMap)
+    return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+  }
+
+  return checkIfNullPairingTwice(newArr, prevAssignments)
 }
 export default SamyakAlgoPro
-
