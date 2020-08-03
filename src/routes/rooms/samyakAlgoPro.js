@@ -149,9 +149,6 @@ function SamyakAlgoPro(userIds, prevAssignments) {
     }
   })
   const checkIfNullPairingTwice = (newArr, prevAssignments) => {
-    console.log('checkIfNullPairingTwice -> prevAssignments', prevAssignments)
-    console.log('checkIfNullPairingTwice -> newArr', newArr)
-
     const idWithNullPairing = newArr
       .find((pairing) => {
         if (pairing[0] === null) {
@@ -168,20 +165,16 @@ function SamyakAlgoPro(userIds, prevAssignments) {
       const arrOfPartnerIds = prevAssignments[idWithNullPairing]
       if (arrOfPartnerIds.indexOf(null) > -1) {
         if (numberOfRematchTries > 30) {
+          console.log('tried rematching 30x, simply cant create a unique pair')
           numberOfRematchTries = 0
           return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
         }
-        console.log(
-          `${idWithNullPairing} has already been assigned null. This is try ${numberOfRematchTries}. Try again`
-        )
+
         numberOfRematchTries += 1
         return SamyakAlgoPro(userIds, prevAssignments)
       }
     }
 
-    console.log('DID IT!')
-    console.log('final pairings', newArr)
-    console.log('finalUserIdsMap', finalUserIdsMap)
     numberOfRematchTries = 0
     return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
   }
