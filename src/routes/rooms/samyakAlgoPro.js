@@ -1,3 +1,6 @@
+let numberOfRematchTries = 0
+
+console.log('initialize numberOfRematchTries to 0')
 const grabExistingData = (userIds, prevAssignments) => {
   // const map = JSON.parse(allAssignments)
   const map = JSON.parse(JSON.stringify(prevAssignments))
@@ -145,8 +148,37 @@ function SamyakAlgoPro(userIds, prevAssignments) {
       newArr.push(item)
     }
   })
+  const checkIfNullPairingTwice = (newArr, prevAssignments) => {
+    const idWithNullPairing = newArr
+      .find((pairing) => {
+        if (pairing[0] === null) {
+          return pairing[1]
+        }
+        if (pairing[1] === null) {
+          return pairing[0]
+        }
+        return null
+      })
+      .filter((id) => id !== null)[0]
 
-  return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+    if (idWithNullPairing && Object.keys(prevAssignments).length > 0) {
+      const arrOfPartnerIds = prevAssignments[idWithNullPairing]
+      if (arrOfPartnerIds.indexOf(null) > -1) {
+        if (numberOfRematchTries > 30) {
+          console.log('tried rematching 30x, simply cant create a unique pair')
+          numberOfRematchTries = 0
+          return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+        }
+
+        numberOfRematchTries += 1
+        return SamyakAlgoPro(userIds, prevAssignments)
+      }
+    }
+
+    numberOfRematchTries = 0
+    return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
+  }
+
+  return checkIfNullPairingTwice(newArr, prevAssignments)
 }
 export default SamyakAlgoPro
-
