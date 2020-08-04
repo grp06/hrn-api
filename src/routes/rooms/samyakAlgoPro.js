@@ -178,7 +178,16 @@ function SamyakAlgoPro(userIds, prevAssignments) {
     numberOfRematchTries = 0
     return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
   }
+  // if we find that there is a null pairing, run check null pairings
+  // [[1,2],[3,4]]
+  const hasNullPairings = () => {
+    return newArr.filter((item) => item[0] === null || item[1] === null)
+  }
 
-  return checkIfNullPairingTwice(newArr, prevAssignments)
+  if (hasNullPairings().length > 0) {
+    return checkIfNullPairingTwice(newArr, prevAssignments)
+  }
+  // otherwise, just return the pairings
+  return { pairingsArray: newArr, userIdsMap: finalUserIdsMap }
 }
 export default SamyakAlgoPro
