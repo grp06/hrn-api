@@ -1,4 +1,5 @@
 import { makeCalendarInvite } from './rsvp'
+
 const path = require('path')
 const ejs = require('ejs')
 const moment = require('moment')
@@ -27,7 +28,7 @@ export const getPasswordResetURL = (user, token) => {
 export const resetPasswordTemplate = (user, url) => {
   const from = process.env.EMAIL_LOGIN
   const to = user.email
-  const subject = '🌻 Hi Right Now Password Reset 🌻'
+  const subject = '🔥 Hi Right Now Password Reset 🌻'
   const html = `
   <p>Hey ${user.name || user.email},</p>
   <p>We heard that you lost your HiRightNow password. Sorry about that!</p>
@@ -67,7 +68,7 @@ export const rsvpTemplate = async (fields) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `Hi Right Now - ${event_name} confirmation`
+  const subject = `🔥Hi Right Now - ${event_name} confirmation`
   const content = [
     {
       type: 'text/html',
@@ -107,7 +108,40 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `Hi Right Now - ${event_name} starts in one hour!`
+  const subject = `🔥Hi Right Now - ${event_name} starts in one hour!`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+  ]
+
+  return { from, to, subject, content }
+}
+
+export const postEventTemplate = async (fields) => {
+  const { event, user, userThumbData } = fields
+  const { name, email } = user.user
+  const firstName = name.split(' ')[0]
+  const { event_name } = event
+
+  let htmlTemplate
+
+  try {
+    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/post-event-email.ejs'), {
+      firstName,
+      event_name,
+      userThumbData: userThumbData[user.user.id],
+    })
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    return error
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `🔥Hi Right Now - Your connections from ${event_name} `
   const content = [
     {
       type: 'text/html',
