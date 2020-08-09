@@ -5,6 +5,7 @@ import signUp from '../../gql/mutations/users/signUp'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
+import { signUpConfirmation } from '../../services/email-service'
 
 const express = require('express')
 
@@ -75,9 +76,10 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // insert user into db
   try {
     const insertUserResult = await orm.request(signUp, variables)
-    console.log('insertUserResult', insertUserResult)
 
     newUser = insertUserResult.data.insert_users.returning[0]
+    console.log('newUser', newUser)
+    signUpConfirmation(newUser)
   } catch (error) {
     Sentry.captureException(error)
     return res.status(500).json({

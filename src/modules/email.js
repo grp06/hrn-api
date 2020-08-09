@@ -151,3 +151,36 @@ export const postEventTemplate = async (fields) => {
 
   return { from, to, subject, content }
 }
+
+export const signUpConfirmationTemplate = async (user) => {
+  const { name, email } = user
+  const firstName = name.split(' ')[0]
+
+  let htmlTemplate
+  try {
+    const ejsResponse = await ejs.renderFile(
+      path.join(__dirname, '/views/sign-up-confirmation.ejs'),
+      {
+        firstName,
+      }
+    )
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    console.log('signUpConfirmationTemplate -> error', error)
+    __Sentry.captureException(error)
+    return error
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `🔥Hi Right Now - Welcome!`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+  ]
+
+  // return { from, to, subject, content }
+}

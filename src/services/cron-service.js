@@ -51,7 +51,7 @@ const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
 })
 
 // check for finished events every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/5 * * * * *', async () => {
   let eventsRecentlyFinished
   try {
     const fiveMinutesAgo = moment().subtract(5, 'minutes')
