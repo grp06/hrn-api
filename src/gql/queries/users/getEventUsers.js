@@ -5,13 +5,19 @@ export const getEventUsers = gql`
     event_users(where: { event_id: { _eq: $event_id } }) {
       user {
         id
-        last_seen
         name
         email
+        linkedIn_url
+        city
+        short_bio
+        tags_users {
+          tag {
+            name
+          }
+        }
       }
     }
   }
 `
 
 export default getEventUsers
-

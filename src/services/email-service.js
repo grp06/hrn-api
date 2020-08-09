@@ -1,5 +1,24 @@
-import { oneHourReminderTemplate } from '../modules/email'
+import { oneHourReminderTemplate, postEventTemplate } from '../modules/email'
+
 const sgMail = require('@sendgrid/mail')
+
+export const sendEmail = async (fields) => {
+  let message
+  try {
+    message = await postEventTemplate(fields)
+  } catch (error) {
+    __Sentry.captureException(error)
+    console.log('error making email template', error)
+  }
+
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    await sgMail.send(message)
+  } catch (error) {
+    __Sentry.captureException(error)
+    console.log('Something went wrong sending email', error)
+  }
+}
 
 export const sendOneHourEmailReminder = async (event, eventUser) => {
   let message
