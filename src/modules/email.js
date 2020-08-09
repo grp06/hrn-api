@@ -155,6 +155,7 @@ export const postEventTemplate = async (fields) => {
 export const signUpConfirmationTemplate = async (user) => {
   const { name, email } = user
   const firstName = name.split(' ')[0]
+  console.log('signUpConfirmationTemplate -> firstName', firstName)
 
   let htmlTemplate
   try {
