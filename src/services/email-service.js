@@ -47,15 +47,15 @@ export const signUpConfirmation = async (user) => {
   try {
     message = await signUpConfirmationTemplate(user)
   } catch (error) {
+    console.log('error making signup email template', error)
     __Sentry.captureException(error)
-    console.log('error making one hour reminder template', error)
   }
 
-  // try {
-  //   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-  //   await sgMail.send(message)
-  // } catch (error) {
-  //   __Sentry.captureException(error)
-  //   console.log('Something went wrong sending the one hour reminder email', error)
-  // }
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    await sgMail.send(message)
+  } catch (error) {
+    console.log('Something went wrong sending the signup template email', error)
+    __Sentry.captureException(error)
+  }
 }
