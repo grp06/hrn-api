@@ -8,10 +8,7 @@ import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 
-let betweenRoundsTimeout
-let roundsTimeout
-
-const runEvent = async (req, res, currentRound = 0) => {
+const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, roundsTimeout) => {
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
@@ -134,7 +131,10 @@ const runEvent = async (req, res, currentRound = 0) => {
     console.log('currentRound = ', currentRound)
 
     clearTimeout(roundsTimeout)
-    roundsTimeout = setTimeout(() => runEvent(req, res, currentRound + 1), round_length)
+    roundsTimeout = setTimeout(
+      () => runEvent(req, res, currentRound + 1, betweenRoundsTimeout, roundsTimeout),
+      round_length
+    )
   }, delayBetweenRounds)
 }
 
