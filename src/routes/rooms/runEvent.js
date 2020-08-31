@@ -30,7 +30,7 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
 
   let eventStatus
   try {
-    const eventStatusResponse = await getEventStatusByEventId(eventId)
+    const eventStatusResponse = await orm.request(getEventStatusByEventId, { eventId })
     eventStatus = eventStatusResponse.data.events.status
     console.log('runEvent -> eventStatus', eventStatus)
   } catch (error) {
