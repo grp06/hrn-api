@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
-import { getEventStatusByEventId } from '../../gql/queries/events/getEventStatusByEventId'
+import { GetEventStatusByEventId } from '../../gql/queries/events/GetEventStatusByEventId'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
@@ -9,7 +9,7 @@ import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 
-console.log('getEventStatusByEventId', getEventStatusByEventId)
+console.log('GetEventStatusByEventId', GetEventStatusByEventId)
 
 const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, roundsTimeout) => {
   const oneMinuteInMs = 60000
@@ -31,7 +31,7 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
 
   let eventStatus
   try {
-    const eventStatusResponse = await getEventStatusByEventId(eventId)
+    const eventStatusResponse = await GetEventStatusByEventId(eventId)
     eventStatus = eventStatusResponse.data.events.status
     console.log('runEvent -> eventStatus', eventStatus)
   } catch (error) {
