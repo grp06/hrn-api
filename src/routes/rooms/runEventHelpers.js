@@ -30,7 +30,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
         newCurrentRound: currentRound,
       })
 
-      console.log('set room to in-between-rounds')
+      console.log('set room to in-between-rounds for eventId ', eventId)
     } catch (error) {
       Sentry.captureException(error)
       console.log('error setting ended_at for event = ', error)
@@ -104,6 +104,7 @@ export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) =
       eventId,
     })
     console.log('reset event to not-started')
+    console.log('eventId = ', eventId)
   } catch (error) {
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
@@ -114,6 +115,7 @@ export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) =
       eventId,
     })
     console.log('deleted round')
+    console.log('eventId = ', eventId)
   } catch (error) {
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
@@ -122,4 +124,5 @@ export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) =
   clearTimeout(betweenRoundsTimeout)
   clearTimeout(roundsTimeout)
   console.log('cleared timeouts')
+  console.log('eventId = ', eventId)
 }

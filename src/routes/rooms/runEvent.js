@@ -13,12 +13,11 @@ let roundsTimeout
 let currentRound = 0
 
 const runEvent = async (req, res) => {
-  console.log('currentRound = ', currentRound)
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
   const round_length = req.body.round_length * oneMinuteInMs || 300000 // default 5 minute rounds
-  console.log('runEvent -> round_length', round_length)
+  console.log(`currentRound: ${currentRound} ||| eventId ${eventId}`)
 
   const roundInterval = req.body.round_interval || 20000 // default 35 second interval
 
@@ -27,6 +26,8 @@ const runEvent = async (req, res) => {
 
     currentRound = 0
     console.log('reset event complete,')
+    console.log('eventId = ', eventId)
+
     return
   }
   // ensures that rooms are closed before next round
@@ -80,7 +81,7 @@ const runEvent = async (req, res) => {
 
     const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
     console.log('betweenRoundsTimeout -> newPairings', newPairings)
-
+    console.log('eventId = ', eventId)
     // do something to check for NULL matches or if game is over somehow
     // -------------------------------mutation to update eventComplete (ended_at in db)
 
@@ -129,6 +130,7 @@ const runEvent = async (req, res) => {
         newStatus: 'room-in-progress',
       })
       console.log('set room to in-progress')
+      console.log('eventId = ', eventId)
     } catch (error) {
       Sentry.captureException(error)
     }
