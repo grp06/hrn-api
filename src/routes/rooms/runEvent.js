@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
-import getEventStatusByEventId from '../../gql/queries/events/getEventStatusByEventId'
+import { getEventStatusByEventId } from '../../gql/queries/events/getEventStatusByEventId'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
