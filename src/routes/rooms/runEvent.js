@@ -1,13 +1,13 @@
 import * as Sentry from '@sentry/node'
 import { getRoundsByEventId } from '../../gql/queries/users/getRoundsByEventId'
 import bulkInsertRounds from '../../gql/mutations/users/bulkInsertRounds'
+import getEventStatusByEventId from '../../gql/queries/events/getEventStatusByEventId'
 import samyakAlgoPro from './samyakAlgoPro'
 import createRoundsMap from './createRoundsMap'
 import orm from '../../services/orm'
 import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
-import getEventStatusByEventId from '../../gql/queries/events/getEventStatusByEventId'
 
 const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, roundsTimeout) => {
   const oneMinuteInMs = 60000
