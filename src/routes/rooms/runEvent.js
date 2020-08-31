@@ -42,7 +42,6 @@ const runEvent = async (req, res, currentRound = 0) => {
     console.log('reached last round, going to end event')
 
     setTimeout(() => {
-      currentRound = 0
       endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
     }, roundInterval / 2)
     return
@@ -93,7 +92,6 @@ const runEvent = async (req, res, currentRound = 0) => {
 
     if (newPairings.length === 0 || numNullPairings > onlineEventUsers.length / 2) {
       return setTimeout(() => {
-        currentRound = 0
         endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
       }, roundInterval / 2)
     }
@@ -122,10 +120,9 @@ const runEvent = async (req, res, currentRound = 0) => {
 
     // increment current round in events table
     try {
-      currentRound += 1
       await orm.request(updateEventObject, {
         id: eventId,
-        newCurrentRound: currentRound,
+        newCurrentRound: currentRound + 1,
         newStatus: 'room-in-progress',
       })
       console.log('set room to in-progress')
@@ -134,10 +131,10 @@ const runEvent = async (req, res, currentRound = 0) => {
       Sentry.captureException(error)
     }
 
-    if (currentRound > 0) {
-      clearTimeout(roundsTimeout)
-      roundsTimeout = setTimeout(() => runEvent(req, res, currentRound), round_length)
-    }
+    console.log('currentRound = ', currentRound)
+
+    clearTimeout(roundsTimeout)
+    roundsTimeout = setTimeout(() => runEvent(req, res, currentRound + 1), round_length)
   }, delayBetweenRounds)
 }
 
