@@ -10,9 +10,8 @@ import getOnlineUsers from './getOnlineUsers'
 
 let betweenRoundsTimeout
 let roundsTimeout
-let currentRound = 0
 
-const runEvent = async (req, res) => {
+const runEvent = async (req, res, currentRound = 0) => {
   const oneMinuteInMs = 60000
   const eventId = req.params.id
   const numRounds = req.body.num_rounds || 10 // default ten rounds
@@ -137,7 +136,7 @@ const runEvent = async (req, res) => {
 
     if (currentRound > 0) {
       clearTimeout(roundsTimeout)
-      roundsTimeout = setTimeout(() => runEvent(req, res), round_length)
+      roundsTimeout = setTimeout(() => runEvent(req, res, currentRound), round_length)
     }
   }, delayBetweenRounds)
 }
