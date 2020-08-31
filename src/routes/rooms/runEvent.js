@@ -7,7 +7,7 @@ import orm from '../../services/orm'
 import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
-import getEventStatusByEventId from '../../gql/queries/getEventStatusByEventId'
+import getEventStatusByEventId from '../../gql/queries/events/getEventStatusByEventId'
 
 const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, roundsTimeout) => {
   const oneMinuteInMs = 60000
