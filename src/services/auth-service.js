@@ -1,30 +1,27 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const AuthService = {
   getUserWithUserName(db, user_name) {
-    return db("users")
-      .where({ user_name })
-      .first();
+    return db('users').where({ user_name }).first()
   },
   hashPassword(password) {
     return bcrypt.hash(password, 12)
   },
   comparePasswords(password, hash) {
-    return bcrypt.compare(password, hash);
+    return bcrypt.compare(password, hash)
   },
   createJwt(subject, payload) {
     return jwt.sign(payload, process.env.SECRET, {
-
       subject,
-      algorithm: "HS256"
-    });
+      algorithm: 'HS256',
+    })
   },
   verifyJwt(token) {
     return jwt.verify(token, process.env.SECRET, {
-      algorithms: ["HS256"]
-    });
-  }
-};
+      algorithms: ['HS256'],
+    })
+  },
+}
 
-module.exports = AuthService;
+module.exports = AuthService
