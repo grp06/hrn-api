@@ -104,7 +104,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
 usersRouter.post('/reset-password', async (req, res) => {
   const { email } = req.body
-
   if (!email) {
     return res.status(400).json({
       error: `Missing 'email' in request body`,
@@ -120,6 +119,19 @@ usersRouter.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Could not find user with that email' })
     }
   } catch (error) {
+    return res.status(500).json({
+      error,
+    })
+  }
+})
+
+usersRouter.get('/get-anonymous-token', async (req, res) => {
+  try {
+    return res.status(201).json({
+      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+    })
+  } catch (error) {
+    Sentry.captureException(error)
     return res.status(500).json({
       error,
     })
