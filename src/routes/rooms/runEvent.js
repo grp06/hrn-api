@@ -23,7 +23,6 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
     await resetEvent(eventId, betweenRoundsTimeout, roundsTimeout)
 
     console.log('reset event complete,')
-    console.log('eventId = ', eventId)
 
     return
   }
@@ -31,14 +30,14 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
   let eventStatus
   try {
     const eventStatusResponse = await orm.request(getEventStatusByEventId, { eventId })
-    eventStatus = eventStatusResponse.data.events.status
+    eventStatus = eventStatusResponse.data.events[0].status
     console.log('runEvent -> eventStatus', eventStatus)
   } catch (error) {
     console.log(error)
     Sentry.captureException(error)
   }
 
-  if (eventStatus !== 'not-started' || eventStatus !== 'complete') {
+  if (eventStatus !== 'not-started') {
     // ensures that rooms are closed before next round
     try {
       await omniFinishRounds(currentRound, eventId)
@@ -89,7 +88,6 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
 
       const { pairingsArray: newPairings } = samyakAlgoPro(onlineEventUsers, roundsMap)
       console.log('betweenRoundsTimeout -> newPairings', newPairings)
-      console.log('eventId = ', eventId)
       // do something to check for NULL matches or if game is over somehow
       // -------------------------------mutation to update eventComplete (ended_at in db)
 
