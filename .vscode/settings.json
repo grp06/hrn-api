@@ -1,8 +1,5 @@
 {
-  "cSpell.words": [
-    "finish",
-    "omni",
-    "omni finish rounds",
-    "rounds"
-  ]
+  "cSpell.words": ["finish", "omni", "omni finish rounds", "rounds"],
+
+  "terminal.integrated.cursorBlinking": true
 }

@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import runEvent from './runEvent'
+import startEvent from './startEvent'
 import orm from '../../services/orm'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
@@ -12,12 +13,12 @@ const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
 
 // endpoint needs an auth check
-roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
-  __logger.info(`Event with id ${req.params.id} started.`)
-  runEvent(req, res)
+// roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
+//   __logger.info(`Event with id ${req.params.id} started.`)
+//   runEvent(req, res)
 
-  return res.status(200).json({ message: 'runEvent started' })
-})
+//   return res.status(200).json({ message: 'runEvent started' })
+// })
 
 roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
@@ -68,6 +69,13 @@ roomsRouter.route('/reset-event').get((req, res) => {
 
   setRoomsCompleted(eventId)
   return res.status(200).json({ res: 'reset the event yo' })
+})
+
+roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
+  __logger.info(`Event with id ${req.params.eventId} started.`)
+  startEvent(req, res)
+
+  return res.status(200).json({ message: 'startEvent started' })
 })
 
 module.exports = roomsRouter

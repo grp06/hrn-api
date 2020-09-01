@@ -45,6 +45,49 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
+app.post('/next-round-webhook', () => {
+  // need to access
+  // check what the current round is
+  // if last round was the final round, end the event
+  // else update event status to in-between-rounds
+  // set timeout for 30s
+})
+
+app.get('/event-trigger-test', () => {
+  console.log('hiii from event trigger test')
+  // fetch(`http://localhost:8080/v1/query`, {
+  //   method: 'POST',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //     'Access-Control-Allow-Origin': '*',
+  //     'Access-Control-Allow-Credentials': true,
+  //   },
+  //   body: JSON.stringify({
+  //     type: 'create_scheduled_event',
+  //     args: {
+  //       webhook: 'http://host.docker.internal:8000/webhook-test',
+  //       schedule_at: '2020-08-18T21:08:29.767Z',
+  //       payload: {
+  //         email: 'bob@ross.com',
+  //       },
+  //       headers: [
+  //         {
+  //           name: 'key',
+  //           value: 'value',
+  //         },
+  //       ],
+  //       retry_conf: {
+  //         num_retries: 3,
+  //         timeout_seconds: 120,
+  //         tolerance_seconds: 21675,
+  //         retry_interval_seconds: 12,
+  //       },
+  //       comment: 'sample scheduled event comment',
+  //     },
+  //   }),
+  // })
+})
+
 app.get('/debug-sentry', () => {
   throw new Error('My first Sentry error!')
 })
