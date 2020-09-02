@@ -12,14 +12,6 @@ const express = require('express')
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
 
-// endpoint needs an auth check
-// roomsRouter.post('/start-event/:id', jsonBodyParser, async (req, res) => {
-//   __logger.info(`Event with id ${req.params.id} started.`)
-//   runEvent(req, res)
-
-//   return res.status(200).json({ message: 'runEvent started' })
-// })
-
 roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
   const onlineEventUsers = await getOnlineUsers(eventId)

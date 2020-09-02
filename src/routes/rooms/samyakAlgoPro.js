@@ -1,6 +1,5 @@
 let numberOfRematchTries = 0
 
-console.log('initialize numberOfRematchTries to 0')
 const grabExistingData = (userIds, prevAssignments) => {
   // const map = JSON.parse(allAssignments)
   const map = JSON.parse(JSON.stringify(prevAssignments))
