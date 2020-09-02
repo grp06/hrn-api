@@ -38,7 +38,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   }
 }
 
-export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => {
+export const endEvent = async (eventId) => {
   try {
     await orm.request(setEventEndedAt, {
       id: eventId,
@@ -60,8 +60,6 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
     console.log('error = ', error)
   }
 
-  clearTimeout(betweenRoundsTimeout)
-  clearTimeout(roundsTimeout)
   console.log('EVENT FINISHED')
 }
 
@@ -84,7 +82,7 @@ export const createNewRooms = async (currentRoundData, eventId) => {
   }
 }
 
-export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => {
+export const resetEvent = async (eventId) => {
   let completedRoomsPromises
   try {
     completedRoomsPromises = await setRoomsCompleted(eventId)
@@ -104,7 +102,6 @@ export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) =
       eventId,
     })
     console.log('reset event to not-started')
-    console.log('eventId = ', eventId)
   } catch (error) {
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
@@ -120,9 +117,4 @@ export const resetEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) =
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
   }
-
-  clearTimeout(betweenRoundsTimeout)
-  clearTimeout(roundsTimeout)
-  console.log('cleared timeouts')
-  console.log('eventId = ', eventId)
 }

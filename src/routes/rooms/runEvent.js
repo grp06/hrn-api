@@ -9,7 +9,6 @@ import { omniFinishRounds, endEvent, resetEvent } from './runEventHelpers'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 
-
 const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, roundsTimeout) => {
   const oneMinuteInMs = 60000
   const eventId = req.params.id
@@ -20,11 +19,10 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
   const roundInterval = req.body.round_interval || 20000 // default 35 second interval
 
   if (req.body.reset) {
-    await resetEvent(eventId, betweenRoundsTimeout, roundsTimeout)
-
-    console.log('reset event complete,')
-
-    return
+    await resetEvent(eventId)
+    clearTimeout(betweenRoundsTimeout)
+    clearTimeout(roundsTimeout)
+    return null
   }
 
   let eventStatus
@@ -51,9 +49,12 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
       console.log('reached last round, going to end event')
 
       setTimeout(() => {
-        endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+        endEvent(eventId)
+        clearTimeout(betweenRoundsTimeout)
+        clearTimeout(roundsTimeout)
+        return null
       }, roundInterval / 2)
-      return
+      return null
     }
 
     // to be used for timeout function
@@ -68,7 +69,9 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
       } catch (error) {
         console.log('error = ', error)
         Sentry.captureException(error)
-        return clearTimeout(roundsTimeout)
+        clearTimeout(betweenRoundsTimeout)
+        clearTimeout(roundsTimeout)
+        return null
       }
 
       // get data for rounds
@@ -79,7 +82,9 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
         roundsData = getRoundsResponse.data
       } catch (error) {
         Sentry.captureException(error)
-        return clearTimeout(roundsTimeout)
+        clearTimeout(betweenRoundsTimeout)
+        clearTimeout(roundsTimeout)
+        return null
       }
 
       // create an array of pairings for a given round/event for use in algorithm
@@ -100,7 +105,10 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
 
       if (newPairings.length === 0 || numNullPairings > onlineEventUsers.length / 2) {
         return setTimeout(() => {
-          endEvent(eventId, betweenRoundsTimeout, roundsTimeout)
+          endEvent(eventId)
+          clearTimeout(betweenRoundsTimeout)
+          clearTimeout(roundsTimeout)
+          return null
         }, roundInterval / 2)
       }
 
@@ -123,7 +131,9 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
       } catch (error) {
         Sentry.captureException(error)
         console.log('error inserting rounds data = ', error)
+        clearTimeout(betweenRoundsTimeout)
         clearTimeout(roundsTimeout)
+        return null
       }
 
       // increment current round in events table
@@ -137,9 +147,10 @@ const runEvent = async (req, res, currentRound = 0, betweenRoundsTimeout, rounds
         console.log('eventId = ', eventId)
       } catch (error) {
         Sentry.captureException(error)
+        clearTimeout(betweenRoundsTimeout)
+        clearTimeout(roundsTimeout)
+        return null
       }
-
-      console.log('currentRound = ', currentRound)
 
       clearTimeout(roundsTimeout)
       roundsTimeout = setTimeout(
