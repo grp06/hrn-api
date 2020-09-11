@@ -6,6 +6,7 @@ import orm from '../../services/orm'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
+import nextRound from './nextRound'
 
 const express = require('express')
 
@@ -63,11 +64,11 @@ roomsRouter.route('/reset-event').get((req, res) => {
   return res.status(200).json({ res: 'reset the event yo' })
 })
 
+// api/rooms/start-event/:eventId
 roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
   __logger.info(`Event with id ${req.params.eventId} started.`)
-  startEvent(req, res)
 
-  return res.status(200).json({ message: 'startEvent started' })
+  return nextRound({ req, res })
 })
 
 module.exports = roomsRouter
