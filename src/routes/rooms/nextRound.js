@@ -18,6 +18,7 @@ const nextRound = async ({ req, res, params }) => {
   let currentRound
 
   if (req) {
+    console.log('got req')
     // we just called start event. First round
     eventId = parseInt(req.params.eventId, 10)
     numRounds = req.body.num_rounds || 10 // default ten rounds
@@ -45,7 +46,7 @@ const nextRound = async ({ req, res, params }) => {
       eventId,
     })
     onlineUsers = onlineUsersResponse.data.online_users
-    console.log('nextRound -> onlineUsers', onlineUsers)
+    // console.log('nextRound -> onlineUsers', onlineUsers)
   } catch (error) {
     Sentry.captureException(error)
     return res.status(500).json({ message: 'Failed to get online users' })
@@ -60,13 +61,12 @@ const nextRound = async ({ req, res, params }) => {
       userIds,
     })
     partnersRows = partnersList.data.partners
-    console.log('nextRound -> partnersRows', partnersRows)
+    // console.log('nextRound -> partnersRows', partnersRows)
   } catch (error) {
     Sentry.captureException(error)
     return res.status(500).json({ message: 'Failed to get partners from list of userIds' })
   }
 
-  console.log('currentRound = ', currentRound)
   // make pairings
   const pairings = makePairings(onlineUsers, partnersRows, currentRound)
 
@@ -91,6 +91,7 @@ const nextRound = async ({ req, res, params }) => {
       newCurrentRound: currentRound,
       newStatus: 'room-in-progress',
     })
+    console.log('set room-in-progress for round ', currentRound)
   } catch (error) {
     Sentry.captureException(error)
     // TODO: delete the partners we just inserted (because the host will try again)

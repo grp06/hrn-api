@@ -60,8 +60,6 @@ export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => 
     console.log('error = ', error)
   }
 
-  clearTimeout(betweenRoundsTimeout)
-  clearTimeout(roundsTimeout)
   console.log('EVENT FINISHED')
 }
 

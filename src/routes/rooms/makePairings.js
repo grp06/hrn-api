@@ -1,6 +1,6 @@
 const makePairings = (onlineUsers, partnersRows, currentRound) => {
-  console.log('partnersRows', partnersRows)
-  console.log('onlineUsers[0].tags_users', onlineUsers[0].tags_users)
+  // console.log('partnersRows', partnersRows)
+  // console.log('onlineUsers[0].tags_users', onlineUsers[0].tags_users)
   const tagsPointsMap = {
     guitar: 10,
     piano: 9,
@@ -40,17 +40,17 @@ const makePairings = (onlineUsers, partnersRows, currentRound) => {
 
   // loop over online users
   const calculations = onlineUsers.reduce((all, user, index) => {
-    console.log('makePairings -> user', user)
+    // console.log('makePairings -> user', user)
     const listOfMyTags = getListOfTags(user)
-    console.log('makePairings -> listOfMyTags', listOfMyTags)
+    // console.log('makePairings -> listOfMyTags', listOfMyTags)
     // for each tag
     user.tags_users.forEach((tag) => {
       // loop over all users loop over each onlineUser's tags and calc points
 
       onlineUsers.forEach((onlineUser) => {
-        console.log('onlineUser = ', onlineUser)
+        // console.log('onlineUser = ', onlineUser)
         onlineUser.tags_users.forEach((tag) => {
-          console.log('tag = ', tag)
+          // console.log('tag = ', tag)
           const iHaveThisTag = listOfMyTags.includes(tag.tag.name)
           const comparingToMyself = user.id === onlineUser.id
           if (iHaveThisTag && !comparingToMyself) {
@@ -62,7 +62,7 @@ const makePairings = (onlineUsers, partnersRows, currentRound) => {
     })
   }, {})
   // for each tag, com
-  console.log('pointsObj = ', pointsObj)
+  // console.log('pointsObj = ', pointsObj)
   if (currentRound === 1) {
     return [
       [1, 2],
