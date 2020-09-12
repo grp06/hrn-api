@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 
+import { resetEvent } from './runEventHelpers'
 import orm from '../../services/orm'
 import getAvailableLobbyUsers from '../../gql/queries/users/getAvailableLobbyUsers'
 import getPartnersFromListOfUserIds from '../../gql/queries/users/getPartnersFromListOfUserIds'
@@ -22,6 +23,13 @@ const nextRound = async ({ req, res, params }) => {
     numRounds = req.body.num_rounds || 10 // default ten rounds
     round_length = req.body.round_length * oneMinuteInMs || 300000
     currentRound = 1
+    if (req.body.reset) {
+      await resetEvent(eventId)
+
+      console.log('reset event complete,')
+
+      return
+    }
   } else {
     // at least round 2
     eventId = params.eventId
@@ -37,6 +45,7 @@ const nextRound = async ({ req, res, params }) => {
       eventId,
     })
     onlineUsers = onlineUsersResponse.data.online_users
+    console.log('nextRound -> onlineUsers', onlineUsers)
   } catch (error) {
     Sentry.captureException(error)
     return res.status(500).json({ message: 'Failed to get online users' })
@@ -51,6 +60,7 @@ const nextRound = async ({ req, res, params }) => {
       userIds,
     })
     partnersRows = partnersList.data.partners
+    console.log('nextRound -> partnersRows', partnersRows)
   } catch (error) {
     Sentry.captureException(error)
     return res.status(500).json({ message: 'Failed to get partners from list of userIds' })
@@ -60,7 +70,8 @@ const nextRound = async ({ req, res, params }) => {
   const pairings = makePairings(onlineUsers, partnersRows)
 
   // transform pairings to be ready for insertion to partners table
-  const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: 1 })
+  const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
+  console.log('nextRound -> variablesArray', variablesArray)
 
   // write to partners table
   try {

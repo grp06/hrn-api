@@ -32,5 +32,11 @@ const initNextRound = async ({
   })
 
   job.start()
+  // insert job exectuion time in a new table
+  // when the server starts, check for in progress events
+  // if theres an in progress event, set up new cron
+
+  // also, when the server starts, if therse an on going event
+  // set up the subscription
 }
 export default initNextRound
