@@ -1,4 +1,5 @@
 const transformPairingsToGqlVars = ({ pairings, eventId, round }) => {
+  console.log('transformPairingsToGqlVars -> pairings', pairings)
   const variablesArr = []
   pairings.forEach((pairing) => {
     variablesArr.push({

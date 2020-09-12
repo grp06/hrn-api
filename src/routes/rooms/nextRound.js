@@ -66,8 +66,9 @@ const nextRound = async ({ req, res, params }) => {
     return res.status(500).json({ message: 'Failed to get partners from list of userIds' })
   }
 
+  console.log('currentRound = ', currentRound)
   // make pairings
-  const pairings = makePairings(onlineUsers, partnersRows)
+  const pairings = makePairings(onlineUsers, partnersRows, currentRound)
 
   // transform pairings to be ready for insertion to partners table
   const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
