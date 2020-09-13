@@ -38,23 +38,13 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   }
 }
 
-export const endEvent = async (eventId, betweenRoundsTimeout, roundsTimeout) => {
-  try {
-    await orm.request(setEventEndedAt, {
-      id: eventId,
-      ended_at: new Date().toISOString(),
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    console.log('error = ', error)
-  }
-
+export const endEvent = async (eventId) => {
   try {
     await orm.request(updateEventObject, {
       id: eventId,
       newStatus: 'complete',
+      ended_at: new Date().toISOString(),
     })
-    console.log('event set to complete')
   } catch (error) {
     Sentry.captureException(error)
     console.log('error = ', error)
@@ -101,8 +91,6 @@ export const resetEvent = async (eventId) => {
     await orm.request(resetEventStatus, {
       eventId,
     })
-    console.log('reset event to not-started')
-    console.log('eventId = ', eventId)
   } catch (error) {
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
@@ -112,10 +100,9 @@ export const resetEvent = async (eventId) => {
     await orm.request(deletePartnersByEventId, {
       eventId,
     })
-    console.log('deleted partners')
-    console.log('eventId = ', eventId)
   } catch (error) {
     console.log('runEvent -> error', error)
     Sentry.captureException(error)
   }
+  console.log('reset event')
 }

@@ -20,11 +20,10 @@ const initNextRound = async ({
   date.setSeconds(date.getSeconds() + 15)
   const job = new CronJob(date, async function () {
     // const d = new Date()
-    console.log('inside job ', job)
+
     console.log('currentRound = ', currentRound)
     console.log('numRounds = ', numRounds)
     if (currentRound < numRounds) {
-      console.log('try to update to in-between-rounds')
       try {
         await orm.request(updateEventObject, {
           id: eventId,
@@ -48,7 +47,7 @@ const initNextRound = async ({
             numRounds,
           },
         })
-        console.log('calling stop')
+
         job.stop()
       }, 10000)
     } else {

@@ -11,6 +11,7 @@ import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import initNextRound from './initNextRound'
 
 const nextRound = async ({ req, res, params }) => {
+  console.log('nextRound -> res', typeof res)
   const oneMinuteInMs = 60000
   let eventId
   let numRounds
@@ -18,18 +19,13 @@ const nextRound = async ({ req, res, params }) => {
   let currentRound
 
   if (req) {
-    console.log('got req')
     // we just called start event. First round
     eventId = parseInt(req.params.eventId, 10)
     numRounds = req.body.num_rounds || 10 // default ten rounds
     round_length = req.body.round_length * oneMinuteInMs || 300000
     currentRound = 1
     if (req.body.reset) {
-      await resetEvent(eventId)
-
-      console.log('reset event complete,')
-
-      return
+      return resetEvent(eventId)
     }
   } else {
     // at least round 2
@@ -99,16 +95,17 @@ const nextRound = async ({ req, res, params }) => {
   }
 
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
-  // only in round 1
-  // subscribe to online users
-  // check to see if neither has blocked the other
-  // pair off and insert rounds
 
   if (res) {
     return res
       .status(200)
       .json({ message: 'Success starting the event and queueing up next round' })
   }
+
+  // only in round 1
+  // subscribe to online users
+  // check to see if neither has blocked the other
+  // pair off and insert rounds
 }
 
 export default nextRound
