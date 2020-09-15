@@ -72,7 +72,7 @@ export default {
 
   Mutation: {
     insertUser: async (parent, { name, email, password, role }, { secret }) => {
-      const userObject = { name, email, password, role }
+      const userObject = { name, email, password, linkedIn_url, role }
       const variables = { objects: [userObject] }
 
       let newUser

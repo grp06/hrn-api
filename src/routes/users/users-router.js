@@ -13,7 +13,7 @@ const usersRouter = express.Router()
 const jsonBodyParser = express.json()
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { name, email, password, role } = req.body
+  const { name, email, password, linkedInUrl, role } = req.body
   console.log('req.body at root /signup', req.body)
 
   for (const field of ['name', 'email', 'password', 'role'])
@@ -68,9 +68,11 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  const userObject = { name, email, password: hashedPassword, role }
-
+  const userObject = { name, email, linkedIn_url: linkedInUrl, password: hashedPassword, role }
+  // console.log("userObject>>>>", userObject)
+  
   const variables = { objects: [userObject] }
+  // console.log("variable>>>", variables)
   let newUser
 
   // insert user into db

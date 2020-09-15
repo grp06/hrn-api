@@ -44,6 +44,7 @@ const UsersService = {
       id: user.id,
       name: xss(user.name),
       email: xss(user.email),
+      linkedIn_url: xss(user.linkedIn_url),
       created_at: new Date(user.created_at),
       role: xss(user.role),
     }
