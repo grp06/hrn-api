@@ -32,6 +32,24 @@ const makePairings = (onlineUsers, partnersRows, currentRound) => {
     },
   }
 
+  // George isn't convinced of this quite yet. Let's revisit
+  // const points = [
+  //   {1:
+  //     { 2: 0},
+  //     { 3: 0},
+  //     { 4: 0}},
+  //   {2:
+  //     {1: 0},
+  //     {3: 0},
+  //     {4: 0}
+  //   }]
+
+  // Max suggested alternative
+  // const newStructure = {
+  //   1: [[2, 76], [3,73], [4,72]],
+  //   2: [[1, 76], [3,73], [4,72]]
+  // }
+
   const getListOfTags = (user) => {
     return user.tags_users.map((item) => item.tag.name)
   }
@@ -39,6 +57,7 @@ const makePairings = (onlineUsers, partnersRows, currentRound) => {
   // loop over online users
   const calculations = onlineUsers.reduce((all, user, index) => {
     const listOfMyTags = getListOfTags(user)
+    console.log('makePairings -> listOfMyTags', listOfMyTags)
 
     // for each tag
     user.tags_users.forEach((tag) => {
