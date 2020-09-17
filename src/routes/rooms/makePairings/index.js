@@ -1,54 +1,16 @@
+import shuffleArray from './shuffleArray'
+import generateInitialPointsArr from './generateInitialPointsArray'
+import generateFinalMatchesArray from './generateFinalMatchesArray'
+
 const makePairings = (onlineUsers, partnersRows, currentRound) => {
-  const tagsPointsMap = {
-    guitar: 10,
-    piano: 9,
-    jumping: 3,
-    programming: 10,
-    design: 8,
-    UX: 4,
-    partying: 4,
-  }
+  // console.log(JSON.stringify(generateInitialPointsArr(onlineUsers), null, 2))
+  const pointsArr = generateInitialPointsArr(onlineUsers)
+  console.log('pointsArr', JSON.stringify(pointsArr, null, 2))
 
-  const pointsObj = {
-    1: {
-      2: 0,
-      3: 0,
-      4: 0,
-    },
-    2: {
-      1: 0,
-      3: 0,
-      4: 0,
-    },
-    3: {
-      1: 0,
-      2: 0,
-      4: 0,
-    },
-    4: {
-      1: 0,
-      2: 0,
-      3: 0,
-    },
-  }
+  // shuffle before we go to get final matches
+  // shuffleArray(pointsArr)
 
-  // George isn't convinced of this quite yet. Let's revisit
-  // const points = [
-  //   {1:
-  //     { 2: 0},
-  //     { 3: 0},
-  //     { 4: 0}},
-  //   {2:
-  //     {1: 0},
-  //     {3: 0},
-  //     {4: 0}
-  //   }]
-
-  // Max suggested alternative
-  // const newStructure = {
-  //   1: [[2, 76], [3,73], [4,72]],
-  //   2: [[1, 76], [3,73], [4,72]]
-  // }
+  const finalMatches = generateFinalMatchesArray(pointsArr)
 
   const getListOfTags = (user) => {
     return user.tags_users.map((item) => item.tag.name)
@@ -59,12 +21,13 @@ const makePairings = (onlineUsers, partnersRows, currentRound) => {
     const listOfMyTags = getListOfTags(user)
     console.log('makePairings -> listOfMyTags', listOfMyTags)
 
-    // for each tag
-    user.tags_users.forEach((tag) => {
-      // loop over all users loop over each onlineUser's tags and calc points
-
+    // for each tag object
+    user.tags_users.forEach(() => {
+      // loop over each onlineUser
       onlineUsers.forEach((onlineUser) => {
+        // loop over each one of their tags
         onlineUser.tags_users.forEach((tag) => {
+          console.log('tag = ', tag)
           const iHaveThisTag = listOfMyTags.includes(tag.tag.name)
           const comparingToMyself = user.id === onlineUser.id
           if (iHaveThisTag && !comparingToMyself) {
