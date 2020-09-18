@@ -66,35 +66,35 @@ const nextRound = async ({ req, res, params }) => {
   // make pairings
   const pairings = makePairings(onlineUsers, partnersRows, currentRound)
 
-  // transform pairings to be ready for insertion to partners table
-  const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
-  console.log('nextRound -> variablesArray', variablesArray)
+  // // transform pairings to be ready for insertion to partners table
+  // const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
+  // console.log('nextRound -> variablesArray', variablesArray)
 
-  // write to partners table
-  try {
-    await orm.request(bulkInsertPartners, {
-      objects: variablesArray,
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({ message: 'Failed to insert partners rows into the database' })
-  }
+  // // write to partners table
+  // try {
+  //   await orm.request(bulkInsertPartners, {
+  //     objects: variablesArray,
+  //   })
+  // } catch (error) {
+  //   Sentry.captureException(error)
+  //   return res.status(500).json({ message: 'Failed to insert partners rows into the database' })
+  // }
 
-  // set event status to in-progress
-  try {
-    await orm.request(updateEventObject, {
-      id: eventId,
-      newCurrentRound: currentRound,
-      newStatus: 'room-in-progress',
-    })
-    console.log('set room-in-progress for round ', currentRound)
-  } catch (error) {
-    Sentry.captureException(error)
-    // TODO: delete the partners we just inserted (because the host will try again)
-    return res.status(500).json({ message: 'Failed to update the event object' })
-  }
+  // // set event status to in-progress
+  // try {
+  //   await orm.request(updateEventObject, {
+  //     id: eventId,
+  //     newCurrentRound: currentRound,
+  //     newStatus: 'room-in-progress',
+  //   })
+  //   console.log('set room-in-progress for round ', currentRound)
+  // } catch (error) {
+  //   Sentry.captureException(error)
+  //   // TODO: delete the partners we just inserted (because the host will try again)
+  //   return res.status(500).json({ message: 'Failed to update the event object' })
+  // }
 
-  initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
+  // initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
 
   if (res) {
     return res
