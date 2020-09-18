@@ -1,9 +1,9 @@
 import * as Sentry from '@sentry/node'
 import { CronJob } from 'cron'
 import nextRound from './nextRound'
-import orm from '../../services/orm'
-import updateEventObject from '../../gql/mutations/event/updateEventObject'
-import { endEvent } from './runEventHelpers'
+import { endEvent, omniFinishRounds } from './runEventHelpers'
+
+const betweenRoundsTimeout = 20000
 
 const initNextRound = async ({
   numRounds = 10,
@@ -11,13 +11,14 @@ const initNextRound = async ({
   roundLength: round_length,
   currentRound,
 }) => {
-  console.log('inside initNextRound. Creating job for 15 secs from now')
   const roundLengthInMinutes = round_length / 60000
   // console.log('roundLengthInMinutes', roundLengthInMinutes)
 
   const date = new Date()
   // date.setMinutes(date.getMinutes() + roundLengthInMinutes)
-  date.setSeconds(date.getSeconds() + 15)
+  // used for testing for super short rounds
+  date.setSeconds(date.getSeconds() + 20)
+
   const job = new CronJob(date, async function () {
     // const d = new Date()
 
@@ -25,20 +26,15 @@ const initNextRound = async ({
     console.log('numRounds = ', numRounds)
     if (currentRound < numRounds) {
       try {
-        await orm.request(updateEventObject, {
-          id: eventId,
-          newStatus: 'in-between-rounds',
-          newCurrentRound: currentRound,
-        })
-
-        console.log('set room to in-between-rounds for eventId ', eventId)
+        await omniFinishRounds(currentRound, eventId)
+        console.log('waiting between rounds')
       } catch (error) {
         Sentry.captureException(error)
-        console.log('error setting ended_at for event = ', error)
+        console.log(error)
       }
 
       setTimeout(() => {
-        console.log('calling next round')
+        console.log('calling next round ', Date.now())
         nextRound({
           params: {
             eventId,
@@ -49,7 +45,7 @@ const initNextRound = async ({
         })
 
         job.stop()
-      }, 10000)
+      }, betweenRoundsTimeout)
     } else {
       endEvent(eventId)
       // end event

@@ -12,12 +12,6 @@ const getCurrentUsersBestMatch = (userObj, pairedUserIds) => {
   let userIdAndScoreOfBestMatch // -> looks like [1, 50]
 
   const currentUsersPointsArr = userObj.scores
-  // looks like this
-  // [
-  //   { 1: 50 },
-  //   { 2: 60 },
-  //   { 3: 70 },
-  // ]
 
   // loop through the "current users points array
   // for each score obj
@@ -28,10 +22,10 @@ const getCurrentUsersBestMatch = (userObj, pairedUserIds) => {
     // make sure that the current user hasn't already been assigned
     if (!pairedUserIds.includes(userIdComparison)) {
       // on the first pass, there no highest score. Set the userId we're looking at and his associated score as highest
+      // (as long as the score is > 0 (they havent given each other 1 star or already matched))
       if (!userIdAndScoreOfBestMatch) {
         // store the userId of the best match + their score in an array
         userIdAndScoreOfBestMatch = [userIdComparison, scoreComparison]
-        console.log(' -> userIdComparison', userIdComparison)
 
         // see if the score of this user is higher than the highest we've seen
       } else if (scoreComparison > userIdAndScoreOfBestMatch[1]) {
@@ -43,8 +37,9 @@ const getCurrentUsersBestMatch = (userObj, pairedUserIds) => {
   if (!userIdAndScoreOfBestMatch) {
     return null
   }
+
   // return the userId with the highest score
-  return userIdAndScoreOfBestMatch[0]
+  return userIdAndScoreOfBestMatch
 }
 
 const generateFinalMatchesArray = (pointsArr) => {
@@ -53,12 +48,10 @@ const generateFinalMatchesArray = (pointsArr) => {
 
   pointsArr.forEach((userObj) => {
     const currentUserId = userObj.userId
-    console.log('pairedUserIds = ', pairedUserIds)
-    if (!pairedUserIds.includes(currentUserId)) {
-      const bestMatch = getCurrentUsersBestMatch(userObj, pairedUserIds)
-
+    const bestMatch = getCurrentUsersBestMatch(userObj, pairedUserIds)
+    if (!pairedUserIds.includes(currentUserId) && bestMatch[1] >= 0) {
       finalMatches.push([parseInt(currentUserId, 10), parseInt(bestMatch, 10) || null])
-      pairedUserIds.push(currentUserId, bestMatch)
+      pairedUserIds.push(currentUserId, bestMatch[0])
     }
   })
   return finalMatches
