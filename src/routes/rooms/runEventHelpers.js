@@ -6,45 +6,48 @@ import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
 import resetEventStatus from '../../gql/mutations/event/resetEventStatus'
 import deletePartnersByEventId from '../../gql/mutations/event/deletePartnersByEventId'
+import jobs from './jobs'
+
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
-  let completedRoomsPromises
   try {
-    completedRoomsPromises = await setRoomsCompleted(eventId)
-  } catch (error) {
-    Sentry.captureException(error)
-  }
-
-  try {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
-  } catch (error) {
-    Sentry.captureException(error)
-  }
 
-  // set ended_at in db for the round we just completed
-  if (currentRound > 0) {
-    try {
-      await orm.request(updateEventObject, {
+    if (currentRound > 0) {
+      const updateEventObjectRes = await orm.request(updateEventObject, {
         id: eventId,
         newStatus: 'in-between-rounds',
         newCurrentRound: currentRound,
       })
 
+      if (updateEventObjectRes.errors) {
+        throw new Error(updateEventObjectRes.errors[0].message)
+      }
+
       console.log('set room to in-between-rounds for eventId ', eventId)
-    } catch (error) {
-      Sentry.captureException(error)
-      console.log('error setting ended_at for event = ', error)
     }
+  } catch (error) {
+    Sentry.captureException(error)
   }
+
+  // set ended_at in db for the round we just completed
 }
 
 export const endEvent = async (eventId) => {
   try {
-    await orm.request(updateEventObject, {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    await Promise.all(completedRoomsPromises)
+
+    const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
       newStatus: 'complete',
       ended_at: new Date().toISOString(),
     })
+
+    if (updateEventObjectRes.errors) {
+      throw new Error(updateEventObjectRes.errors[0].message)
+    }
   } catch (error) {
     Sentry.captureException(error)
     console.log('error = ', error)
@@ -73,36 +76,33 @@ export const endEvent = async (eventId) => {
 // }
 
 export const resetEvent = async (eventId) => {
-  let completedRoomsPromises
-  try {
-    completedRoomsPromises = await setRoomsCompleted(eventId)
-  } catch (error) {
-    Sentry.captureException(error)
+  if (jobs[eventId]) {
+    jobs[eventId].stop()
   }
 
   try {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+
     await Promise.all(completedRoomsPromises)
-  } catch (error) {
-    console.log('runEvent -> error', error)
-    Sentry.captureException(error)
-  }
 
-  try {
-    await orm.request(resetEventStatus, {
+    const resetEventRes = await orm.request(resetEventStatus, {
       eventId,
     })
-  } catch (error) {
-    console.log('runEvent -> error', error)
-    Sentry.captureException(error)
-  }
 
-  try {
-    await orm.request(deletePartnersByEventId, {
+    if (resetEventRes.errors) {
+      Sentry.captureException(resetEventRes.errors[0].message)
+      throw new Error(resetEventRes.errors[0].message)
+    }
+
+    const deletePartnersRes = await orm.request(deletePartnersByEventId, {
       eventId,
     })
+
+    if (deletePartnersRes.errors) {
+      Sentry.captureException(deletePartnersRes.errors[0].message)
+      throw new Error(deletePartnersRes.errors[0].message)
+    }
   } catch (error) {
-    console.log('runEvent -> error', error)
     Sentry.captureException(error)
   }
-  console.log('reset event')
 }

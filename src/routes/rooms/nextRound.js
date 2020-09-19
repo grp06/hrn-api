@@ -11,100 +11,98 @@ import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import initNextRound from './initNextRound'
 
 const nextRound = async ({ req, res, params }) => {
-  console.log('nextRound -> res', typeof res)
   const oneMinuteInMs = 60000
   let eventId
   let numRounds
   let round_length
   let currentRound
 
-  if (req) {
-    // we just called start event. First round
-    eventId = parseInt(req.params.eventId, 10)
-    numRounds = req.body.num_rounds || 10 // default ten rounds
-    round_length = req.body.round_length * oneMinuteInMs || 300000
-    if (req.body.reset) {
-      return resetEvent(eventId)
-    }
-
-    try {
-      await omniFinishRounds(currentRound, eventId)
-    } catch (error) {
-      Sentry.captureException(error)
-      console.log(error)
-    }
-    currentRound = 1
-  } else {
-    // at least round 2
-    eventId = params.eventId
-    numRounds = params.numRounds
-    round_length = params.round_length
-    currentRound = params.currentRound
-  }
-
-  // get all online users for this eventId
-  let onlineUsers
   try {
+    if (req) {
+      // we just called start event. First round
+      eventId = parseInt(req.params.eventId, 10)
+      numRounds = req.body.num_rounds || 10 // default ten rounds
+      round_length = req.body.round_length * oneMinuteInMs || 300000
+      if (req.body.reset) {
+        return resetEvent(eventId)
+      }
+
+      await omniFinishRounds(currentRound, eventId)
+
+      currentRound = 1
+    } else {
+      // at least round 2
+      eventId = params.eventId
+      numRounds = params.numRounds
+      round_length = params.round_length
+      currentRound = params.currentRound
+    }
+
+    // get all online users for this eventId
     const onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
       eventId,
     })
-    onlineUsers = onlineUsersResponse.data.online_users
-    console.log('from intiial API call onlineUsers', onlineUsers)
-    // console.log('nextRound -> onlineUsers', onlineUsers)
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({ message: 'Failed to get online users' })
-  }
 
-  // get all rows from the partners table from those users
-  let allRoundsDataForOnlineUsers
-  try {
-    // get an array of just the userIds from onlineUsers
+    if (onlineUsersResponse.errors) {
+      Sentry.captureException(onlineUsersResponse.errors[0].message)
+      throw new Error(onlineUsersResponse.errors[0].message)
+    }
+
+    const onlineUsers = onlineUsersResponse.data.online_users
+
     const userIds = onlineUsers.map((user) => user.id)
-    const partnersList = await orm.request(getPartnersFromListOfUserIds, {
+    const partnersListResponse = await orm.request(getPartnersFromListOfUserIds, {
       userIds,
     })
-    allRoundsDataForOnlineUsers = partnersList.data.partners
-    // console.log('nextRound -> allRoundsDataForOnlineUsers', allRoundsDataForOnlineUsers)
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({ message: 'Failed to get partners from list of userIds' })
-  }
 
-  // make pairings
-  const pairings = makePairings({ onlineUsers, allRoundsDataForOnlineUsers, currentRound, eventId })
-  console.log('nextRound -> pairings', pairings)
-  console.log('onlineUsers.length = ', onlineUsers.length)
-  if (pairings.length < onlineUsers.length / 2) {
-    console.log('no more pairings, end this shit')
-    return endEvent(eventId)
-  }
-  // transform pairings to be ready for insertion to partners table
-  const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
+    if (partnersListResponse.errors) {
+      Sentry.captureException(partnersListResponse.errors[0].message)
+      throw new Error(partnersListResponse.errors[0].message)
+    }
 
-  // write to partners table
-  try {
-    await orm.request(bulkInsertPartners, {
+    const allRoundsDataForOnlineUsers = partnersListResponse.data.partners
+
+    const pairings = makePairings({
+      onlineUsers,
+      allRoundsDataForOnlineUsers,
+      currentRound,
+      eventId,
+    })
+
+    if (pairings.length < onlineUsers.length / 2) {
+      console.log('no more pairings')
+      return endEvent(eventId)
+    }
+    // transform pairings to be ready for insertion to partners table
+    const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
+
+    // write to partners table
+    const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
       objects: variablesArray,
     })
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({ message: 'Failed to insert partners rows into the database' })
-  }
 
-  // set event status to in-progress
-  try {
-    await orm.request(updateEventObject, {
+    if (bulkInsertPartnersRes.errors) {
+      throw new Error(bulkInsertPartnersRes.errors[0].message)
+    }
+
+    // set event status to in-progress
+    const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
       newCurrentRound: currentRound,
       newStatus: 'room-in-progress',
     })
-    console.log('set room-in-progress for round ', currentRound)
-    console.log('next round in progress ', Date.now())
+
+    if (updateEventObjectRes.errors) {
+      Sentry.captureException(updateEventObjectRes.errors[0].message)
+      throw new Error(updateEventObjectRes.errors[0].message)
+    }
   } catch (error) {
-    Sentry.captureException(error)
-    // TODO: delete the partners we just inserted (because the host will try again)
-    return res.status(500).json({ message: 'Failed to update the event object' })
+    console.log('error = ', error)
+    if (res) {
+      Sentry.captureException(error)
+      return res.status(500).json({ error })
+    }
+    return Sentry.captureException(error)
   }
 
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
