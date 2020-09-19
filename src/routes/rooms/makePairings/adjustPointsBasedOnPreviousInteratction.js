@@ -4,6 +4,9 @@ const adjustPointsBasedOnPreviousInteratction = ({
   allRoundsDataForOnlineUsers,
   eventId,
 }) => {
+  if (!allRoundsDataForOnlineUsers.length) {
+    return 0
+  }
   // at the moment, this is within a loop
   // what this means is that we'll hit this mutliple times
   // (as many times as we have tags)
@@ -35,7 +38,7 @@ const adjustPointsBasedOnPreviousInteratction = ({
   )
 
   if (eitherPartnerGaveOtherOneStar) {
-    return -9999
+    return -900
   }
 
   const usersHaveAlreadyMatched = allRoundsDataForOnlineUsers.reduce((all, currentUserRow) => {
@@ -61,7 +64,7 @@ const adjustPointsBasedOnPreviousInteratction = ({
   }, false)
 
   if (usersHaveAlreadyMatched) {
-    return -999
+    return -90
   }
 
   const eitherPartnerHasReportedTheOther = allRoundsDataForOnlineUsers.reduce(
@@ -84,12 +87,14 @@ const adjustPointsBasedOnPreviousInteratction = ({
         return true
       }
 
-      return false
-    }
+      return all
+    },
+    false
   )
 
   if (eitherPartnerHasReportedTheOther) {
-    return -999
+    console.log('subtract 9000')
+    return -9000
   }
 
   return 0

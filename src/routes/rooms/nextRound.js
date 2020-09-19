@@ -2,13 +2,12 @@ import * as Sentry from '@sentry/node'
 
 import { resetEvent, omniFinishRounds, endEvent } from './runEventHelpers'
 import orm from '../../services/orm'
-import getAvailableLobbyUsers from '../../gql/queries/users/getAvailableLobbyUsers'
-import getPartnersFromListOfUserIds from '../../gql/queries/users/getPartnersFromListOfUserIds'
-import makePairings from './makePairings'
+
 import transformPairingsToGqlVars from './transformPairingsToGqlVars'
 import bulkInsertPartners from '../../gql/mutations/users/bulkInsertPartners'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import initNextRound from './initNextRound'
+import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnlineUsers'
 
 const nextRound = async ({ req, res, params }) => {
   const oneMinuteInMs = 60000
@@ -38,36 +37,8 @@ const nextRound = async ({ req, res, params }) => {
       currentRound = params.currentRound
     }
 
-    // get all online users for this eventId
-    const onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
-      eventId,
-    })
-
-    if (onlineUsersResponse.errors) {
-      Sentry.captureException(onlineUsersResponse.errors[0].message)
-      throw new Error(onlineUsersResponse.errors[0].message)
-    }
-
-    const onlineUsers = onlineUsersResponse.data.online_users
-
-    const userIds = onlineUsers.map((user) => user.id)
-    const partnersListResponse = await orm.request(getPartnersFromListOfUserIds, {
-      userIds,
-    })
-
-    if (partnersListResponse.errors) {
-      Sentry.captureException(partnersListResponse.errors[0].message)
-      throw new Error(partnersListResponse.errors[0].message)
-    }
-
-    const allRoundsDataForOnlineUsers = partnersListResponse.data.partners
-
-    const pairings = makePairings({
-      onlineUsers,
-      allRoundsDataForOnlineUsers,
-      currentRound,
-      eventId,
-    })
+    const [pairings, onlineUsers] = await createPairingsFromOnlineUsers(eventId, currentRound)
+    console.log('nextRound -> pairings', pairings)
 
     if (pairings.length < onlineUsers.length / 2) {
       console.log('no more pairings')
