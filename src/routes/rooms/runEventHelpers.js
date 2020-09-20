@@ -35,6 +35,10 @@ export const omniFinishRounds = async (currentRound, eventId) => {
 }
 
 export const endEvent = async (eventId) => {
+  if (jobs.lobbyAssignments[eventId]) {
+    jobs.lobbyAssignments[eventId].stop()
+  }
+
   try {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
@@ -76,8 +80,19 @@ export const endEvent = async (eventId) => {
 // }
 
 export const resetEvent = async (eventId) => {
-  if (jobs[eventId]) {
-    jobs[eventId].stop()
+  if (jobs.nextRound[eventId]) {
+    console.log('clearing next round job')
+    jobs.nextRound[eventId].stop()
+  }
+
+  if (jobs.lobbyAssignments[eventId]) {
+    console.log('clearing lobby assignments job')
+    jobs.lobbyAssignments[eventId].stop()
+  }
+
+  if (jobs.betweenRounds[eventId]) {
+    console.log('clearing between rounds')
+    jobs.betweenRounds[eventId].stop()
   }
 
   try {

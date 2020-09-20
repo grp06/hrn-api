@@ -8,6 +8,7 @@ import bulkInsertPartners from '../../gql/mutations/users/bulkInsertPartners'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import initNextRound from './initNextRound'
 import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnlineUsers'
+import scanLobbyForPairings from './scanLobbyForPairings'
 
 const nextRound = async ({ req, res, params }) => {
   const oneMinuteInMs = 60000
@@ -79,6 +80,7 @@ const nextRound = async ({ req, res, params }) => {
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
 
   if (res) {
+    scanLobbyForPairings(eventId)
     return res
       .status(200)
       .json({ message: 'Success starting the event and queueing up next round' })

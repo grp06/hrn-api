@@ -93,7 +93,6 @@ const adjustPointsBasedOnPreviousInteratction = ({
   )
 
   if (eitherPartnerHasReportedTheOther) {
-    console.log('subtract 9000')
     return -9000
   }
 

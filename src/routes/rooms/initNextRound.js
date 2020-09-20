@@ -19,7 +19,7 @@ const initNextRound = async ({
   // used for testing for super short rounds
   date.setSeconds(date.getSeconds() + 20)
 
-  jobs[eventId] = new CronJob(date, async function () {
+  jobs.nextRound[eventId] = new CronJob(date, async function () {
     // const d = new Date()
 
     if (currentRound < numRounds) {
@@ -29,7 +29,14 @@ const initNextRound = async ({
         Sentry.captureException(error)
       }
 
-      setTimeout(() => {
+      // I know it's not semantic to call variable currentTime, then increment it 20 secs
+      // but if I do const twentySecondsFromNow = currentTime.setSeconds(currentTime.getSeconds() + 20)
+      // it doesnt work. //Todo ... make this more semantic
+
+      const currentTime = new Date()
+      currentTime.setSeconds(currentTime.getSeconds() + 20)
+
+      jobs.betweenRounds[eventId] = new CronJob(currentTime, async function () {
         nextRound({
           params: {
             eventId,
@@ -38,13 +45,14 @@ const initNextRound = async ({
             numRounds,
           },
         })
-      }, betweenRoundsTimeout)
-    } else {
-      endEvent(eventId)
+      })
+
+      return jobs.betweenRounds[eventId].start()
     }
+    return endEvent(eventId)
   })
 
-  jobs[eventId].start()
+  return jobs.nextRound[eventId].start()
 
   // insert job exectuion time in a new table
   // when the server starts, check for in progress events
