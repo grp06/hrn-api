@@ -1,10 +1,8 @@
 import * as Sentry from '@sentry/node'
 
-import { resetEvent, omniFinishRounds, endEvent } from './runEventHelpers'
+import { resetEvent, omniFinishRounds } from './runEventHelpers'
 import orm from '../../services/orm'
 
-import transformPairingsToGqlVars from './transformPairingsToGqlVars'
-import bulkInsertPartners from '../../gql/mutations/users/bulkInsertPartners'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import initNextRound from './initNextRound'
 import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnlineUsers'
@@ -38,24 +36,7 @@ const nextRound = async ({ req, res, params }) => {
       currentRound = params.currentRound
     }
 
-    const [pairings, onlineUsers] = await createPairingsFromOnlineUsers(eventId, currentRound)
-    console.log('nextRound -> pairings', pairings)
-
-    if (pairings.length < onlineUsers.length / 2) {
-      console.log('no more pairings')
-      return endEvent(eventId)
-    }
-    // transform pairings to be ready for insertion to partners table
-    const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
-
-    // write to partners table
-    const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
-      objects: variablesArray,
-    })
-
-    if (bulkInsertPartnersRes.errors) {
-      throw new Error(bulkInsertPartnersRes.errors[0].message)
-    }
+    await createPairingsFromOnlineUsers({ eventId, currentRound })
 
     // set event status to in-progress
     const updateEventObjectRes = await orm.request(updateEventObject, {

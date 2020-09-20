@@ -15,9 +15,9 @@ const initNextRound = async ({
   const roundLengthInMinutes = round_length / 60000
 
   const date = new Date()
-  // date.setMinutes(date.getMinutes() + roundLengthInMinutes)
+  date.setMinutes(date.getMinutes() + roundLengthInMinutes)
   // used for testing for super short rounds
-  date.setSeconds(date.getSeconds() + 20)
+  // date.setSeconds(date.getSeconds() + 20)
 
   jobs.nextRound[eventId] = new CronJob(date, async function () {
     // const d = new Date()

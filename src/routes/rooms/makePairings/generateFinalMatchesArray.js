@@ -49,7 +49,8 @@ const generateFinalMatchesArray = (pointsArr) => {
   pointsArr.forEach((userObj) => {
     const currentUserId = userObj.userId
     const bestMatch = getCurrentUsersBestMatch(userObj, pairedUserIds)
-    if (!pairedUserIds.includes(currentUserId) && bestMatch[1] >= 0) {
+    console.log('generateFinalMatchesArray -> bestMatch', bestMatch)
+    if (!pairedUserIds.includes(currentUserId) && bestMatch && bestMatch[1] >= 0) {
       finalMatches.push([parseInt(currentUserId, 10), parseInt(bestMatch, 10) || null])
       pairedUserIds.push(currentUserId, bestMatch[0])
     }
