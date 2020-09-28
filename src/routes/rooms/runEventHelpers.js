@@ -1,60 +1,58 @@
 import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
-import createRooms from './createPreEventRooms'
+// import createRooms from './createPreEventRooms'
 import orm from '../../services/orm'
 import updateEventObject from '../../gql/mutations/event/updateEventObject'
 import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
 import resetEventStatus from '../../gql/mutations/event/resetEventStatus'
-import deleteRounds from '../../gql/mutations/event/deleteRounds'
+import deletePartnersByEventId from '../../gql/mutations/event/deletePartnersByEventId'
+import jobs from './jobs'
+
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
-  let completedRoomsPromises
   try {
-    completedRoomsPromises = await setRoomsCompleted(eventId)
-  } catch (error) {
-    Sentry.captureException(error)
-  }
-
-  try {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
-  } catch (error) {
-    Sentry.captureException(error)
-  }
 
-  // set ended_at in db for the round we just completed
-  if (currentRound > 0) {
-    try {
-      await orm.request(updateEventObject, {
+    if (currentRound > 0) {
+      const updateEventObjectRes = await orm.request(updateEventObject, {
         id: eventId,
         newStatus: 'in-between-rounds',
         newCurrentRound: currentRound,
       })
 
+      if (updateEventObjectRes.errors) {
+        throw new Error(updateEventObjectRes.errors[0].message)
+      }
+
       console.log('set room to in-between-rounds for eventId ', eventId)
-    } catch (error) {
-      Sentry.captureException(error)
-      console.log('error setting ended_at for event = ', error)
     }
+  } catch (error) {
+    Sentry.captureException(error)
   }
+
+  // set ended_at in db for the round we just completed
 }
 
 export const endEvent = async (eventId) => {
-  try {
-    await orm.request(setEventEndedAt, {
-      id: eventId,
-      ended_at: new Date().toISOString(),
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    console.log('error = ', error)
+  if (jobs.lobbyAssignments[eventId]) {
+    console.log('clear lobby assignments job')
+    jobs.lobbyAssignments[eventId].stop()
   }
 
   try {
-    await orm.request(updateEventObject, {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    await Promise.all(completedRoomsPromises)
+
+    const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
       newStatus: 'complete',
+      ended_at: new Date().toISOString(),
     })
-    console.log('event set to complete')
+    console.log('endEvent -> updateEventObjectRes', updateEventObjectRes)
+    if (updateEventObjectRes.errors) {
+      throw new Error(updateEventObjectRes.errors[0].message)
+    }
   } catch (error) {
     Sentry.captureException(error)
     console.log('error = ', error)
@@ -63,58 +61,65 @@ export const endEvent = async (eventId) => {
   console.log('EVENT FINISHED')
 }
 
-export const createNewRooms = async (currentRoundData, eventId) => {
-  const newRoundsByRowId = currentRoundData.reduce((all, row) => {
-    all.push(row.id)
-    return all
-  }, [])
+// export const createNewRooms = async (currentRoundData, eventId) => {
+//   const newRoundsByRowId = currentRoundData.reduce((all, row) => {
+//     all.push(row.id)
+//     return all
+//   }, [])
 
-  // on the frontend maybe consider putting in a delay on the 'join room'  function
-  // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
-  // twilio room id is the same as the round id in the db
-  try {
-    const createdRoomsPromises = await createRooms(newRoundsByRowId, eventId)
-    const res = await Promise.all(createdRoomsPromises)
-    console.log('just created these guys -> res', res)
-  } catch (error) {
-    Sentry.captureException(error)
-    console.log('error = ', error)
-  }
-}
+//   // on the frontend maybe consider putting in a delay on the 'join room'  function
+//   // to make sure clients dont join rooms before they're created? Unlikely, but technically possible
+//   // twilio room id is the same as the round id in the db
+//   try {
+//     const createdRoomsPromises = await createRooms(newRoundsByRowId, eventId)
+//     const res = await Promise.all(createdRoomsPromises)
+//     console.log('just created these guys -> res', res)
+//   } catch (error) {
+//     Sentry.captureException(error)
+//     console.log('error = ', error)
+//   }
+// }
 
 export const resetEvent = async (eventId) => {
-  let completedRoomsPromises
-  try {
-    completedRoomsPromises = await setRoomsCompleted(eventId)
-  } catch (error) {
-    Sentry.captureException(error)
+  console.log('jobs = ', jobs)
+  if (jobs.nextRound[eventId]) {
+    console.log('clearing next round job')
+    jobs.nextRound[eventId].stop()
+  }
+
+  if (jobs.lobbyAssignments[eventId]) {
+    console.log('clearing lobby assignments job')
+    jobs.lobbyAssignments[eventId].stop()
+  }
+
+  if (jobs.betweenRounds[eventId]) {
+    console.log('clearing between rounds')
+    jobs.betweenRounds[eventId].stop()
   }
 
   try {
+    const completedRoomsPromises = await setRoomsCompleted(eventId)
+
     await Promise.all(completedRoomsPromises)
-  } catch (error) {
-    console.log('runEvent -> error', error)
-    Sentry.captureException(error)
-  }
 
-  try {
-    await orm.request(resetEventStatus, {
+    const resetEventRes = await orm.request(resetEventStatus, {
       eventId,
     })
-    console.log('reset event to not-started')
-  } catch (error) {
-    console.log('runEvent -> error', error)
-    Sentry.captureException(error)
-  }
 
-  try {
-    await orm.request(deleteRounds, {
+    if (resetEventRes.errors) {
+      Sentry.captureException(resetEventRes.errors[0].message)
+      throw new Error(resetEventRes.errors[0].message)
+    }
+
+    const deletePartnersRes = await orm.request(deletePartnersByEventId, {
       eventId,
     })
-    console.log('deleted round')
-    console.log('eventId = ', eventId)
+
+    if (deletePartnersRes.errors) {
+      Sentry.captureException(deletePartnersRes.errors[0].message)
+      throw new Error(deletePartnersRes.errors[0].message)
+    }
   } catch (error) {
-    console.log('runEvent -> error', error)
     Sentry.captureException(error)
   }
 }

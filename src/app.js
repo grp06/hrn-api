@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import { startServer } from './server-graphql'
 import logger from './logger'
 import './services/cron-service'
+import webhooks from './webhooks'
 
 require('dotenv').config()
 const cors = require('cors')
@@ -41,8 +42,14 @@ app.use('/api/token', tokenRouter)
 app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/email', emailRouter)
+app.use('/webhooks', webhooks)
+
 app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
+})
+
+app.get('/event-trigger-test', () => {
+  console.log('hiii from event trigger test')
 })
 
 app.get('/debug-sentry', () => {
