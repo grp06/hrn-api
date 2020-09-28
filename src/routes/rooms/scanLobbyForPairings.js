@@ -33,7 +33,7 @@ const scanLobbyForPairings = (eventId) => {
       console.log('TRY TO MAKE NEW MATCHES')
       createPairingsFromOnlineUsers({ eventId, currentRound: current_round, fromLobbyScan: true })
     } else {
-      console.log('LESS THAN 2 MINS')
+      // console.log('LESS THAN 2 MINS')
     }
     // if we're not in between rounds
     // and there's > 2 mins left in the round

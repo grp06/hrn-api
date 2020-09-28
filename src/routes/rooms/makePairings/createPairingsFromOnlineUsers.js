@@ -8,9 +8,10 @@ import { endEvent } from '../runEventHelpers'
 import transformPairingsToGqlVars from '../transformPairingsToGqlVars'
 import bulkInsertPartners from '../../../gql/mutations/users/bulkInsertPartners'
 
+const _ = require('lodash')
+
 const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyScan }) => {
   try {
-    console.log('createPairingsFromOnlineUsers -> eventId', eventId)
     // get all online users for this eventId
     const onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
       eventId,
@@ -48,7 +49,6 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
       eventId,
     })
 
-    console.log('nextRound -> pairings', pairings)
     // don't end it if we're just dealing with 3 people, we're most likely testing
     const tooManyBadPairings = pairings.length > 3 && pairings.length < onlineUsers.length / 2
     if (tooManyBadPairings && !fromLobbyScan) {
@@ -56,6 +56,14 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
       endEvent(eventId)
       return 'ended event early'
     }
+
+    const flattenedPairings = _.flatten(pairings)
+    const difference = _.difference(userIds, flattenedPairings)
+    console.log(' difference', difference)
+
+    // figure out which users didn't get a partner, push them to the pariings array with a null partner
+    difference.forEach((userWithoutPairing) => pairings.push([userWithoutPairing, null]))
+    console.log('pairings = ', pairings)
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
     console.log('createPairingsFromOnlineUsers -> variablesArray', variablesArray)

@@ -81,7 +81,7 @@ export const endEvent = async (eventId) => {
 // }
 
 export const resetEvent = async (eventId) => {
-  console.log('jobs = ', jobs)
+  // console.log('jobs = ', jobs)
   if (jobs.nextRound[eventId]) {
     console.log('clearing next round job')
     jobs.nextRound[eventId].stop()

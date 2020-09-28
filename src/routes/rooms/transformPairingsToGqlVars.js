@@ -8,12 +8,15 @@ const transformPairingsToGqlVars = ({ pairings, eventId, round }) => {
       event_id: eventId,
       round,
     })
-    variablesArr.push({
-      user_id: pairing[1],
-      partner_id: pairing[0],
-      event_id: eventId,
-      round,
-    })
+
+    if (pairing[1] !== null) {
+      variablesArr.push({
+        user_id: pairing[1],
+        partner_id: pairing[0],
+        event_id: eventId,
+        round,
+      })
+    }
   })
   return variablesArr
 }

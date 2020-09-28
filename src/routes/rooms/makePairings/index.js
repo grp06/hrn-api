@@ -9,12 +9,10 @@ const makePairings = ({ onlineUsers, allRoundsDataForOnlineUsers, currentRound, 
     currentRound,
     eventId,
   })
-  console.log('makePairings -> calculatedPoints', JSON.stringify(calculatedPoints, null, 2))
 
   // shuffleArray(pointsArr)
 
   const finalMatches = generateFinalMatchesArray(calculatedPoints)
-  console.log('makePairings -> finalMatches', finalMatches)
 
   return finalMatches
 }
