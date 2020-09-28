@@ -49,10 +49,12 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
     })
 
     console.log('nextRound -> pairings', pairings)
-    const tooManyBadPairings = pairings.length < onlineUsers.length / 2
+    // don't end it if we're just dealing with 3 people, we're most likely testing
+    const tooManyBadPairings = pairings.length > 3 && pairings.length < onlineUsers.length / 2
     if (tooManyBadPairings && !fromLobbyScan) {
       console.log('no more pairings, end the event')
-      return endEvent(eventId)
+      endEvent(eventId)
+      return 'ended event early'
     }
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })

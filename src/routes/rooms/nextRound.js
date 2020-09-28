@@ -36,8 +36,11 @@ const nextRound = async ({ req, res, params }) => {
       currentRound = params.currentRound
     }
 
-    await createPairingsFromOnlineUsers({ eventId, currentRound })
-
+    const createPairingsRes = await createPairingsFromOnlineUsers({ eventId, currentRound })
+    console.log('nextRound -> createPairingsRes', createPairingsRes)
+    if (createPairingsRes === 'ended event') {
+      return null
+    }
     // set event status to in-progress
     const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,

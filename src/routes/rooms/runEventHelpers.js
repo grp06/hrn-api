@@ -49,7 +49,7 @@ export const endEvent = async (eventId) => {
       newStatus: 'complete',
       ended_at: new Date().toISOString(),
     })
-
+    console.log('endEvent -> updateEventObjectRes', updateEventObjectRes)
     if (updateEventObjectRes.errors) {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
