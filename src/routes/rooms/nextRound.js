@@ -1,11 +1,11 @@
 import * as Sentry from '@sentry/node'
 
-import { resetEvent, omniFinishRounds } from './runEventHelpers'
+import { resetEvent, omniFinishRounds, endEvent } from './runEventHelpers'
 import orm from '../../services/orm'
 
 import { updateEventObject } from '../../gql/mutations'
 import initNextRound from './initNextRound'
-import createPairingsFromOnlineUsers from '../../matchingAlgo/createPairingsFromOnlineUsers'
+import omniCreatePairings from '../../matchingAlgo/omniCreatePairings'
 import scanLobbyForPairings from './scanLobbyForPairings'
 
 const nextRound = async ({ req, res, params }) => {
@@ -36,10 +36,11 @@ const nextRound = async ({ req, res, params }) => {
       currentRound = params.currentRound
     }
 
-    const createPairingsRes = await createPairingsFromOnlineUsers({ eventId, currentRound })
+    const createPairingsRes = await omniCreatePairings({ eventId, currentRound })
 
     if (createPairingsRes === 'ended event early') {
-      console.log('nextRound -> createPairingsRes', createPairingsRes)
+      console.log('no more pairings, end the event')
+      endEvent(eventId)
       return null
     }
     // set event status to in-progress
@@ -64,8 +65,8 @@ const nextRound = async ({ req, res, params }) => {
   }
 
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
-
   scanLobbyForPairings(eventId)
+
   if (res) {
     return res
       .status(200)

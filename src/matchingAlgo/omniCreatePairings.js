@@ -4,7 +4,6 @@ import { getPartnersFromListOfUserIds, getAvailableLobbyUsers } from '../gql/que
 
 import makePairings from './makePairings'
 import orm from '../services/orm'
-import { endEvent } from '../routes/rooms/runEventHelpers'
 import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
 import { bulkInsertPartners } from '../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
@@ -12,7 +11,7 @@ import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 
 const _ = require('lodash')
 
-const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyScan }) => {
+const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
   try {
     // get all online users for this eventId
     const [userIds, onlineUsers] = await getOnlineUsers(eventId)
@@ -35,8 +34,6 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
     const tooManyBadPairings = pairings.length > 3 && pairings.length < onlineUsers.length / 2
 
     if (tooManyBadPairings && !fromLobbyScan) {
-      console.log('no more pairings, end the event')
-      endEvent(eventId)
       return 'ended event early'
     }
 
@@ -62,9 +59,9 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }
   } catch (error) {
-    console.log('createPairingsFromOnlineUsers -> error', error)
+    console.log('omniCreatePairings -> error', error)
     Sentry.captureException(error)
   }
 }
 
-export default createPairingsFromOnlineUsers
+export default omniCreatePairings

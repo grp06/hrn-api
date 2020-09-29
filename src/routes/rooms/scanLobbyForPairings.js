@@ -4,7 +4,7 @@ import { CronJob } from 'cron'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { getEventInfoByEventId } from '../../gql/queries'
-import createPairingsFromOnlineUsers from '../../matchingAlgo/createPairingsFromOnlineUsers'
+import omniCreatePairings from '../../matchingAlgo/omniCreatePairings'
 
 const scanLobbyForPairings = (eventId) => {
   console.log('scanLobbyForPairings -> eventId', eventId)
@@ -31,7 +31,7 @@ const scanLobbyForPairings = (eventId) => {
 
     if (status === 'room-in-progress' && moreThanTwoMinsLeft) {
       console.log('TRY TO MAKE NEW MATCHES')
-      createPairingsFromOnlineUsers({ eventId, currentRound: current_round, fromLobbyScan: true })
+      omniCreatePairings({ eventId, currentRound: current_round, fromLobbyScan: true })
     } else {
       console.log('LESS THAN 2 MINS')
     }
