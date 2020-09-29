@@ -66,7 +66,6 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
     console.log('pairings = ', pairings)
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
-    console.log('createPairingsFromOnlineUsers -> variablesArray', variablesArray)
 
     // write to partners table
     const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {

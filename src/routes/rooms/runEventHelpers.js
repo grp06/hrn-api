@@ -14,19 +14,17 @@ export const omniFinishRounds = async (currentRound, eventId) => {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
 
-    if (currentRound > 0) {
-      const updateEventObjectRes = await orm.request(updateEventObject, {
-        id: eventId,
-        newStatus: 'in-between-rounds',
-        newCurrentRound: currentRound,
-      })
+    const updateEventObjectRes = await orm.request(updateEventObject, {
+      id: eventId,
+      newStatus: 'in-between-rounds',
+      newCurrentRound: currentRound,
+    })
 
-      if (updateEventObjectRes.errors) {
-        throw new Error(updateEventObjectRes.errors[0].message)
-      }
-
-      console.log('set room to in-between-rounds for eventId ', eventId)
+    if (updateEventObjectRes.errors) {
+      throw new Error(updateEventObjectRes.errors[0].message)
     }
+
+    console.log('set room to in-between-rounds for eventId ', eventId)
   } catch (error) {
     Sentry.captureException(error)
   }
@@ -50,6 +48,7 @@ export const endEvent = async (eventId) => {
       ended_at: new Date().toISOString(),
     })
     console.log('endEvent -> updateEventObjectRes', updateEventObjectRes)
+
     if (updateEventObjectRes.errors) {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
