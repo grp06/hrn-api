@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-const getEventUsers = gql`
+const getPartnersFromListOfUserIds = gql`
   query getPartnersFromListOfUserIds($userIds: [Int!]) {
     partners(where: { user_id: { _in: $userIds } }) {
       id
@@ -13,4 +13,4 @@ const getEventUsers = gql`
   }
 `
 
-export default getEventUsers
+export default getPartnersFromListOfUserIds

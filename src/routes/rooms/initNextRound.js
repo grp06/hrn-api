@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import { CronJob } from 'cron'
 import nextRound from './nextRound'
 import { endEvent, omniFinishRounds } from './runEventHelpers'
-import jobs from './jobs'
+import jobs from '../../services/jobs'
 
 let betweenRoundsDelay = 20
 

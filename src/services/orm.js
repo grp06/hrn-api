@@ -2,7 +2,7 @@
 
 import axios from 'axios'
 import { print } from 'graphql'
-import { constants } from '../extensions/jwtHelper.js'
+import { constants } from '../extensions/jwtHelper'
 import { HASURA_ENDPOINT } from '../config'
 
 const request = async (gqlQuery, variables = {}, token) => {

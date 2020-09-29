@@ -1,12 +1,8 @@
 import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
-// import createRooms from './createPreEventRooms'
 import orm from '../../services/orm'
-import updateEventObject from '../../gql/mutations/event/updateEventObject'
-import setEventEndedAt from '../../gql/mutations/event/setEventEndedAt'
-import resetEventStatus from '../../gql/mutations/event/resetEventStatus'
-import deletePartnersByEventId from '../../gql/mutations/event/deletePartnersByEventId'
-import jobs from './jobs'
+import { updateEventObject, resetEventStatus, deletePartnersByEventId } from '../../gql/mutations'
+import jobs from '../../services/jobs'
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {

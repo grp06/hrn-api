@@ -1,9 +1,12 @@
 import orm from './orm'
-import { getEventsByStartTime } from '../gql/queries/events/getEventsByStartTime'
-import { getEventsByEndTime } from '../gql/queries/events/getEventsByEndTime'
+import {
+  getEventsByStartTime,
+  getEventsByEndTime,
+  getEventUsers,
+  getMutualThumbsByEventId,
+} from '../gql/queries'
+
 import { sendOneHourEmailReminder, sendEmail } from './email-service'
-import { getEventUsers } from '../gql/queries/users/getEventUsers'
-import { getMutualThumbsByEventId } from '../gql/queries/users/getMutualThumbsByEventId'
 
 const cron = require('node-cron')
 const moment = require('moment')

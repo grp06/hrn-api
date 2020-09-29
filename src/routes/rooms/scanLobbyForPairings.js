@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/node'
 
 import { CronJob } from 'cron'
-import jobs from './jobs'
+import jobs from '../../services/jobs'
 import orm from '../../services/orm'
-import { getEventInfoByEventId } from '../../gql/queries/events/getEventInfoByEventId'
-import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnlineUsers'
+import { getEventInfoByEventId } from '../../gql/queries'
+import createPairingsFromOnlineUsers from '../../matchingAlgo/createPairingsFromOnlineUsers'
 
 const scanLobbyForPairings = (eventId) => {
   console.log('scanLobbyForPairings -> eventId', eventId)

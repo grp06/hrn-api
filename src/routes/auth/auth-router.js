@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
-import findUserByEmail from '../../gql/queries/users/findUserByEmail'
+import { findUserByEmail } from '../../gql/queries'
 import { createToken } from '../../extensions/jwtHelper'
 import { comparePasswords } from '../../services/auth-service'
 

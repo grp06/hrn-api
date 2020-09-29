@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const getMutualThumbsByEventId = gql`
+const getMutualThumbsByEventId = gql`
   query getMutualThumbsByEventId($event_id: Int!) {
     rounds(
       where: {

@@ -10,7 +10,7 @@ const makePairings = ({ onlineUsers, allRoundsDataForOnlineUsers, currentRound, 
     eventId,
   })
 
-  // shuffleArray(pointsArr)
+  shuffleArray(calculatedPoints)
 
   const finalMatches = generateFinalMatchesArray(calculatedPoints)
 

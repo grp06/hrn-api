@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const findUserByEmail = gql`
+const findUserByEmail = gql`
   query findUserByEmail($email: String!) {
     users(where: { email: { _eq: $email } }) {
       id

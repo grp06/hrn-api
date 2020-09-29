@@ -1,5 +1,5 @@
-import { getOnlineUsersByEventId } from '../../gql/queries/users/getOnlineUsersByEventId'
 import * as Sentry from '@sentry/node'
+import { getOnlineUsersByEventId } from '../../gql/queries'
 import orm from '../../services/orm'
 
 const getOnlineUsers = async (eventId) => {

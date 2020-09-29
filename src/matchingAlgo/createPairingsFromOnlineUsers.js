@@ -1,12 +1,12 @@
 import * as Sentry from '@sentry/node'
 
-import getAvailableLobbyUsers from '../../../gql/queries/users/getAvailableLobbyUsers'
-import getPartnersFromListOfUserIds from '../../../gql/queries/users/getPartnersFromListOfUserIds'
-import makePairings from '.'
-import orm from '../../../services/orm'
-import { endEvent } from '../runEventHelpers'
-import transformPairingsToGqlVars from '../transformPairingsToGqlVars'
-import bulkInsertPartners from '../../../gql/mutations/users/bulkInsertPartners'
+import { getPartnersFromListOfUserIds, getAvailableLobbyUsers } from '../gql/queries'
+
+import makePairings from './makePairings'
+import orm from '../services/orm'
+import { endEvent } from '../routes/rooms/runEventHelpers'
+import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
+import { bulkInsertPartners } from '../gql/mutations'
 
 const _ = require('lodash')
 
@@ -23,7 +23,7 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
     }
 
     const onlineUsers = onlineUsersResponse.data.online_users
-    console.log('createPairingsFromOnlineUsers -> onlineUsers', onlineUsers)
+    console.log(`found ${onlineUsers.length} online users`)
 
     if (onlineUsers.length < 2 && fromLobbyScan) {
       console.log('not enough to pair from lobby scan')
@@ -57,13 +57,16 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
       return 'ended event early'
     }
 
-    const flattenedPairings = _.flatten(pairings)
-    const difference = _.difference(userIds, flattenedPairings)
-    console.log(' difference', difference)
+    if (!fromLobbyScan) {
+      // when making assignments, after creating all the pairings, find out who didn't get paired
+      const flattenedPairings = _.flatten(pairings)
+      const difference = _.difference(userIds, flattenedPairings)
+      console.log(' difference', difference)
 
-    // figure out which users didn't get a partner, push them to the pariings array with a null partner
-    difference.forEach((userWithoutPairing) => pairings.push([userWithoutPairing, null]))
-    console.log('pairings = ', pairings)
+      // push them to the pariings array with a null partner
+      difference.forEach((userWithoutPairing) => pairings.push([userWithoutPairing, null]))
+      console.log('pairings = ', pairings)
+    }
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
 

@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const getRoundsByEventId = gql`
+const getRoundsByEventId = gql`
   query getRoundsByEventId($event_id: Int!) {
     rounds(where: { event_id: { _eq: $event_id } }) {
       id

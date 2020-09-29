@@ -3,9 +3,9 @@ import * as Sentry from '@sentry/node'
 import { resetEvent, omniFinishRounds } from './runEventHelpers'
 import orm from '../../services/orm'
 
-import updateEventObject from '../../gql/mutations/event/updateEventObject'
+import {updateEventObject} from '../../gql/mutations'
 import initNextRound from './initNextRound'
-import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnlineUsers'
+import createPairingsFromOnlineUsers from '../../matchingAlgo/createPairingsFromOnlineUsers'
 import scanLobbyForPairings from './scanLobbyForPairings'
 
 const nextRound = async ({ req, res, params }) => {

@@ -24,7 +24,6 @@
     //   "__logger": "readonly"
     // },
 
-    "globals": "warn",
     "no-underscore-dangle": [
       "error",
       {

@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const findUserById = gql`
+const findUserById = gql`
   query findUserById($id: Int!) {
     users(where: { id: { _eq: $id } }) {
       id

@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const getEventInfoByEventId = gql`
+const getEventInfoByEventId = gql`
   query getEventInfoByEventId($eventId: Int!) {
     events(where: { id: { _eq: $eventId } }) {
       id
@@ -11,3 +11,4 @@ export const getEventInfoByEventId = gql`
     }
   }
 `
+export default getEventInfoByEventId

@@ -1,7 +1,7 @@
 import gql from 'graphql-tag'
 
-export const getEventsByEndTime = gql`
-  query MyQuery($less_than: timestamptz, $greater_than: timestamptz) {
+const getEventsByEndTime = gql`
+  query getEventsByEndTime($less_than: timestamptz, $greater_than: timestamptz) {
     events(where: { ended_at: { _lte: $less_than, _gt: $greater_than } }) {
       event_name
       ended_at
