@@ -17,8 +17,8 @@ const scanLobbyForPairings = (eventId) => {
         eventId,
       })
     } catch (error) {
+      console.log('scanLobbyForPairings -> error', error)
       Sentry.captureException(error)
-      console.log('error = ', error)
     }
 
     const eventObj = eventInfo.data.events[0]

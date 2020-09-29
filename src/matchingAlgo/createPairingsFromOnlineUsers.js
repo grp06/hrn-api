@@ -7,40 +7,22 @@ import orm from '../services/orm'
 import { endEvent } from '../routes/rooms/runEventHelpers'
 import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
 import { bulkInsertPartners } from '../gql/mutations'
+import getOnlineUsers from './getOnlineUsers'
+import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 
 const _ = require('lodash')
 
 const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyScan }) => {
   try {
     // get all online users for this eventId
-    const onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
-      eventId,
-    })
+    const [userIds, onlineUsers] = await getOnlineUsers(eventId)
 
-    if (onlineUsersResponse.errors) {
-      Sentry.captureException(onlineUsersResponse.errors[0].message)
-      throw new Error(onlineUsersResponse.errors[0].message)
-    }
-
-    const onlineUsers = onlineUsersResponse.data.online_users
-    console.log(`found ${onlineUsers.length} online users`)
-
-    if (onlineUsers.length < 2 && fromLobbyScan) {
+    if (userIds.length < 2 && fromLobbyScan) {
       console.log('not enough to pair from lobby scan')
       return null
     }
 
-    const userIds = onlineUsers.map((user) => user.id)
-    const partnersListResponse = await orm.request(getPartnersFromListOfUserIds, {
-      userIds,
-    })
-
-    if (partnersListResponse.errors) {
-      Sentry.captureException(partnersListResponse.errors[0].message)
-      throw new Error(partnersListResponse.errors[0].message)
-    }
-
-    const allRoundsDataForOnlineUsers = partnersListResponse.data.partners
+    const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds)
 
     const pairings = makePairings({
       onlineUsers,
@@ -51,6 +33,7 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
     const tooManyBadPairings = pairings.length > 3 && pairings.length < onlineUsers.length / 2
+
     if (tooManyBadPairings && !fromLobbyScan) {
       console.log('no more pairings, end the event')
       endEvent(eventId)
@@ -79,8 +62,8 @@ const createPairingsFromOnlineUsers = async ({ eventId, currentRound, fromLobbyS
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }
   } catch (error) {
+    console.log('createPairingsFromOnlineUsers -> error', error)
     Sentry.captureException(error)
-    console.log('error = ', error)
   }
 }
 

@@ -24,6 +24,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
 
     console.log('set room to in-between-rounds for eventId ', eventId)
   } catch (error) {
+    console.log('omniFinishRounds -> error', error)
     Sentry.captureException(error)
   }
 
@@ -51,8 +52,8 @@ export const endEvent = async (eventId) => {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
   } catch (error) {
+    console.log('endEvent -> error', error)
     Sentry.captureException(error)
-    console.log('error = ', error)
   }
 
   console.log('EVENT FINISHED')

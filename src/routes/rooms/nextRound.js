@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node'
 import { resetEvent, omniFinishRounds } from './runEventHelpers'
 import orm from '../../services/orm'
 
-import {updateEventObject} from '../../gql/mutations'
+import { updateEventObject } from '../../gql/mutations'
 import initNextRound from './initNextRound'
 import createPairingsFromOnlineUsers from '../../matchingAlgo/createPairingsFromOnlineUsers'
 import scanLobbyForPairings from './scanLobbyForPairings'
@@ -37,8 +37,9 @@ const nextRound = async ({ req, res, params }) => {
     }
 
     const createPairingsRes = await createPairingsFromOnlineUsers({ eventId, currentRound })
-    console.log('nextRound -> createPairingsRes', createPairingsRes)
-    if (createPairingsRes === 'ended event') {
+
+    if (createPairingsRes === 'ended event early') {
+      console.log('nextRound -> createPairingsRes', createPairingsRes)
       return null
     }
     // set event status to in-progress
@@ -53,7 +54,8 @@ const nextRound = async ({ req, res, params }) => {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
   } catch (error) {
-    console.log('error = ', error)
+    console.log('nextRound -> error', error)
+
     if (res) {
       Sentry.captureException(error)
       return res.status(500).json({ error })
