@@ -56,13 +56,11 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
     return jobs.betweenRounds[eventId].start()
   })
 
-  return jobs.nextRound[eventId].start()
-
+  // TODO
   // insert job exectuion time in a new table
   // when the server starts, check for in progress events
   // if theres an in progress event, set up new cron
 
-  // also, when the server starts, if therse an on going event
-  // set up the subscription
+  return jobs.nextRound[eventId].start()
 }
 export default initNextRound

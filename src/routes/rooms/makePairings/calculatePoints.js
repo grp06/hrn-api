@@ -17,7 +17,6 @@ const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) 
     }
   })
 
-  // console.log('calculatePoints -> pointsArr', JSON.stringify(pointsArr, null, 2))
   // loop over online users
   onlineUsersWithSimplifiedTags.forEach((myUser) => {
     // for each of my tags

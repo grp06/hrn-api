@@ -63,8 +63,8 @@ const nextRound = async ({ req, res, params }) => {
 
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
 
+  scanLobbyForPairings(eventId)
   if (res) {
-    scanLobbyForPairings(eventId)
     return res
       .status(200)
       .json({ message: 'Success starting the event and queueing up next round' })

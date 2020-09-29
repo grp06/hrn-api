@@ -8,7 +8,7 @@ import createPairingsFromOnlineUsers from './makePairings/createPairingsFromOnli
 
 const scanLobbyForPairings = (eventId) => {
   console.log('scanLobbyForPairings -> eventId', eventId)
-  jobs.lobbyAssignments[eventId] = new CronJob('*/15 * * * * *', async function () {
+  jobs.lobbyAssignments[eventId] = new CronJob('*/20 * * * * *', async function () {
     console.log('scanning lobby for assignments')
     // get query for eventObj by eventId
     let eventInfo
