@@ -9,6 +9,7 @@ let betweenRoundsDelay = 20
 const initNextRound = async ({ numRounds, eventId, roundLength: round_length, currentRound }) => {
   const roundLengthInMinutes = round_length / 60000
   const eventIsOver = currentRound === numRounds
+
   const date = new Date()
   date.setMinutes(date.getMinutes() + roundLengthInMinutes)
   // used for testing for super short rounds
@@ -32,10 +33,9 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
     const currentTime = new Date()
 
     if (eventIsOver) {
-      console.log('set between rounds delay to 10')
       betweenRoundsDelay = 10
     }
-    console.log('betweenRoundsDelay = ', betweenRoundsDelay)
+
     currentTime.setSeconds(currentTime.getSeconds() + betweenRoundsDelay)
     // in 20 seconds, run this code
     jobs.betweenRounds[eventId] = new CronJob(currentTime, async function () {
