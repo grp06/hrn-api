@@ -40,7 +40,9 @@ const scanLobbyForPairings = (eventId) => {
     // make pairings with eventId and currentRound
   })
 
-  jobs.lobbyAssignments[eventId].start()
+  setTimeout(() => {
+    jobs.lobbyAssignments[eventId].start()
+  }, 20000)
 }
 
 export default scanLobbyForPairings
