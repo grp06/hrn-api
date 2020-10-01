@@ -72,11 +72,7 @@ const nextRound = async ({ req, res, params }) => {
       .status(200)
       .json({ message: 'Success starting the event and queueing up next round' })
   }
-
-  // only in round 1
-  // subscribe to online users
-  // check to see if neither has blocked the other
-  // pair off and insert rounds
+  
 }
 
 export default nextRound
