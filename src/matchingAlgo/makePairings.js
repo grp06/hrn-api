@@ -13,6 +13,7 @@ const makePairings = ({
   fromLobbyScan,
   userIds,
 }) => {
+  console.log('fromLobbyScan', fromLobbyScan)
   let pairingAttempts = 0
   let finalMatches
   let numNullPairings

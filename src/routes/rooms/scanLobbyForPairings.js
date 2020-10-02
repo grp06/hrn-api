@@ -23,6 +23,7 @@ const scanLobbyForPairings = (eventId) => {
 
     const eventObj = eventInfo.data.events[0]
     const { status, updated_at, round_length, current_round } = eventObj
+    console.log('scanLobbyForPairings -> status', status)
 
     const roundLengthInMs = round_length * 60000
     const twoMinsInMs = 120000

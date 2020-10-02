@@ -3,6 +3,8 @@ import { startServer } from './server-graphql'
 import logger from './logger'
 import './services/cron-service'
 import webhooks from './webhooks'
+import orm from './services/orm'
+import { bulkInsertPartners } from './gql/mutations'
 
 require('dotenv').config()
 const cors = require('cors')
@@ -70,5 +72,556 @@ app.use(function errorHandler(error, req, res, next) {
   }
   res.status(500).json(response)
 })
+
+const insertPartners = async () => {
+  try {
+    const rounds = [
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 89,
+        },
+        event_id: 36,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 89,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 90,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 97,
+        round_number: 6,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 92,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 88,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 85,
+        },
+        event_id: 77,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 86,
+        },
+        event_id: 36,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 84,
+        },
+        partnerY: {
+          id: 87,
+        },
+        event_id: 77,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 85,
+        },
+        partnerY: {
+          id: 87,
+        },
+        event_id: 36,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 85,
+        },
+        partnerY: {
+          id: 87,
+        },
+        event_id: 77,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 85,
+        },
+        partnerY: {
+          id: 86,
+        },
+        event_id: 36,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 85,
+        },
+        partnerY: {
+          id: 89,
+        },
+        event_id: 77,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 86,
+        },
+        partnerY: {
+          id: 87,
+        },
+        event_id: 77,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 175,
+        },
+        event_id: 92,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 97,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 190,
+        },
+        event_id: 93,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 185,
+        },
+        event_id: 97,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 85,
+        },
+        event_id: 94,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 116,
+        },
+        partnerY: {
+          id: 85,
+        },
+        event_id: 93,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 182,
+        },
+        event_id: 97,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 92,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 90,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 92,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 90,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 97,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 182,
+        },
+        event_id: 92,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 182,
+        },
+        event_id: 90,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 182,
+        },
+        event_id: 88,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 183,
+        },
+        event_id: 88,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 185,
+        },
+        event_id: 92,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 175,
+        },
+        partnerY: {
+          id: 185,
+        },
+        event_id: 97,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 181,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 90,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 181,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 90,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 181,
+        },
+        partnerY: {
+          id: 182,
+        },
+        event_id: 90,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 92,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 90,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 185,
+        },
+        event_id: 97,
+        round_number: 6,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 89,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 183,
+        },
+        event_id: 88,
+        round_number: 5,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 90,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 88,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 89,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 92,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 182,
+        },
+        partnerY: {
+          id: 185,
+        },
+        event_id: 92,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 183,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 88,
+        round_number: 2,
+      },
+      {
+        partnerX: {
+          id: 183,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 88,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 185,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 92,
+        round_number: 4,
+      },
+      {
+        partnerX: {
+          id: 185,
+        },
+        partnerY: {
+          id: 90,
+        },
+        event_id: 97,
+        round_number: 1,
+      },
+      {
+        partnerX: {
+          id: 190,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 94,
+        round_number: 3,
+      },
+      {
+        partnerX: {
+          id: 190,
+        },
+        partnerY: {
+          id: 84,
+        },
+        event_id: 93,
+        round_number: 1,
+      },
+    ]
+    const variablesArr = []
+
+    rounds.forEach((round) => {
+      variablesArr.push({
+        user_id: round.partnerX.id,
+        partner_id: round.partnerY.id,
+        event_id: round.event_id,
+        round: round.round_number,
+        partner_shared_details: true,
+        i_shared_details: true,
+      })
+
+      variablesArr.push({
+        user_id: round.partnerY.id,
+        partner_id: round.partnerX.id,
+        event_id: round.event_id,
+        round: round.round_number,
+        partner_shared_details: true,
+        i_shared_details: true,
+      })
+    })
+    // write to partners table
+    const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
+      objects: variablesArr,
+    })
+    console.log('insertPartners -> bulkInsertPartnersRes', bulkInsertPartnersRes)
+
+    if (bulkInsertPartnersRes.errors) {
+      throw new Error(bulkInsertPartnersRes.errors[0].message)
+    }
+  } catch (error) {
+    console.log('error = ', error)
+  }
+}
+
+insertPartners()
 
 module.exports = app

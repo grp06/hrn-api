@@ -8,17 +8,20 @@ const killAllJobsByEventId = (eventId) => {
   // console.log('jobs = ', jobs)
   if (jobs.lobbyAssignments[eventId]) {
     jobs.lobbyAssignments[eventId].stop()
-    console.log('clearing lobby assignments job = ', jobs)
+    jobs.lobbyAssignments[eventId] = null
+    console.log('clearing lobby assignments job')
   }
 
   if (jobs.nextRound[eventId]) {
     console.log('clearing next round job')
     jobs.nextRound[eventId].stop()
+    jobs.nextRound[eventId] = null
   }
 
   if (jobs.betweenRounds[eventId]) {
     console.log('clearing between rounds')
     jobs.betweenRounds[eventId].stop()
+    jobs.betweenRounds[eventId] = null
   }
 }
 
@@ -27,6 +30,8 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   if (jobs.lobbyAssignments[eventId]) {
     console.log('omni finish lobby assignments job = ', jobs)
     jobs.lobbyAssignments[eventId].stop()
+    jobs.lobbyAssignments[eventId] = null
+    console.log('omni finish lobby assignments job = ', jobs)
   }
   try {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
@@ -53,7 +58,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
 
 export const endEvent = async (eventId) => {
   killAllJobsByEventId(eventId)
-  console.log('jobs = ', jobs)
+  // console.log('jobs = ', jobs)
   try {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)

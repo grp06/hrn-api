@@ -4,9 +4,8 @@ import nextRound from './nextRound'
 import { endEvent, omniFinishRounds } from './runEventHelpers'
 import jobs from '../../services/jobs'
 
-let betweenRoundsDelay = 20
-
 const initNextRound = async ({ numRounds, eventId, roundLength: round_length, currentRound }) => {
+  let betweenRoundsDelay = 20
   const roundLengthInMinutes = round_length / 60000
   const eventIsOver = currentRound === numRounds
 
@@ -31,12 +30,15 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
     // it doesnt work. //Todo ... make this more semantic
 
     const currentTime = new Date()
+    console.log('initNextRound -> currentTime', currentTime)
 
     if (eventIsOver) {
+      console.log('initNextRound -> eventIsOver', eventIsOver)
       betweenRoundsDelay = 10
     }
 
     currentTime.setSeconds(currentTime.getSeconds() + betweenRoundsDelay)
+    console.log('initNextRound -> currentTime', currentTime)
     // in 20 seconds, run this code
     jobs.betweenRounds[eventId] = new CronJob(currentTime, async function () {
       if (eventIsOver) {
