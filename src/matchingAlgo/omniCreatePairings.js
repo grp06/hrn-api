@@ -28,6 +28,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
       allRoundsDataForOnlineUsers,
       currentRound,
       eventId,
+      fromLobbyScan,
     })
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
@@ -37,16 +38,6 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
       return 'ended event early'
     }
 
-    if (!fromLobbyScan) {
-      // when making assignments, after creating all the pairings, find out who didn't get paired
-      const flattenedPairings = _.flatten(pairings)
-      const difference = _.difference(userIds, flattenedPairings)
-      console.log(' difference', difference)
-
-      // push them to the pariings array with a null partner
-      difference.forEach((userWithoutPairing) => pairings.push([userWithoutPairing, null]))
-      console.log('pairings = ', pairings)
-    }
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, eventId, round: currentRound })
 
