@@ -27,7 +27,6 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   if (jobs.lobbyAssignments[eventId]) {
     jobs.lobbyAssignments[eventId].stop()
   }
-  console.log('jobs = ', jobs)
   try {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)

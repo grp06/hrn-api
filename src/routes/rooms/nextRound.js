@@ -72,7 +72,6 @@ const nextRound = async ({ req, res, params }) => {
       .status(200)
       .json({ message: 'Success starting the event and queueing up next round' })
   }
-  
 }
 
 export default nextRound
