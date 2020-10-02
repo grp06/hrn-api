@@ -14,6 +14,8 @@ const makePairings = ({
   userIds,
 }) => {
   let pairingAttempts = 0
+  let finalMatches
+  let numNullPairings
 
   const attemptPairings = () => {
     const calculatedPoints = calculatePoints({
@@ -31,35 +33,36 @@ const makePairings = ({
       eventId,
     })
 
-    const matchesArray = generateFinalMatchesArray(reorderedWithNullsInFront)
-    return matchesArray
-  }
+    finalMatches = generateFinalMatchesArray(reorderedWithNullsInFront)
+    if (!fromLobbyScan) {
+      // when making assignments, after creating all the pairings, find out who didn't get paired
+      const flattenedPairings = _.flatten(finalMatches)
+      const difference = _.difference(userIds, flattenedPairings)
+      console.log(' difference', difference)
 
-  const finalMatches = attemptPairings()
-  console.log('makePairings -> finalMatches', finalMatches)
-
-  if (!fromLobbyScan) {
-    // when making assignments, after creating all the pairings, find out who didn't get paired
-    const flattenedPairings = _.flatten(finalMatches)
-    const difference = _.difference(userIds, flattenedPairings)
-    console.log(' difference', difference)
-
-    // push them to the pariings array with a null partner
-    difference.forEach((userWithoutPairing) => finalMatches.push([userWithoutPairing, null]))
-  }
-
-  const numNullPairings = finalMatches.reduce((all, item, index) => {
-    if (item[1] === null) {
-      all += 1
+      // push them to the pariings array with a null partner
+      difference.forEach((userWithoutPairing) => finalMatches.push([userWithoutPairing, null]))
     }
-    return all
-  }, 0)
-  console.log('makePairings -> numNullPairings', numNullPairings)
+
+    numNullPairings = finalMatches.reduce((all, item, index) => {
+      if (item[1] === null) {
+        all += 1
+      }
+      return all
+    }, 0)
+    console.log('makePairings -> numNullPairings', numNullPairings)
+  }
+
+  attemptPairings()
+
+  console.log('makePairings -> finalMatches', finalMatches)
 
   if (numNullPairings > 1 && pairingAttempts < 20) {
     pairingAttempts += 1
     console.log('makePairings -> pairingAttempts', pairingAttempts)
-    return attemptPairings()
+    finalMatches = null
+    numNullPairings = null
+    attemptPairings()
   }
 
   return finalMatches
