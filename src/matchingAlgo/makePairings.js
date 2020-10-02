@@ -51,19 +51,19 @@ const makePairings = ({
       return all
     }, 0)
     console.log('makePairings -> numNullPairings', numNullPairings)
+
+    if (numNullPairings > 1 && pairingAttempts < 20) {
+      pairingAttempts += 1
+      console.log('makePairings -> pairingAttempts', pairingAttempts)
+      finalMatches = null
+      numNullPairings = null
+      return attemptPairings()
+    }
   }
 
   attemptPairings()
 
   console.log('makePairings -> finalMatches', finalMatches)
-
-  if (numNullPairings > 1 && pairingAttempts < 20) {
-    pairingAttempts += 1
-    console.log('makePairings -> pairingAttempts', pairingAttempts)
-    finalMatches = null
-    numNullPairings = null
-    attemptPairings()
-  }
 
   return finalMatches
 }
