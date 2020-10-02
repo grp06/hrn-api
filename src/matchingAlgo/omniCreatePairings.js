@@ -9,8 +9,6 @@ import { bulkInsertPartners } from '../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
 import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 
-const _ = require('lodash')
-
 const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
   try {
     // get all online users for this eventId
@@ -29,6 +27,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
       currentRound,
       eventId,
       fromLobbyScan,
+      userIds,
     })
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
