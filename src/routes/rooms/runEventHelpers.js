@@ -1,7 +1,12 @@
 import * as Sentry from '@sentry/node'
 import setRoomsCompleted from './set-rooms-completed'
 import orm from '../../services/orm'
-import { updateEventObject, resetEventStatus, deletePartnersByEventId } from '../../gql/mutations'
+import {
+  updateEventObject,
+  resetEventStatus,
+  deletePartnersByEventId,
+  deleteCronTimestamp,
+} from '../../gql/mutations'
 import jobs from '../../services/jobs'
 
 const killAllJobsByEventId = (eventId) => {
@@ -47,6 +52,16 @@ export const omniFinishRounds = async (currentRound, eventId) => {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
 
+    const deleteCronTimestampRes = await orm.request(deleteCronTimestamp, {
+      eventId,
+    })
+    console.log('endEvent -> deleteCronTimestampRes', deleteCronTimestampRes)
+
+    if (deleteCronTimestampRes.errors) {
+      Sentry.captureException(deleteCronTimestampRes.errors[0].message)
+      throw new Error(deleteCronTimestampRes.errors[0].message)
+    }
+
     console.log('set room to in-between-rounds for eventId ', eventId)
   } catch (error) {
     console.log('omniFinishRounds -> error', error)
@@ -68,10 +83,20 @@ export const endEvent = async (eventId) => {
       newStatus: 'complete',
       ended_at: new Date().toISOString(),
     })
-    console.log('endEvent -> updateEventObjectRes', updateEventObjectRes)
 
     if (updateEventObjectRes.errors) {
       throw new Error(updateEventObjectRes.errors[0].message)
+    }
+
+    const deleteCronTimestampRes = await orm.request(deleteCronTimestamp, {
+      eventId,
+    })
+
+    console.log('endEvent -> deleteCronTimestampRes', deleteCronTimestampRes)
+
+    if (deleteCronTimestampRes.errors) {
+      Sentry.captureException(deleteCronTimestampRes.errors[0].message)
+      throw new Error(deleteCronTimestampRes.errors[0].message)
     }
   } catch (error) {
     console.log('endEvent -> error', error)
@@ -105,6 +130,16 @@ export const resetEvent = async (eventId) => {
     if (deletePartnersRes.errors) {
       Sentry.captureException(deletePartnersRes.errors[0].message)
       throw new Error(deletePartnersRes.errors[0].message)
+    }
+
+    const deleteCronTimestampRes = await orm.request(deleteCronTimestamp, {
+      eventId,
+    })
+    console.log('endEvent -> deleteCronTimestampRes', deleteCronTimestampRes)
+
+    if (deleteCronTimestampRes.errors) {
+      Sentry.captureException(deleteCronTimestampRes.errors[0].message)
+      throw new Error(deleteCronTimestampRes.errors[0].message)
     }
   } catch (error) {
     Sentry.captureException(error)

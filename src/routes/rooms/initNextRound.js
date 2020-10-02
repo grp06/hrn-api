@@ -3,19 +3,39 @@ import { CronJob } from 'cron'
 import nextRound from './nextRound'
 import { endEvent, omniFinishRounds } from './runEventHelpers'
 import jobs from '../../services/jobs'
+import orm from '../../services/orm'
+import { setCronTimestamp } from '../../gql/mutations'
 
-const initNextRound = async ({ numRounds, eventId, roundLength: round_length, currentRound }) => {
+const initNextRound = async ({
+  numRounds,
+  eventId,
+  roundLength: round_length,
+  currentRound,
+  nextRoundStart,
+}) => {
+  console.log('numRounds', numRounds)
+  console.log('eventId', eventId)
+  console.log('roundLength', round_length)
+  console.log('currentRound', currentRound)
+  console.log('nextRoundStart', nextRoundStart)
   let betweenRoundsDelay = 20
-  const roundLengthInMinutes = round_length / 60000
   const eventIsOver = currentRound === numRounds
 
-  const date = new Date()
-  date.setMinutes(date.getMinutes() + roundLengthInMinutes)
+  const timeToEndRound = new Date(new Date().getTime() + round_length)
+  console.log('time now =', new Date(new Date().getTime()))
+  console.log('end roun =', timeToEndRound)
   // used for testing for super short rounds
   // date.setSeconds(date.getSeconds() + 20)
 
+  let recoveredStartTime
+
+  if (nextRoundStart) {
+    recoveredStartTime = new Date(nextRoundStart)
+    console.log('recoverd =', recoveredStartTime)
+  }
   // in X minutes, run the following code
-  jobs.nextRound[eventId] = new CronJob(date, async function () {
+  // if next_round_start exists, we're recovering from a server restart
+  jobs.nextRound[eventId] = new CronJob(recoveredStartTime || timeToEndRound, async function () {
     // const d = new Date()
 
     // when we're inside, its the END of currentRound
@@ -30,7 +50,6 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
     // it doesnt work. //Todo ... make this more semantic
 
     const currentTime = new Date()
-    console.log('initNextRound -> currentTime', currentTime)
 
     if (eventIsOver) {
       console.log('initNextRound -> eventIsOver', eventIsOver)
@@ -38,7 +57,7 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
     }
 
     currentTime.setSeconds(currentTime.getSeconds() + betweenRoundsDelay)
-    console.log('initNextRound -> currentTime', currentTime)
+
     // in 20 seconds, run this code
     jobs.betweenRounds[eventId] = new CronJob(currentTime, async function () {
       if (eventIsOver) {
@@ -57,6 +76,15 @@ const initNextRound = async ({ numRounds, eventId, roundLength: round_length, cu
 
     return jobs.betweenRounds[eventId].start()
   })
+
+  if (!nextRoundStart) {
+    console.log('time sav =', timeToEndRound)
+    const setCronTimestampRes = await orm.request(setCronTimestamp, {
+      eventId,
+      timestamp: timeToEndRound.toISOString(),
+    })
+    console.log('setCronTimestampRes', setCronTimestampRes)
+  }
 
   // TODO
   // insert job exectuion time in a new table
