@@ -27,13 +27,16 @@ const makePairings = ({
 
     shuffleArray(calculatedPoints)
 
-    const reorderedWithNullsInFront = moveNullsToTheFront({
-      calculatedPoints,
-      allRoundsDataForOnlineUsers,
-      eventId,
-    })
+    let reorderedWithNullsInFront
+    if (pairingAttempts < 1) {
+      reorderedWithNullsInFront = moveNullsToTheFront({
+        calculatedPoints,
+        allRoundsDataForOnlineUsers,
+        eventId,
+      })
+    }
 
-    finalMatches = generateFinalMatchesArray(reorderedWithNullsInFront)
+    finalMatches = generateFinalMatchesArray(reorderedWithNullsInFront || calculatedPoints)
     if (!fromLobbyScan) {
       // when making assignments, after creating all the pairings, find out who didn't get paired
       const flattenedPairings = _.flatten(finalMatches)
@@ -44,7 +47,7 @@ const makePairings = ({
       difference.forEach((userWithoutPairing) => finalMatches.push([userWithoutPairing, null]))
     }
 
-    numNullPairings = finalMatches.reduce((all, item, index) => {
+    numNullPairings = finalMatches.reduce((all, item) => {
       if (item[1] === null) {
         all += 1
       }
