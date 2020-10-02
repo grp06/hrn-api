@@ -65,6 +65,7 @@ const nextRound = async ({ req, res, params }) => {
   }
 
   initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
+  console.log('start scan lobby')
   scanLobbyForPairings(eventId)
 
   if (res) {

@@ -4,16 +4,16 @@ import nextRound from './nextRound'
 import { endEvent, omniFinishRounds } from './runEventHelpers'
 import jobs from '../../services/jobs'
 
-let betweenRoundsDelay = 15
+let betweenRoundsDelay = 20
 
 const initNextRound = async ({ numRounds, eventId, roundLength: round_length, currentRound }) => {
   const roundLengthInMinutes = round_length / 60000
   const eventIsOver = currentRound === numRounds
 
   const date = new Date()
-  // date.setMinutes(date.getMinutes() + roundLengthInMinutes)
+  date.setMinutes(date.getMinutes() + roundLengthInMinutes)
   // used for testing for super short rounds
-  date.setSeconds(date.getSeconds() + 15)
+  // date.setSeconds(date.getSeconds() + 20)
 
   // in X minutes, run the following code
   jobs.nextRound[eventId] = new CronJob(date, async function () {

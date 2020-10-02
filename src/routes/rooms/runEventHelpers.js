@@ -6,14 +6,14 @@ import jobs from '../../services/jobs'
 
 const killAllJobsByEventId = (eventId) => {
   // console.log('jobs = ', jobs)
+  if (jobs.lobbyAssignments[eventId]) {
+    jobs.lobbyAssignments[eventId].stop()
+    console.log('clearing lobby assignments job = ', jobs)
+  }
+
   if (jobs.nextRound[eventId]) {
     console.log('clearing next round job')
     jobs.nextRound[eventId].stop()
-  }
-
-  if (jobs.lobbyAssignments[eventId]) {
-    console.log('clearing lobby assignments job')
-    jobs.lobbyAssignments[eventId].stop()
   }
 
   if (jobs.betweenRounds[eventId]) {
@@ -25,7 +25,7 @@ const killAllJobsByEventId = (eventId) => {
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
   if (jobs.lobbyAssignments[eventId]) {
-    console.log('stop the lobby job')
+    console.log('omni finish lobby assignments job = ', jobs)
     jobs.lobbyAssignments[eventId].stop()
   }
   try {
