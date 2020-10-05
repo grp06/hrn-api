@@ -3,6 +3,7 @@ import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPrevio
 
 const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) => {
   const onlineUsersIdArray = onlineUsers.map((user) => user.id)
+  console.log('calculatePoints -> onlineUsersIdArray', onlineUsersIdArray)
 
   // start out with this points array where everyone has 0 points
   const pointsArr = generateInitialPointsArr(onlineUsersIdArray)
