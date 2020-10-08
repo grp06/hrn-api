@@ -43,7 +43,6 @@ const getHighestScoringPartner = (userObj, pairedUserIds) => {
 const generateFinalMatchesArray = (pointsArr) => {
   const finalMatches = []
   const pairedUserIds = []
-  console.log('pointsArr = ', JSON.stringify(pointsArr, null, 2))
 
   pointsArr.forEach((userObj) => {
     const bestMatch = getHighestScoringPartner(userObj, pairedUserIds)
