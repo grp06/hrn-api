@@ -37,6 +37,7 @@ const nextRound = async ({ req, res, params }) => {
     }
 
     const createPairingsRes = await omniCreatePairings({ eventId, currentRound })
+    console.log('nextRound -> createPairingsRes', createPairingsRes)
 
     if (createPairingsRes === 'ended event early') {
       console.log('no more pairings, end the event')

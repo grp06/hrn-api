@@ -18,26 +18,31 @@ const killAllJobsByEventId = (eventId) => {
   }
 
   if (jobs.nextRound[eventId]) {
-    console.log('clearing next round job')
     jobs.nextRound[eventId].stop()
     jobs.nextRound[eventId] = null
+    console.log('clearing next round job')
   }
 
   if (jobs.betweenRounds[eventId]) {
-    console.log('clearing between rounds')
     jobs.betweenRounds[eventId].stop()
     jobs.betweenRounds[eventId] = null
+    console.log('clearing between rounds')
   }
 }
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
   if (jobs.lobbyAssignments[eventId]) {
-    console.log('omni finish lobby assignments job = ', jobs)
     jobs.lobbyAssignments[eventId].stop()
     jobs.lobbyAssignments[eventId] = null
     console.log('omni finish lobby assignments job = ', jobs)
   }
+  if (jobs.nextRound[eventId]) {
+    jobs.nextRound[eventId].stop()
+    jobs.nextRound[eventId] = null
+    console.log('clearing next round job')
+  }
+  console.log('jobs =- ', jobs)
   try {
     const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
@@ -52,7 +57,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
     const deleteCronTimestampRes = await orm.request(deleteCronTimestamp, {
       eventId,
     })
-    console.log('endEvent -> deleteCronTimestampRes', deleteCronTimestampRes)
+    console.log('omniFinishRounds -> deleteCronTimestampRes', deleteCronTimestampRes)
 
     if (deleteCronTimestampRes.errors) {
       Sentry.captureException(deleteCronTimestampRes.errors[0].message)
