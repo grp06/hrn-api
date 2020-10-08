@@ -70,13 +70,6 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   return res.status(200).json({ message: 'pre-event started' })
 })
 
-roomsRouter.route('/reset-event').get((req, res) => {
-  const { eventId } = req.body
-
-  setRoomsCompleted(eventId)
-  return res.status(200).json({ res: 'reset the event yo' })
-})
-
 // api/rooms/start-event/:eventId
 roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
   __logger.info(`Event with id ${req.params.eventId} started.`)

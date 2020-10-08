@@ -23,7 +23,6 @@ const initNextRound = async ({
 
   const timeToEndRound = new Date(new Date().getTime() + round_length)
   console.log('time now =', new Date(new Date().getTime()))
-  console.log('end roun =', timeToEndRound)
   // used for testing for super short rounds
   // date.setSeconds(date.getSeconds() + 20)
 

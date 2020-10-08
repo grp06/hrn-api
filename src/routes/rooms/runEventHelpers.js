@@ -39,9 +39,6 @@ export const omniFinishRounds = async (currentRound, eventId) => {
     console.log('omni finish lobby assignments job = ', jobs)
   }
   try {
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
-    await Promise.all(completedRoomsPromises)
-
     const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
       newStatus: 'in-between-rounds',
