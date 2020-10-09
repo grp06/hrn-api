@@ -12,10 +12,10 @@ const getOnlineUsers = async (eventId) => {
     throw new Error(onlineUsersResponse.errors[0].message)
   }
 
-  const onlineUsers = onlineUsersResponse.data.online_users
+  const onlineUsers = onlineUsersResponse.data.online_event_users
   console.log(`found ${onlineUsers.length} online users`)
 
-  const userIds = onlineUsers.map((user) => user.id)
+  const userIds = onlineUsers.map((user) => user.user_id)
   return [userIds, onlineUsers]
 }
 
