@@ -30,10 +30,17 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
       userIds,
     })
 
+    const numNullPairings = pairings.reduce((all, item) => {
+      if (item[1] === null) {
+        all += 1
+      }
+      return all
+    }, 0)
+
+    console.log('omniCreatePairings -> numNullPairings', numNullPairings)
     // don't end it if we're just dealing with 3 people, we're most likely testing
-    const tooManyBadPairings = pairings.length > 3 && pairings.length < onlineUsers.length / 2
+    const tooManyBadPairings = numNullPairings > onlineUsers.length / 2
     console.log('omniCreatePairings -> onlineUsers.length / 2', onlineUsers.length / 2)
-    console.log('omniCreatePairings -> pairings.length', pairings.length)
     console.log('omniCreatePairings -> tooManyBadPairings', tooManyBadPairings)
 
     if (tooManyBadPairings && !fromLobbyScan) {
