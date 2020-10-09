@@ -2,7 +2,7 @@ import generateInitialPointsArr from './generateInitialPointsArray'
 import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPreviousInteratction'
 
 const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) => {
-  const onlineUsersIdArray = onlineUsers.map((user) => user.id)
+  const onlineUsersIdArray = onlineUsers.map((user) => user.user_id)
 
   // start out with this points array where everyone has 0 points
   const pointsArr = generateInitialPointsArr(onlineUsersIdArray)
@@ -11,7 +11,7 @@ const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) 
   // tags: ['guitar', 'basketball', 'piano', 'investment banking']
   const onlineUsersWithSimplifiedTags = onlineUsers.map((user) => {
     return {
-      id: user.id,
+      id: user.user_id,
       last_seen: user.last_seen,
       tags: user.tags_users.map((tagObj) => tagObj.tag.name),
     }
@@ -33,7 +33,9 @@ const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) 
             eventId,
           })
           const pointDefault = Number(Math.random().toFixed(3)) + 10
-          const myPointsObj = pointsArr.find((pointsObj) => pointsObj.userId === myUser.id)
+          const myPointsObj = pointsArr.find((pointsObj) => {
+            return pointsObj.userId === myUser.id
+          })
 
           const userToAdjustPointsOn = myPointsObj.scores.find((u) => {
             const partnerIdWithinMyPointsObj = parseInt(Object.keys(u)[0], 10)
