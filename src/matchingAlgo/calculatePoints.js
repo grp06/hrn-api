@@ -2,12 +2,7 @@ import generateInitialPointsArr from './generateInitialPointsArray'
 import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPreviousInteratction'
 
 const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) => {
-<<<<<<< Updated upstream
   const onlineUsersIdArray = onlineUsers.map((user) => user.id)
-=======
-  const onlineUsersIdArray = onlineUsers.map((user) => user.user_id)
-  console.log('calculatePoints -> onlineUsersIdArray', onlineUsersIdArray)
->>>>>>> Stashed changes
 
   // start out with this points array where everyone has 0 points
   const pointsArr = generateInitialPointsArr(onlineUsersIdArray)
