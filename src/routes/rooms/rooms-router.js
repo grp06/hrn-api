@@ -29,7 +29,7 @@ roomsRouter.post('/get-online-event-users/:id', jsonBodyParser, async (req, res)
       throw new Error(onlineUsersResponse.errors[0].message)
     }
 
-    const onlineUsers = onlineUsersResponse.data.online_users
+    const onlineUsers = onlineUsersResponse.data.online_event_users
     userIds = onlineUsers.map((user) => user.id)
   } catch (error) {
     console.log('error = ', error)
@@ -49,9 +49,10 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
     onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
       eventId,
     })
+    console.log('onlineUsersResponse', onlineUsersResponse)
 
     const maxNumUsersPerRoom = 40
-    const numOnlineUsers = onlineUsersResponse.data.online_users.length
+    const numOnlineUsers = onlineUsersResponse.data.online_event_users.length
     console.log('numOnlineUsers', numOnlineUsers)
     const numRooms = Math.ceil(numOnlineUsers / maxNumUsersPerRoom)
     console.log('numRooms', numRooms)
