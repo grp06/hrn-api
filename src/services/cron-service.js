@@ -54,8 +54,8 @@ const checkForUpcomingEvents = cron.schedule('*/5 * * * *', async () => {
 })
 
 // check for finished events every 5 minutes
-cron.schedule('*/5 * * * * *', async () => {
-  console.log('cron')
+cron.schedule('*/5 * * * *', async () => {
+  console.log('checking for recently finished events')
   let eventsRecentlyFinished
   try {
     const fiveMinutesAgo = moment().subtract(5, 'minutes')
@@ -104,53 +104,6 @@ cron.schedule('*/5 * * * * *', async () => {
       console.log(`error getting event users for event ${event.id}`, error)
     }
 
-    // const reformattedThumbingData = mutualThumbs.reduce((all, thumbingPair) => {
-    //   const idsSavedSoFar = []
-    //   all.forEach((person) => {
-    //     const id = parseInt(Object.keys(person)[0], 10)
-    //     if (idsSavedSoFar.indexOf(id) === -1) {
-    //       idsSavedSoFar.push(id)
-    //     }
-    //   })
-
-    //   if (!all.length) {
-    //     all.push({
-    //       [thumbingPair.partnerY.id]: [thumbingPair.partnerX],
-    //     })
-    //     all.push({
-    //       [thumbingPair.partnerX.id]: [thumbingPair.partnerY],
-    //     })
-    //     return all
-    //   }
-
-    //   if (idsSavedSoFar.indexOf(thumbingPair.partnerX.id) === -1) {
-    //     all.push({
-    //       [thumbingPair.partnerX.id]: [thumbingPair.partnerY],
-    //     })
-    //   } else {
-    //     // add on new object to correct key
-    //     const objToAddTo = all.find(
-    //       (user) => Object.keys(user)[0] === thumbingPair.partnerX.id.toString()
-    //     )
-    //     objToAddTo[thumbingPair.partnerX.id].push(thumbingPair.partnerY)
-    //   }
-
-    //   if (idsSavedSoFar.indexOf(thumbingPair.partnerY.id) === -1) {
-    //     all.push({
-    //       [thumbingPair.partnerY.id]: [thumbingPair.partnerX],
-    //     })
-    //   } else {
-    //     // add on new object to correct key
-
-    //     const objToAddTo = all.find(
-    //       (user) => Object.keys(user)[0] === thumbingPair.partnerY.id.toString()
-    //     )
-    //     objToAddTo[thumbingPair.partnerY.id].push(thumbingPair.partnerX)
-    //   }
-
-    //   return all
-    // }, [])
-
     const listOfMatchesByUserEmail = partnersToEmail.reduce((all, item) => {
       if (!all.length) {
         all.push({
@@ -162,7 +115,6 @@ cron.schedule('*/5 * * * * *', async () => {
       }
 
       const indexOfUserToOperateOn = all.findIndex((user) => user.email === item.user.email)
-      console.log('indexOfUserToOperateOn', indexOfUserToOperateOn)
       if (indexOfUserToOperateOn === -1) {
         all.push({
           name: item.user.name,
@@ -175,7 +127,6 @@ cron.schedule('*/5 * * * * *', async () => {
       return all
     }, [])
 
-    console.log('listOfMatchesByUserEmail', listOfMatchesByUserEmail)
     listOfMatchesByUserEmail.forEach((userObj) => {
       const fields = {
         event,
