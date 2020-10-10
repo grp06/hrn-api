@@ -513,7 +513,7 @@
                               valign="top"
                               style="padding: 0; margin: 0; width: 560px;"
                             >
-                              <% for (var i = 0; i < userThumbData.length; i++) { %>
+                              <% for (var i = 0; i < partnerData.length; i++) { %>
 
                               <table
                                 cellpadding="0"
@@ -552,9 +552,9 @@
                                         color: #333333;
                                       "
                                     >
-                                      <strong><%= userThumbData[i].name %>,</strong
+                                      <strong><%= partnerData[i].name %>,</strong
                                       ><span style="margin-left: 5px;"
-                                        ><%= userThumbData[i].city %></span
+                                        ><%= partnerData[i].city %></span
                                       >
                                     </p>
                                   </td>
@@ -574,7 +574,7 @@
                                   >
                                     <a
                                       target="_blank"
-                                      href="mailto:<%= userThumbData[i].email %>?subject=Hi%20Right%20Now%20event"
+                                      href="mailto:<%= partnerData[i].email %>?subject=Hi%20Right%20Now%20event"
                                       style="
                                         -webkit-text-size-adjust: none;
                                         -ms-text-size-adjust: none;
@@ -598,10 +598,10 @@
                                         width="30"
                                     /></a>
 
-                                    <%if (userThumbData[i].linkedIn_url) {%>
+                                    <%if (partnerData[i].linkedIn_url) {%>
                                     <a
                                       target="_blank"
-                                      href="<%= userThumbData[i].linkedIn_url %>"
+                                      href="<%= partnerData[i].linkedIn_url %>"
                                       style="
                                         -webkit-text-size-adjust: none;
                                         -ms-text-size-adjust: none;
@@ -641,7 +641,7 @@
                                       padding-right: 10px;
                                     "
                                   >
-                                    <% for (var j = 0; j < userThumbData[i].tags_users.length; j++)
+                                    <% for (var j = 0; j < partnerData[i].tags_users.length; j++)
                                     { %>
                                     <span
                                       class="es-button-border"
@@ -681,14 +681,14 @@
                                           width: auto;
                                           text-align: center;
                                         "
-                                        ><%= userThumbData[i].tags_users[j].tag.name %></a
+                                        ><%= partnerData[i].tags_users[j].tag.name %></a
                                       ></span
                                     >
 
                                     <% } %>
                                   </td>
                                 </tr>
-                                <%if (userThumbData[i].short_bio) {%>
+                                <%if (partnerData[i].short_bio) {%>
 
                                 <tr style="border-collapse: collapse;">
                                   <td
@@ -717,7 +717,7 @@
                                         border-radius: 4px;
                                       "
                                     >
-                                      <%= userThumbData[i].short_bio %>
+                                      <%= partnerData[i].short_bio %>
                                     </blockquote>
                                   </td>
                                 </tr>
