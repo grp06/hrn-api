@@ -8,7 +8,6 @@ const getAllRoundsDataForOnlineUsers = async (userIds) => {
   const partnersListResponse = await orm.request(getPartnersFromListOfUserIds, {
     userIds,
   })
-  console.log('getAllRoundsDataForOnlineUsers -> partnersListResponse', partnersListResponse)
 
   if (partnersListResponse.errors) {
     Sentry.captureException(partnersListResponse.errors[0].message)

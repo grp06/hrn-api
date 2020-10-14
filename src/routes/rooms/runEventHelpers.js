@@ -35,14 +35,12 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   if (jobs.lobbyAssignments[eventId]) {
     jobs.lobbyAssignments[eventId].stop()
     jobs.lobbyAssignments[eventId] = null
-    console.log('omni finish lobby assignments job = ', jobs)
   }
   if (jobs.nextRound[eventId]) {
     jobs.nextRound[eventId].stop()
     jobs.nextRound[eventId] = null
     console.log('clearing next round job')
   }
-  console.log('jobs =- ', jobs)
   try {
     const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
