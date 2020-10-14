@@ -10,6 +10,7 @@ export const sendEmail = async (fields) => {
   let message
   try {
     message = await postEventTemplate(fields)
+    console.log('sendEmail -> message', message)
   } catch (error) {
     __Sentry.captureException(error)
     console.log('error making email template', error)

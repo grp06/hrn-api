@@ -120,18 +120,17 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 }
 
 export const postEventTemplate = async (fields) => {
-  const { event, user, userThumbData } = fields
-  const { name, email } = user.user
-  const firstName = name.split(' ')[0]
+  const { event, user, partnerData } = fields
+  const { name, email } = user
   const { event_name } = event
 
   let htmlTemplate
 
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/post-event-email.ejs'), {
-      firstName,
+      firstName: name,
       event_name,
-      userThumbData: userThumbData[user.user.id],
+      partnerData,
     })
 
     htmlTemplate = ejsResponse
