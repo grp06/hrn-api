@@ -14,7 +14,8 @@ const nextRound = async ({ req, res, params }) => {
   let numRounds
   let round_length
   let currentRound
-
+  let createPairingsRes
+  let useSamyakAlgo
   try {
     if (req) {
       // we just called start event. First round
@@ -34,9 +35,12 @@ const nextRound = async ({ req, res, params }) => {
       numRounds = params.numRounds
       round_length = params.round_length
       currentRound = params.currentRound
+      useSamyakAlgo = params.useSamyakAlgo
+      console.log("nextRound params -> useSamyakAlgo", useSamyakAlgo)
     }
 
-    const createPairingsRes = await omniCreatePairings({ eventId, currentRound })
+    // createPairingsRes can either be undefined, true, or ended event early'
+    createPairingsRes = await omniCreatePairings({ eventId, currentRound, useSamyakAlgo })
     console.log('nextRound -> createPairingsRes', createPairingsRes)
 
     if (createPairingsRes === 'ended event early') {
@@ -65,7 +69,13 @@ const nextRound = async ({ req, res, params }) => {
     return Sentry.captureException(error)
   }
 
-  initNextRound({ numRounds, eventId, roundLength: round_length, currentRound })
+  initNextRound({
+    numRounds,
+    eventId,
+    roundLength: round_length,
+    currentRound,
+    useSamyakAlgo: createPairingsRes,
+  })
   scanLobbyForPairings(eventId)
 
   if (res) {
