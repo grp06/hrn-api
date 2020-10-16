@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 
 import { resetEvent, omniFinishRounds, endEvent } from './runEventHelpers'
 import orm from '../../services/orm'
+import setRoomsCompleted from './set-rooms-completed'
 
 import { updateEventObject } from '../../gql/mutations'
 import initNextRound from './initNextRound'
@@ -25,7 +26,8 @@ const nextRound = async ({ req, res, params }) => {
       if (req.body.reset) {
         return resetEvent(eventId)
       }
-
+      const completedRoomsPromises = await setRoomsCompleted(eventId)
+      await Promise.all(completedRoomsPromises)
       await omniFinishRounds(currentRound, eventId)
 
       currentRound = 1
