@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/node'
-
-import { getPartnersFromListOfUserIds, getAvailableLobbyUsers } from '../gql/queries'
+import makePairingsFromSamyakAlgo from './makePairingsFromSamyakAlgo'
 
 import makePairings from './makePairings'
 import orm from '../services/orm'
@@ -9,7 +8,8 @@ import { bulkInsertPartners } from '../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
 import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 
-const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
+const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSamyakAlgo }) => {
+  console.log('omniCreatePairings -> useSamyakAlgo', useSamyakAlgo)
   try {
     // get all online users for this eventId
     const [userIds, onlineUsers] = await getOnlineUsers(eventId)
@@ -21,14 +21,27 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
 
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds)
 
-    const pairings = makePairings({
-      onlineUsers,
-      allRoundsDataForOnlineUsers,
-      currentRound,
-      eventId,
-      fromLobbyScan,
-      userIds,
-    })
+    let pairings
+    let isSamyakAlgo
+    if (onlineUsers.length < 15 || useSamyakAlgo) {
+      console.log('making assignments with samyak algo')
+      pairings = makePairingsFromSamyakAlgo({
+        allRoundsDataForOnlineUsers,
+        userIds,
+        eventId,
+      })
+      isSamyakAlgo = true
+    } else {
+      console.log('making assignment with the new algo')
+      pairings = makePairings({
+        onlineUsers,
+        allRoundsDataForOnlineUsers,
+        currentRound,
+        eventId,
+        fromLobbyScan,
+        userIds,
+      })
+    }
 
     const numNullPairings = pairings.reduce((all, item) => {
       if (item[1] === null) {
@@ -37,15 +50,11 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
       return all
     }, 0)
 
-    console.log('omniCreatePairings -> numNullPairings', numNullPairings)
     // don't end it if we're just dealing with 3 people, we're most likely testing
-    const tooManyBadPairings = numNullPairings > onlineUsers.length / 2
-    // const tooManyBadPairings = false
-    console.log('omniCreatePairings -> onlineUsers.length / 2', onlineUsers.length / 2)
-    console.log('omniCreatePairings -> tooManyBadPairings', tooManyBadPairings)
+    const tooManyBadPairings = numNullPairings >= onlineUsers.length / 2 || pairings.length === 0
 
     if (tooManyBadPairings && !fromLobbyScan) {
-      console.log('ended early')
+      console.log('ended event early')
       return 'ended event early'
     }
 
@@ -60,6 +69,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan }) => {
     if (bulkInsertPartnersRes.errors) {
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }
+    return isSamyakAlgo
   } catch (error) {
     console.log('omniCreatePairings -> error', error)
     Sentry.captureException(error)

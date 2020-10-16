@@ -12,6 +12,7 @@ const initNextRound = async ({
   roundLength: round_length,
   currentRound,
   nextRoundStart,
+  useSamyakAlgo,
 }) => {
   console.log('numRounds', numRounds)
   console.log('eventId', eventId)
@@ -69,6 +70,7 @@ const initNextRound = async ({
           currentRound: currentRound + 1,
           round_length,
           numRounds,
+          useSamyakAlgo,
         },
       })
     })
