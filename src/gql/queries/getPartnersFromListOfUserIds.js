@@ -9,7 +9,6 @@ const getPartnersFromListOfUserIds = gql`
       user_id
       left_chat
       rating
-      dont_rematch
     }
   }
 `
