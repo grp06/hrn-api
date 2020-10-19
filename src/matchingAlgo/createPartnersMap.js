@@ -30,7 +30,9 @@ const createPartnersMap = ({ allRoundsDataForOnlineUsers, userIds, eventId }) =>
 
   const pairingsWhoShouldntMatch = []
   allRoundsDataForOnlineUsers.forEach((row) => {
-    if (row.rating === 0) {
+    const userIdIsInPartnersMap = partnersMapObject[row.user_id]
+    const partnerIsInPartnersMap = partnersMapObject[row.partner_id]
+    if (row.rating === 0 && userIdIsInPartnersMap && partnerIsInPartnersMap) {
       pairingsWhoShouldntMatch.push([row.user_id, row.partner_id])
     }
   })
@@ -38,6 +40,9 @@ const createPartnersMap = ({ allRoundsDataForOnlineUsers, userIds, eventId }) =>
   console.log('createPartnersMap -> pairingsWhoShouldntMatch', pairingsWhoShouldntMatch)
 
   pairingsWhoShouldntMatch.forEach((pairing) => {
+  console.log("createPartnersMap -> pairing", pairing)
+    console.log("createPartnersMap -> pairing[0]", pairing[0])
+    console.log("createPartnersMap -> pairing[1]", pairing[1])
     partnersMapObject[pairing[0]].push(pairing[1])
     partnersMapObject[pairing[1]].push(pairing[0])
   })
