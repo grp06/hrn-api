@@ -1,6 +1,4 @@
 const createPartnersMap = ({ allRoundsDataForOnlineUsers, userIds, eventId }) => {
-  console.log('createPartnersMap -> userIds', userIds)
-  console.log('createPartnersMap -> allRoundsDataForOnlineUsers', allRoundsDataForOnlineUsers)
   // look out for this in new algo
   // if (!allRoundsDataForOnlineUsers || allRoundsDataForOnlineUsers.length === 0) {
   //   return {}
@@ -40,9 +38,9 @@ const createPartnersMap = ({ allRoundsDataForOnlineUsers, userIds, eventId }) =>
   console.log('createPartnersMap -> pairingsWhoShouldntMatch', pairingsWhoShouldntMatch)
 
   pairingsWhoShouldntMatch.forEach((pairing) => {
-  console.log("createPartnersMap -> pairing", pairing)
-    console.log("createPartnersMap -> pairing[0]", pairing[0])
-    console.log("createPartnersMap -> pairing[1]", pairing[1])
+    console.log('createPartnersMap -> pairing', pairing)
+    console.log('createPartnersMap -> pairing[0]', pairing[0])
+    console.log('createPartnersMap -> pairing[1]', pairing[1])
     partnersMapObject[pairing[0]].push(pairing[1])
     partnersMapObject[pairing[1]].push(pairing[0])
   })
