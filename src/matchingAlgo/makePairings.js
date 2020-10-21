@@ -25,7 +25,7 @@ const makePairings = ({
       currentRound,
       eventId,
     })
-    console.log('attemptPairings -> calculatedPoints', calculatedPoints)
+    console.log('attemptPairings -> calculatedPoints', JSON.stringify(calculatedPoints, null, 2))
 
     shuffleArray(calculatedPoints)
 
