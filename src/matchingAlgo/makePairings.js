@@ -2,6 +2,7 @@ import shuffleArray from './shuffleArray'
 import generateFinalMatchesArray from './generateFinalMatchesArray'
 import calculatePoints from './calculatePoints'
 import moveNullsToTheFront from './moveNullsToTheFront'
+import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPreviousInteratction'
 
 const _ = require('lodash')
 
@@ -21,24 +22,31 @@ const makePairings = ({
   const attemptPairings = () => {
     const calculatedPoints = calculatePoints({
       onlineUsers,
-      allRoundsDataForOnlineUsers,
       currentRound,
       eventId,
     })
-    // console.log('attemptPairings -> calculatedPoints', JSON.stringify(calculatedPoints, null, 2))
+    console.log('attemptPairings -> calculatedPoints', JSON.stringify(calculatedPoints, null, 2))
 
-    shuffleArray(calculatedPoints)
+    const adjustedPoints = adjustPointsBasedOnPreviousInteratction({
+      calculatedPoints,
+      allRoundsDataForOnlineUsers,
+      eventId,
+    })
+    console.log('attemptPairings -> adjustedPoints', JSON.stringify(adjustedPoints, null, 2))
+
+
+    shuffleArray(adjustedPoints)
 
     let reorderedWithNullsInFront
     if (pairingAttempts < 1) {
       reorderedWithNullsInFront = moveNullsToTheFront({
-        calculatedPoints,
+        adjustedPoints,
         allRoundsDataForOnlineUsers,
         eventId,
       })
     }
 
-    finalMatches = generateFinalMatchesArray(reorderedWithNullsInFront || calculatedPoints)
+    finalMatches = generateFinalMatchesArray(reorderedWithNullsInFront || adjustedPoints)
     if (!fromLobbyScan) {
       // when making assignments, after creating all the pairings, find out who didn't get paired
       const flattenedPairings = _.flatten(finalMatches)
