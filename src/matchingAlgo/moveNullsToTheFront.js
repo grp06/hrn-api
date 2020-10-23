@@ -1,4 +1,4 @@
-const moveNullsToTheFront = ({ calculatedPoints, allRoundsDataForOnlineUsers, eventId }) => {
+const moveNullsToTheFront = ({ adjustedPoints, allRoundsDataForOnlineUsers, eventId }) => {
   const usersWhoHaveSatOut = []
   // make a list of userIds who have sat out
   allRoundsDataForOnlineUsers.forEach((userObj) => {
@@ -10,10 +10,10 @@ const moveNullsToTheFront = ({ calculatedPoints, allRoundsDataForOnlineUsers, ev
 
   // if nobody's sat out yet, just return what we started with
   if (!usersWhoHaveSatOut.length) {
-    return calculatedPoints
+    return adjustedPoints
   }
 
-  const reorderedWithNullsInFront = calculatedPoints.reduce((all, item, index) => {
+  const reorderedWithNullsInFront = adjustedPoints.reduce((all, item, index) => {
     // if the current user has sat out before, push him to the front of the array
     if (usersWhoHaveSatOut.includes(item.userId)) {
       all.unshift(item)
