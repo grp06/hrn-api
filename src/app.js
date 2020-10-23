@@ -10,11 +10,18 @@ import initNextRound from './routes/rooms/initNextRound'
 
 import { getCronJobs } from './gql/queries'
 
+import { updateProfilePic } from './gql/mutations'
+
 require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
+const AWS = require('aws-sdk')
+const fs = require('fs')
+const fileType = require('file-type')
+const multiparty = require('multiparty')
+const sharp = require('sharp')
 const { NODE_ENV, PORT } = require('./config.js')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const tokenRouter = require('./routes/twilio-token/twilio-token-router')
@@ -30,6 +37,30 @@ const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'
 
 global.__logger = logger
 global.__Sentry = Sentry
+
+// configure the keys for accessing AWS
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+})
+
+// create S3 instance
+const s3 = new AWS.S3()
+
+// abstracts function to upload a file returning a promise
+// NOTE: if you are using TypeScript the typed function signature will be
+// const uploadFile = (buffer: S3.Body, name: string, type: { ext: string; mime: string })
+const uploadFile = (buffer, name, type) => {
+  const params = {
+    ACL: 'public-read',
+    Body: buffer,
+    Bucket: process.env.S3_BUCKET,
+    ContentType: type.mime,
+    Key: `${name}.${type.ext}`,
+  }
+  return s3.upload(params).promise()
+}
+
 // The request handler must be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler())
 
@@ -56,6 +87,39 @@ app.get('/', (req, res) => {
 
 app.get('/event-trigger-test', () => {
   console.log('hiii from event trigger test')
+})
+
+app.post('/test-upload', (request, response) => {
+  const form = new multiparty.Form()
+
+  form.parse(request, async (error, fields, files) => {
+    const userId = fields.userId[0]
+    if (error) {
+      return response.status(500).send(error)
+    }
+    try {
+      const { path } = files.file[0]
+
+      const buffer = fs.readFileSync(path)
+      await sharp(buffer)
+        .resize(250, 250)
+        .toBuffer(async (err, data, info) => {
+          const type = await fileType.fromBuffer(data)
+          const fileName = `bucketFolder/${Date.now().toString()}`
+          const uploadResult = await uploadFile(data, fileName, type)
+
+          const updateProfilePicResponse = await orm.request(updateProfilePic, {
+            id: userId,
+            profile_pic_url: uploadResult.Location,
+          })
+
+          return response.status(200).send({ url: uploadResult.Location })
+        })
+    } catch (err) {
+      console.log('err', err)
+      return response.status(500).send(err)
+    }
+  })
 })
 
 app.get('/debug-sentry', () => {
