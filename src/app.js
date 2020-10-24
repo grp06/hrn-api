@@ -5,6 +5,7 @@ import './services/cron-service'
 import webhooks from './webhooks'
 import orm from './services/orm'
 // import { bulkInsertPartners } from './gql/mutations'
+import Unsplash, { toJson } from 'unsplash-js'
 
 import initNextRound from './routes/rooms/initNextRound'
 
@@ -13,6 +14,8 @@ import { getCronJobs } from './gql/queries'
 import { updateProfilePic } from './gql/mutations'
 
 require('dotenv').config()
+require('es6-promise').polyfill()
+require('isomorphic-fetch')
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
@@ -28,6 +31,8 @@ const tokenRouter = require('./routes/twilio-token/twilio-token-router')
 const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
+
+const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
 const app = express()
 
@@ -87,6 +92,21 @@ app.get('/', (req, res) => {
 
 app.get('/event-trigger-test', () => {
   console.log('hiii from event trigger test')
+})
+
+app.post('/get-unsplash-image', (req, res) => {
+  try {
+    unsplash.search
+      .photos(req.body.keyword, 1, 10, { orientation: 'landscape' })
+      .then(toJson)
+      .then((json) => {
+        console.log('json', json)
+        const randomIndex = Math.floor(Math.random() * 10)
+        return res.status(200).send({ image: json.results[randomIndex] })
+      })
+  } catch (error) {
+    return res.status(500).send(error)
+  }
 })
 
 app.post('/test-upload', (request, response) => {
