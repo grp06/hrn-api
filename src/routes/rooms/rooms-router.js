@@ -3,7 +3,7 @@ import setRoomsCompleted from './set-rooms-completed'
 import orm from '../../services/orm'
 import { updateEventObject } from '../../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
-import createGroupRooms from './createGroupRooms'
+import createPreEventRooms from './createPreEventRooms'
 import nextRound from './nextRound'
 import { getAvailableLobbyUsers } from '../../gql/queries'
 
@@ -44,7 +44,7 @@ roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
     console.log('numOnlineUsers', numOnlineUsers)
     const numRooms = Math.ceil(numOnlineUsers / maxNumUsersPerRoom)
     console.log('numRooms', numRooms)
-    await createGroupRooms(numRooms, eventId)
+    await createPreEventRooms(numRooms, eventId)
 
     await orm.request(updateEventObject, {
       id: eventId,

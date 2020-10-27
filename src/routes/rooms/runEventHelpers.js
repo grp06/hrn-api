@@ -8,7 +8,7 @@ import {
   deleteCronTimestamp,
 } from '../../gql/mutations'
 import { getEventInfoByEventId, getAvailableLobbyUsers } from '../../gql/queries'
-import createGroupRooms from './createGroupRooms'
+import createGroupRoom from './createGroupRoom'
 
 import jobs from '../../services/jobs'
 
@@ -103,7 +103,7 @@ export const endEvent = async (eventId) => {
 
     let updateEventObjectRes
     if (hostIsOnline && group_video_chat) {
-      const createGroupRoomRes = await createGroupRooms(1, eventId)
+      const createGroupRoomRes = await createGroupRoom(eventId)
 
       if (createGroupRoomRes.errors) {
         throw new Error(createGroupRoomRes.errors[0].message)
