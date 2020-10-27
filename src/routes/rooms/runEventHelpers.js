@@ -7,6 +7,8 @@ import {
   deletePartnersByEventId,
   deleteCronTimestamp,
 } from '../../gql/mutations'
+import { getEventInfoByEventId, getAvailableLobbyUsers } from '../../gql/queries'
+
 import jobs from '../../services/jobs'
 
 const killAllJobsByEventId = (eventId) => {
@@ -78,11 +80,41 @@ export const endEvent = async (eventId) => {
     const completedRoomsPromises = await setRoomsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
 
-    const updateEventObjectRes = await orm.request(updateEventObject, {
-      id: eventId,
-      newStatus: 'complete',
-      ended_at: new Date().toISOString(),
+    const eventInfoRes = await orm.request(getEventInfoByEventId, { eventId })
+
+    const { host_id, group_video_chat } = eventInfoRes.data.events[0]
+    console.log('endEvent -> host_id', host_id)
+
+    const onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
+      eventId,
     })
+
+    if (onlineUsersResponse.errors) {
+      Sentry.captureException(onlineUsersResponse.errors[0].message)
+      throw new Error(onlineUsersResponse.errors[0].message)
+    }
+
+    const onlineUsers = onlineUsersResponse.data.online_event_users
+
+    const userIds = onlineUsers.map((user) => user.user_id)
+    const hostIsOnline = userIds.includes(host_id)
+    console.log('endEvent -> hostIsOnline', hostIsOnline)
+
+    let updateEventObjectRes
+    if (hostIsOnline && group_video_chat) {
+      updateEventObjectRes = await orm.request(updateEventObject, {
+        id: eventId,
+        newStatus: 'group-video-chat',
+      })
+      console.log('set status to group video chat')
+    } else {
+      updateEventObjectRes = await orm.request(updateEventObject, {
+        id: eventId,
+        newStatus: 'complete',
+        ended_at: new Date().toISOString(),
+      })
+      console.log('set status to event complete')
+    }
 
     if (updateEventObjectRes.errors) {
       throw new Error(updateEventObjectRes.errors[0].message)
@@ -92,8 +124,6 @@ export const endEvent = async (eventId) => {
       eventId,
     })
 
-    console.log('endEvent -> deleteCronTimestampRes', deleteCronTimestampRes)
-
     if (deleteCronTimestampRes.errors) {
       Sentry.captureException(deleteCronTimestampRes.errors[0].message)
       throw new Error(deleteCronTimestampRes.errors[0].message)
@@ -102,8 +132,6 @@ export const endEvent = async (eventId) => {
     console.log('endEvent -> error', error)
     Sentry.captureException(error)
   }
-
-  console.log('EVENT FINISHED')
 }
 
 export const resetEvent = async (eventId) => {

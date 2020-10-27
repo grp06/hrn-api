@@ -8,6 +8,8 @@ const getEventInfoByEventId = gql`
       current_round
       updated_at
       round_length
+      host_id
+      group_video_chat
     }
   }
 `
