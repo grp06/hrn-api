@@ -1,6 +1,6 @@
 import client from '../../extensions/twilioClient'
 
-const createPreEventRooms = async (numRooms, eventId) => {
+const createGroupRooms = async (numRooms, eventId) => {
   const roomsArray = Array.apply(null, Array(numRooms))
 
   return roomsArray.map((room, idx) => {
@@ -12,4 +12,4 @@ const createPreEventRooms = async (numRooms, eventId) => {
   })
 }
 
-export default createPreEventRooms
+export default createGroupRooms
