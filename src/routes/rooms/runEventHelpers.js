@@ -104,6 +104,7 @@ export const endEvent = async (eventId) => {
     let updateEventObjectRes
     if (hostIsOnline && group_video_chat) {
       const createGroupRoomRes = await createGroupRoom(eventId)
+      console.log('createGroupRoomRes ->', createGroupRoomRes)
 
       if (createGroupRoomRes.errors) {
         throw new Error(createGroupRoomRes.errors[0].message)

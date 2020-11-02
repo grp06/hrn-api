@@ -5,6 +5,7 @@ import { updateEventObject } from '../../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
 import nextRound from './nextRound'
+import createGroupRoom from './createGroupRoom'
 import { getAvailableLobbyUsers } from '../../gql/queries'
 
 const express = require('express')
@@ -64,6 +65,24 @@ roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
   __logger.info(`Event with id ${req.params.eventId} started.`)
 
   return nextRound({ req, res })
+})
+
+roomsRouter.post('/start-group-video-chat/:eventId', jsonBodyParser, async (req, res) => {
+  const eventId = req.params.id
+  try {
+    const createGroupRoomRes = await createGroupRoom(eventId)
+
+    await orm.request(updateEventObject, {
+      id: eventId,
+      newStatus: 'group-video-chat',
+    })
+
+    console.log('createGroupRoomRes ->', createGroupRoomRes)
+    console.log('set status to event complete')
+  } catch (error) {
+    console.log('error', error)
+    Sentry.captureException(error)
+  }
 })
 
 module.exports = roomsRouter
