@@ -12,6 +12,23 @@ const express = require('express')
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
 
+roomsRouter.post('/end-event/:id', jsonBodyParser, async (req, res) => {
+  try {
+    const completedRoomsPromises = await setRoomsCompleted(req.params.id)
+    await Promise.all(completedRoomsPromises)
+
+    await orm.request(updateEventObject, {
+      id: req.params.id,
+      newStatus: 'complete',
+      ended_at: new Date().toISOString(),
+    })
+    console.log('set status to event complete')
+  } catch (error) {
+    console.log('error', error)
+    Sentry.captureException(error)
+  }
+})
+
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id
 

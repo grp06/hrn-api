@@ -1,7 +1,6 @@
 import generateInitialPointsArr from './generateInitialPointsArray'
-import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPreviousInteratction'
 
-const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) => {
+const calculatePoints = ({ onlineUsers }) => {
   const onlineUsersIdArray = onlineUsers.map((user) => user.user_id)
 
   // start out with this points array where everyone has 0 points
@@ -20,40 +19,28 @@ const calculatePoints = ({ onlineUsers, allRoundsDataForOnlineUsers, eventId }) 
   // loop over online users
   onlineUsersWithSimplifiedTags.forEach((myUser) => {
     // for each of my tags
+    const myPointsObj = pointsArr.find((pointsObj) => {
+      return pointsObj.userId === myUser.id
+    })
     myUser.tags.forEach((tagString) => {
       // check each online user and see if we share a tag
       onlineUsersWithSimplifiedTags.forEach((partner) => {
+        const userToAdjustPointsOn = myPointsObj.scores.find((u) => {
+          const partnerIdWithinMyPointsObj = parseInt(Object.keys(u)[0], 10)
+
+          return partner.id === partnerIdWithinMyPointsObj
+        })
+
         if (myUser.id !== partner.id) {
-          // make sure that neither user has given the other 1 star
-          // the two users in question haven't already matched this event
-          const pointsAdjustment = adjustPointsBasedOnPreviousInteratction({
-            userA: myUser.id,
-            userB: partner.id,
-            allRoundsDataForOnlineUsers,
-            eventId,
-          })
-          const pointDefault = Number(Math.random().toFixed(3)) + 10
-          const myPointsObj = pointsArr.find((pointsObj) => {
-            return pointsObj.userId === myUser.id
-          })
+          const tenPointsAndChange = Number(Math.random().toFixed(3)) + 10
 
-          const userToAdjustPointsOn = myPointsObj.scores.find((u) => {
-            const partnerIdWithinMyPointsObj = parseInt(Object.keys(u)[0], 10)
-
-            return partner.id === partnerIdWithinMyPointsObj
+          partner.tags.forEach((partnerTag) => {
+            const iAlsoHaveThisTag = tagString === partnerTag
+            // and if we share this tag, increment on that user on "my" object
+            if (iAlsoHaveThisTag) {
+              userToAdjustPointsOn[partner.id] += tenPointsAndChange
+            }
           })
-
-          if (pointsAdjustment === 0) {
-            partner.tags.forEach((partnerTag) => {
-              const iAlsoHaveThisTag = tagString === partnerTag
-              // and if we share this tag, increment on that user on "my" object
-              if (iAlsoHaveThisTag) {
-                userToAdjustPointsOn[partner.id] += pointDefault
-              }
-            })
-          } else {
-            userToAdjustPointsOn[partner.id] += pointsAdjustment
-          }
         }
       })
     })

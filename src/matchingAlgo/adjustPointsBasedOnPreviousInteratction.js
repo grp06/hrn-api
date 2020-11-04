@@ -1,102 +1,67 @@
-const adjustPointsBasedOnPreviousInteratction = ({
-  userA,
-  userB,
+const checkIfHasGivenOneStarRating = ({ userId, partnersUserId, allRoundsDataForOnlineUsers }) => {
+  let hasGivenOneStarRating = false
+  allRoundsDataForOnlineUsers.forEach((item) => {
+    const myRowAndIGave1Star = item.user_id === userId && partnersUserId === item.partner_id && item.rating === 1
+    const myPartnersRowAndHeGaveMe1Star = item.user_id === partnersUserId && item.rating === 1 && item.partner_id === userId
+    if (myRowAndIGave1Star || myPartnersRowAndHeGaveMe1Star) {
+      hasGivenOneStarRating = true
+    }
+  })
+  return hasGivenOneStarRating
+}
+
+const checkIfHasMetPartnerThisEvent = ({
+  userId,
+  partnersUserId,
   allRoundsDataForOnlineUsers,
   eventId,
 }) => {
-  if (!allRoundsDataForOnlineUsers.length) {
-    return 0
-  }
-  // at the moment, this is within a loop
-  // what this means is that we'll hit this mutliple times
-  // (as many times as we have tags)
-  // it just makes the number super negative
-  // probably ok for now, but we should fix
-  const eitherPartnerGaveOtherOneStar = allRoundsDataForOnlineUsers.reduce(
-    (all, currentUserRow) => {
-      if (all) {
-        return true
-      }
-
-      const userAGaveUserBOneStar =
-        currentUserRow.user_id === userA &&
-        currentUserRow.partner_id === userB &&
-        currentUserRow.rating === 1
-
-      const userBGaveUserAOneStar =
-        currentUserRow.user_id === userB &&
-        currentUserRow.partner_id === userA &&
-        currentUserRow.rating === 1
-
-      if (userAGaveUserBOneStar || userBGaveUserAOneStar) {
-        return true
-      }
-
-      return all
-    },
-    false
-  )
-
-  if (eitherPartnerGaveOtherOneStar) {
-    return -900
-  }
-
-  const usersHaveAlreadyMatched = allRoundsDataForOnlineUsers.reduce((all, currentUserRow) => {
-    if (all) {
-      return true
+  let hasMetThisEvent = false
+  allRoundsDataForOnlineUsers.forEach((item) => {
+    if (
+      item.user_id === userId &&
+      item.event_id === eventId &&
+      item.partner_id === partnersUserId
+    ) {
+      hasMetThisEvent = true
     }
+  })
+  return hasMetThisEvent
+}
 
-    const userAAlreadyMatchedUserBThisEvent =
-      currentUserRow.user_id === userA &&
-      currentUserRow.partner_id === userB &&
-      currentUserRow.event_id === eventId
+const adjustPointsBasedOnPreviousInteratction = ({
+  allRoundsDataForOnlineUsers,
+  eventId,
+  calculatedPoints,
+}) => {
+  const adjustedPoints = calculatedPoints.reduce((all, userObj, index) => {
+    const { scores, userId } = userObj
+    scores.forEach((item, idx) => {
+      const partnersUserId = parseInt(Object.keys(item)[0], 10)
+      const hasGivenOneStarRating = checkIfHasGivenOneStarRating({
+        userId,
+        partnersUserId,
+        allRoundsDataForOnlineUsers,
+      })
+      const hasMetPartnerThisEvent = checkIfHasMetPartnerThisEvent({
+        userId,
+        partnersUserId,
+        allRoundsDataForOnlineUsers,
+        eventId,
+      })
+      if (hasMetPartnerThisEvent) {
+        item[partnersUserId] -= 1000
+      }
+      if (hasGivenOneStarRating) {
+        item[partnersUserId] -= 10000
+      }
+    })
 
-    const userBAlreadyMatchedUserAThisEvent =
-      currentUserRow.user_id === userB &&
-      currentUserRow.partner_id === userA &&
-      currentUserRow.event_id === eventId
-
-    if (userAAlreadyMatchedUserBThisEvent || userBAlreadyMatchedUserAThisEvent) {
-      return true
-    }
-
+    all.push(userObj)
     return all
-  }, false)
+  }, [])
 
-  if (usersHaveAlreadyMatched) {
-    return -90
-  }
-
-  const eitherPartnerHasReportedTheOther = allRoundsDataForOnlineUsers.reduce(
-    (all, currentUserRow) => {
-      if (all) {
-        return true
-      }
-
-      const userAReportedUserB =
-        currentUserRow.user_id === userA &&
-        currentUserRow.partner_id === userB &&
-        currentUserRow.left_chat === 'reported my partner'
-
-      const userBReportedUserA =
-        currentUserRow.user_id === userB &&
-        currentUserRow.partner_id === userA &&
-        currentUserRow.left_chat === 'reported my partner'
-
-      if (userAReportedUserB || userBReportedUserA) {
-        return true
-      }
-
-      return all
-    },
-    false
-  )
-
-  if (eitherPartnerHasReportedTheOther) {
-    return -9000
-  }
-
-  return 0
+  return adjustedPoints
 }
 
 export default adjustPointsBasedOnPreviousInteratction
