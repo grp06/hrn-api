@@ -130,8 +130,6 @@ app.post('/test-upload', (request, response) => {
           const cleanDate = dateNow.replace(/:/g, '-')
           const fileName = `bucketFolder/${userId}-${cleanDate}`
           const uploadResult = await uploadFile(data, fileName, type)
-          console.log('uploadResult', uploadResult)
-
           const updateProfilePicResponse = await orm.request(updateProfilePic, {
             id: userId,
             profile_pic_url: uploadResult.Location,
