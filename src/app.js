@@ -12,6 +12,7 @@ import initNextRound from './routes/rooms/initNextRound'
 import { getCronJobs } from './gql/queries'
 
 import { updateProfilePic } from './gql/mutations'
+import { addPath } from 'graphql/jsutils/Path'
 
 require('dotenv').config()
 require('es6-promise').polyfill()
@@ -119,14 +120,17 @@ app.post('/test-upload', (request, response) => {
     }
     try {
       const { path } = files.file[0]
-
+      console.log('path ->', path)
       const buffer = fs.readFileSync(path)
       await sharp(buffer)
         .resize(250, 250)
         .toBuffer(async (err, data, info) => {
           const type = await fileType.fromBuffer(data)
-          const fileName = `bucketFolder/${Date.now().toString()}`
+          const dateNow = new Date().toISOString()
+          const cleanDate = dateNow.replace(/:/g, '-')
+          const fileName = `bucketFolder/${userId}-${cleanDate}`
           const uploadResult = await uploadFile(data, fileName, type)
+          console.log('uploadResult', uploadResult)
 
           const updateProfilePicResponse = await orm.request(updateProfilePic, {
             id: userId,
