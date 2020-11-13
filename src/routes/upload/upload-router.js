@@ -1,55 +1,91 @@
 import * as Sentry from '@sentry/node'
+import orm from '../../services/orm'
+
+import { updateProfilePic } from '../../gql/mutations'
+
+const fs = require('fs')
+const multiparty = require('multiparty')
+
+const sharp = require('sharp')
+const fileType = require('file-type')
 
 const express = require('express')
 
 const uploadRouter = express.Router()
 const AWS = require('aws-sdk')
 
-const envString = process.env.NODE_ENV === 'development' ? 'staging' : 'prod'
+const envString = process.env.NODE_ENV === 'development' ? 'staging' : 'production'
 console.log('envString', envString)
 
-uploadRouter.get('/profile-pic', async (req, res) => {
-console.log("req", req.body)
-  console.log('hit the endpoint')
-  AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: 'us-east-1', // Must be the same as your bucket
-    signatureVersion: 'v4',
-  })
-  const params = {
-    ACL: 'public-read',
-    Bucket: 'profile-pics',
-    ContentType: 'image/jpeg',
-    Fields: {
-      key: 'req.body.name',
-    },
-    Conditions: [],
-  }
-  const options = {
-    signatureVersion: 'v4',
-    region: 'us-east-1', // same as your bucket
-    endpoint: new AWS.Endpoint(`https://${envString}-${process.env.S3_BUCKET}.s3.amazonaws.com`),
-    useAccelerateEndpoint: false,
-    s3ForcePathStyle: true,
-  }
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: 'us-east-1',
+  signatureVersion: 'v4',
+})
 
-  const client = new AWS.S3(options)
-  const form = await new Promise((resolve, reject) => {
-    client.createPresignedPost(params, (err, data) => {
-      if (err) {
-        console.log('form -> err', err)
-        reject(err)
-      } else {
-        console.log('form -> data', data)
-        resolve(data)
+uploadRouter.post('/get-signed-url', async (req, res) => {
+  try {
+    const form = new multiparty.Form()
+
+    form.parse(req, async (error, fields, files) => {
+      if (error) {
+        return res.status(500).send(error)
+      }
+      try {
+        const { path } = files.file[0]
+        const userId = fields.userId[0]
+        const buffer = fs.readFileSync(path)
+        // resize the image
+        await sharp(buffer)
+          .resize(250, 250)
+          .toBuffer(async (err, data) => {
+            const type = await fileType.fromBuffer(data)
+            const bucketName = `hi-right-now-${envString}-profile-pictures`
+            const signedUrlExpireSeconds = 60 * 5
+            const key = `${Date.now()}-${userId}-${files.file[0].originalFilename}`
+            const s3 = new AWS.S3()
+
+            const url = await s3.getSignedUrl('putObject', {
+              ContentType: type.mime,
+              Bucket: bucketName,
+              Key: key,
+              ACL: 'public-read',
+              Expires: signedUrlExpireSeconds,
+            })
+
+            return res.json({
+              url,
+              data,
+            })
+          })
+      } catch (err) {
+        console.log('err', err)
+        return res.status(500).send(err)
       }
     })
-  })
-  console.log('form = ', form)
-  return res.json({
-    form: { ...form, url: `https://${envString}-${process.env.S3_BUCKET}.s3.amazonaws.com` },
-  })
+  } catch (error) {
+    console.log('error = ', error)
+    Sentry.captureException(error)
+  }
+})
+
+uploadRouter.post('/save-profile-pic-url', async (req, res) => {
+  const { userId, url } = req.body
+  try {
+    await orm.request(updateProfilePic, {
+      id: userId,
+      profile_pic_url: url,
+    })
+
+    return res.status(200).send({
+      success: Boolean(updateProfilePic),
+    })
+  } catch (error) {
+    console.log('error = ', error)
+    Sentry.captureException(error)
+    return res.status(500).send(error)
+  }
 })
 
 module.exports = uploadRouter
