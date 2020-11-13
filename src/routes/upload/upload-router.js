@@ -25,6 +25,7 @@ AWS.config.update({
 })
 
 uploadRouter.post('/get-signed-url', async (req, res) => {
+  console.log('get signed url hit!');
   try {
     const form = new multiparty.Form()
 
