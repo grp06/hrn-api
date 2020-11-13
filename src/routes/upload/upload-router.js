@@ -14,7 +14,7 @@ const express = require('express')
 const uploadRouter = express.Router()
 const AWS = require('aws-sdk')
 
-const envString = process.env.NODE_ENV === 'development' ? 'staging' : 'production'
+const envString = process.env.DEPLOYED_ENV === 'production' ? 'production' : 'staging'
 console.log('envString', envString)
 
 AWS.config.update({

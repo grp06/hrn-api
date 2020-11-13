@@ -34,7 +34,6 @@ const emailRouter = require('./routes/email/email-router')
 
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
-console.log("uploadRouter", uploadRouter)
 const app = express()
 
 Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sentry.io/5279031' })
