@@ -1,17 +1,38 @@
+import * as Sentry from '@sentry/node'
 import Stripe from 'stripe'
+import orm from '../../services/orm'
+import { updateStripeCustomerId } from '../../gql/mutations'
 
 const express = require('express')
 
 const stripeRouter = express.Router()
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 stripeRouter.post('/create-customer', async (req, res) => {
-  const { email, name } = req.body
+  const { email, name, userId } = req.body
+  console.log('email ->', email)
+  console.log('name ->', name)
+  console.log('userId ->', userId)
   const customer = await stripe.customers.create({ email, name })
-  // TODO: save the customer id as stripeCustomerId in our db
+
   console.log('customer ->', customer)
-  res.send({ customer })
+  console.log('customer.id ->', customer.id)
+  try {
+    await orm.request(updateStripeCustomerId, {
+      user_id: userId,
+      stripe_customer_id: customer.id,
+    })
+
+    // return res.status(200).send({
+    //   success: Boolean(updateStripeCustomerId),
+    // })
+  } catch (error) {
+    console.log('error = ', error)
+    Sentry.captureException(error)
+    // return res.status(500).send(error)
+  }
+  // TODO: save the customer id as stripeCustomerId in our db
+  return res.send({ customer })
 })
 
 stripeRouter.post('/create-subscription', async (req, res) => {
