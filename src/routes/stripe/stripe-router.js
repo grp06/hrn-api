@@ -10,13 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 stripeRouter.post('/create-customer', async (req, res) => {
   const { email, name, userId } = req.body
-  console.log('email ->', email)
-  console.log('name ->', name)
-  console.log('userId ->', userId)
   const customer = await stripe.customers.create({ email, name })
-
-  console.log('customer ->', customer)
-  console.log('customer.id ->', customer.id)
   try {
     await orm.request(updateStripeCustomerId, {
       user_id: userId,
@@ -27,7 +21,7 @@ stripeRouter.post('/create-customer', async (req, res) => {
     //   success: Boolean(updateStripeCustomerId),
     // })
   } catch (error) {
-    console.log('error = ', error)
+    console.log('[stripe /create-customer error] -> ', error)
     Sentry.captureException(error)
     // return res.status(500).send(error)
   }
@@ -36,47 +30,62 @@ stripeRouter.post('/create-customer', async (req, res) => {
 })
 
 stripeRouter.post('/create-subscription', async (req, res) => {
-  const { customerId, paymentMethodId, planName } = req.body
+  const { customerId, paymentMethodId, plan } = req.body
+  console.log('req.body ->', req.body)
+  console.log('rpocess.env[planName] ->', process.env[plan])
   // set the default payment method on the customer
   try {
     await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId })
   } catch (error) {
+    console.log('[stripe /create-subscription error] ->', error)
+    Sentry.captureException(error)
     return res.status(402).send({ error: { message: error.message } })
   }
 
-  // let updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
-  //   invoice_settings: {
-  //     default_payment_method: paymentMethodId,
-  //   },
-  // })
+  // this needs to be a part of this even though we dont use the result for anything
+  // in the code. The default payment needs to be configured on the stripe API
+  // for payments to process.
+  let updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
+    invoice_settings: {
+      default_payment_method: paymentMethodId,
+    },
+  })
 
   // Create the subscription
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
-    items: [{ price: process.env[planName] }],
+    items: [{ price: process.env[plan] }],
     expand: ['latest_invoice.payment_intent'],
   })
 
   res.send(subscription)
 })
 
-stripeRouter.post('/payment-intents', async (req, res) => {
+stripeRouter.post('/retry-invoice', async (req, res) => {
+  const { customerId, paymentMethodId, invoiceId } = req.body
+  // reconfigure the default payment method on the user since the
+  // last one presumably failed if we're retrying
   try {
-    const { amount } = req.body
-    console.log('amount ->', amount)
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    })
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
     })
-    console.log(paymentIntent)
-    console.log(paymentIntent.client_secret)
-    return res.status(200).json({
-      secret: paymentIntent.client_secret,
-    })
-  } catch (err) {
-    res.status(500).json({ statusCode: 500, message: err.message })
+  } catch (error) {
+    console.log('[stripe /retry-invoice error] ->', error)
+    Sentry.captureException(error)
+    return res.status(402).send({ result: { error: { message: error.message } } })
   }
+
+  const invoice = await stripe.invoices.retrieve(invoiceId, {
+    expand: ['payment_intent'],
+  })
+
+  res.send(invoice)
 })
 
 module.exports = stripeRouter
