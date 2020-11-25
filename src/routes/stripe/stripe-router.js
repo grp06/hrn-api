@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import Stripe from 'stripe'
 import orm from '../../services/orm'
-import { updateStripeCustomerId } from '../../gql/mutations'
+import { updateStripeCustomerId, updateUserRole } from '../../gql/mutations'
 
 const express = require('express')
 
@@ -30,9 +30,10 @@ stripeRouter.post('/create-customer', async (req, res) => {
 })
 
 stripeRouter.post('/create-subscription', async (req, res) => {
-  const { customerId, paymentMethodId, plan } = req.body
-  console.log('req.body ->', req.body)
-  console.log('rpocess.env[planName] ->', process.env[plan])
+  const { customerId, paymentMethodId, plan, userId } = req.body
+  const planTypeName = plan.split('_')[0].toLowerCase()
+  console.log('planTypeName ->', planTypeName)
+
   // set the default payment method on the customer
   try {
     await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId })
@@ -57,6 +58,18 @@ stripeRouter.post('/create-subscription', async (req, res) => {
     items: [{ price: process.env[plan] }],
     expand: ['latest_invoice.payment_intent'],
   })
+
+  // Update the user role in our DB
+  try {
+    await orm.request(updateUserRole, {
+      user_id: userId,
+      role: `host-${planTypeName}`,
+    })
+  } catch (error) {
+    console.log('[stripe /create-customer error] -> ', error)
+    Sentry.captureException(error)
+    // return res.status(500).send(error)
+  }
 
   res.send(subscription)
 })
