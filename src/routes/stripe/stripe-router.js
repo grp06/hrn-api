@@ -32,7 +32,6 @@ stripeRouter.post('/create-customer', async (req, res) => {
 stripeRouter.post('/create-subscription', async (req, res) => {
   const { customerId, paymentMethodId, plan, userId } = req.body
   const planTypeName = plan.split('_')[0].toLowerCase()
-  console.log('planTypeName ->', planTypeName)
 
   // set the default payment method on the customer
   try {
@@ -75,7 +74,8 @@ stripeRouter.post('/create-subscription', async (req, res) => {
 })
 
 stripeRouter.post('/retry-invoice', async (req, res) => {
-  const { customerId, paymentMethodId, invoiceId } = req.body
+  const { customerId, paymentMethodId, invoiceId, plan, userId } = req.body
+  const planTypeName = plan.split('_')[0].toLowerCase()
   // reconfigure the default payment method on the user since the
   // last one presumably failed if we're retrying
   try {
@@ -97,6 +97,18 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   const invoice = await stripe.invoices.retrieve(invoiceId, {
     expand: ['payment_intent'],
   })
+
+  // Update the user role in our DB
+  try {
+    await orm.request(updateUserRole, {
+      user_id: userId,
+      role: `host-${planTypeName}`,
+    })
+  } catch (error) {
+    console.log('[stripe /create-customer error] -> ', error)
+    Sentry.captureException(error)
+    // return res.status(500).send(error)
+  }
 
   res.send(invoice)
 })
