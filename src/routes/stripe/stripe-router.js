@@ -65,7 +65,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
-      role: `host-${planTypeName}`,
+      role: `host_${planTypeName}`,
     })
 
     await orm.request(updateUserSubPeriod, {
@@ -113,7 +113,7 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
-      role: `host-${planTypeName}`,
+      role: `host_${planTypeName}`,
     })
 
     await orm.request(updateUserSubPeriod, {
