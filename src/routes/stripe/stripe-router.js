@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import Stripe from 'stripe'
 import orm from '../../services/orm'
-import { updateStripeCustomerId, updateUserRole } from '../../gql/mutations'
+import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
 
 const express = require('express')
 
@@ -58,11 +58,19 @@ stripeRouter.post('/create-subscription', async (req, res) => {
     expand: ['latest_invoice.payment_intent'],
   })
 
-  // Update the user role in our DB
+  const subPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString()
+  console.log(subPeriodEnd)
+
+  // Update the user role and sub_period_end in our DB
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
       role: `host-${planTypeName}`,
+    })
+
+    await orm.request(updateUserSubPeriod, {
+      user_id: userId,
+      sub_period_end: subPeriodEnd,
     })
   } catch (error) {
     console.log('[stripe /create-customer error] -> ', error)
@@ -98,11 +106,19 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
     expand: ['payment_intent'],
   })
 
+  const subPeriodEnd = new Date(invoice.period_end * 1000).toISOString()
+  console.log(subPeriodEnd)
+
   // Update the user role in our DB
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
       role: `host-${planTypeName}`,
+    })
+
+    await orm.request(updateUserSubPeriod, {
+      user_id: userId,
+      sub_period_end: subPeriodEnd,
     })
   } catch (error) {
     console.log('[stripe /create-customer error] -> ', error)
