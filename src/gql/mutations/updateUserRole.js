@@ -7,6 +7,7 @@ const updateUserRole = gql`
         id
         role
         name
+        email
       }
     }
   }
