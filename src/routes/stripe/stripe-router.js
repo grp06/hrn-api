@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import Stripe from 'stripe'
 import orm from '../../services/orm'
 import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
+import { createToken } from '../../extensions/jwtHelper'
 
 const express = require('express')
 
@@ -23,6 +24,7 @@ stripeRouter.post('/create-customer', async (req, res) => {
   } catch (error) {
     console.log('[stripe /create-customer error] -> ', error)
     Sentry.captureException(error)
+    return res.status(500).send({ error })
     // return res.status(500).send(error)
   }
   // TODO: save the customer id as stripeCustomerId in our db
@@ -30,7 +32,7 @@ stripeRouter.post('/create-customer', async (req, res) => {
 })
 
 stripeRouter.post('/create-subscription', async (req, res) => {
-  const { customerId, paymentMethodId, plan, userId } = req.body
+  const { customerId, paymentMethodId, plan, userId, userEmail } = req.body
   const planTypeName = plan.split('_')[0].toLowerCase()
 
   // set the default payment method on the customer
@@ -73,16 +75,28 @@ stripeRouter.post('/create-subscription', async (req, res) => {
       sub_period_end: subPeriodEnd,
     })
   } catch (error) {
-    console.log('[stripe /create-customer error] -> ', error)
+    console.log('[stripe /create-subscription updateUserRole/updateUserSub  error] -> ', error)
     Sentry.captureException(error)
+    return res.status(500).send({ error })
     // return res.status(500).send(error)
   }
 
-  res.send(subscription)
+  // create a new token and send both token and sub obj back
+  const userObject = { email: userEmail, id: userId, role: `host_${planTypeName}` }
+  try {
+    const token = await createToken(userObject, process.env.SECRET)
+    console.log(token)
+    return res.status(201).send({ subscriptionObject: subscription, token })
+  } catch (error) {
+    console.log('[stripe /create-subscription createToken error] -> ', error)
+    Sentry.captureException(error)
+    return res.status(500).send({ error })
+    // return res.status(500).send(error)
+  }
 })
 
 stripeRouter.post('/retry-invoice', async (req, res) => {
-  const { customerId, paymentMethodId, invoiceId, plan, userId } = req.body
+  const { customerId, paymentMethodId, invoiceId, plan, userId, userEmail } = req.body
   const planTypeName = plan.split('_')[0].toLowerCase()
   // reconfigure the default payment method on the user since the
   // last one presumably failed if we're retrying
@@ -121,12 +135,23 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
       sub_period_end: subPeriodEnd,
     })
   } catch (error) {
-    console.log('[stripe /create-customer error] -> ', error)
+    console.log('[stripe /retry-invoice updateUserRole/updateUserSub error] -> ', error)
     Sentry.captureException(error)
-    // return res.status(500).send(error)
+    return res.status(500).send({ error })
   }
 
-  res.send(invoice)
+  // create a new token and send both token and invoice obj back
+  const userObject = { email: userEmail, id: userId, role: `host_${planTypeName}` }
+  try {
+    const token = await createToken(userObject, process.env.SECRET)
+    console.log(token)
+    return res.status(201).send({ invoice, token })
+  } catch (error) {
+    console.log('[stripe /retry-invoice createToken  error] -> ', error)
+    Sentry.captureException(error)
+    return res.status(500).send({ error })
+    // return res.status(500).send(error)
+  }
 })
 
 module.exports = stripeRouter
