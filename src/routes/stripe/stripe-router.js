@@ -31,6 +31,16 @@ stripeRouter.post('/create-customer', async (req, res) => {
   return res.send({ customer })
 })
 
+stripeRouter.post('/create-customer-portal', async (req, res) => {
+  const { customer_id, return_url } = req.body
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customer_id,
+    return_url,
+  })
+
+  return res.send({ url: session.url })
+})
+
 stripeRouter.post('/create-subscription', async (req, res) => {
   const { customerId, paymentMethodId, plan, userId, userEmail } = req.body
   const planTypeName = plan.split('_')[0].toLowerCase()
