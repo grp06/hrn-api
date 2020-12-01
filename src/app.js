@@ -63,7 +63,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/stripe', stripeRouter)
-app.use('/webhooks', webhooks)
+app.use('/api/webhooks', webhooks)
 
 app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')

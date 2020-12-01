@@ -81,7 +81,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
     })
 
     await orm.request(updateUserSubPeriod, {
-      user_id: userId,
+      stripe_customer_id: customerId,
       sub_period_end: subPeriodEnd,
     })
   } catch (error) {
@@ -141,7 +141,7 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
     })
 
     await orm.request(updateUserSubPeriod, {
-      user_id: userId,
+      stripe_customer_id: customerId,
       sub_period_end: subPeriodEnd,
     })
   } catch (error) {
