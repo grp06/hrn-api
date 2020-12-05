@@ -8,8 +8,6 @@ import { bulkInsertPartners } from '../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
 import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 import getPredeterminedPartners from './getPredeterminedPartners'
-import turnPredeterminedPartersIntoPairingsArray from './turnPredeterminedPartersIntoPairingsArray'
-import filterPredeterminedMatchesByUniqueUserIds from './filterPredeterminedMatchesByUniqueUserIds'
 
 const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSamyakAlgo }) => {
   try {
@@ -25,25 +23,10 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     const predeterminedPartnersQueryResponse = await getPredeterminedPartners({
       userIds,
     })
-    console.log("🚀 ~ omniCreatePairings ~ predeterminedPartnersQueryResponse", predeterminedPartnersQueryResponse)
-
-    // const queryResponseByThoseWhoHaventMet = filterPredeterminedMatchesByUniqueUserIds({
-    //   predeterminedPartnersQueryResponse,
-    //   allRoundsDataForOnlineUsers,
-    //   userIds,
-    // })
-
-    // console.log(
-    //   '🚀 ~ omniCreatePairings ~ queryResponseByThoseWhoHaventMet',
-    //   queryResponseByThoseWhoHaventMet
-    // )
 
     let pairings
     let isSamyakAlgo
 
-    // at the moment, we're going under the assumption that if there are ANY pre-determined matches
-    // that this is a "pre-determined matches"-type of event
-    // this won't handle the case where there's just one suggested match. Need to think a little more for that
     // revert 1 to 15
     if (onlineUsers.length < 1 || useSamyakAlgo) {
       console.log('making assignments with samyak algo')
