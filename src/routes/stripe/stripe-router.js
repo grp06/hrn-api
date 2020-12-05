@@ -17,17 +17,11 @@ stripeRouter.post('/create-customer', async (req, res) => {
       user_id: userId,
       stripe_customer_id: customer.id,
     })
-
-    // return res.status(200).send({
-    //   success: Boolean(updateStripeCustomerId),
-    // })
   } catch (error) {
     console.log('[stripe /create-customer error] -> ', error)
     Sentry.captureException(error)
     return res.status(500).send({ error })
-    // return res.status(500).send(error)
   }
-  // TODO: save the customer id as stripeCustomerId in our db
   return res.send({ customer })
 })
 

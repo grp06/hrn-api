@@ -36,9 +36,10 @@ webhooks.post('/next-round', jsonBodyParser, async (req, res, next) => {
 // customer.subscription.deleted, customer.subscription.updated, invoice.payment_succeeded
 
 webhooks.post('/stripe-customer-portal', jsonBodyParser, async (req, res) => {
+  console.log('req.body ->', req.body)
   // for customer subscription we want to check the plan from the sub, get the id or product
   // from the plan object, and compare them to the ids of the product to make sure we are still
-  // giving them correct access
+  // giving them correct host access
   if (req.body.type === 'customer.subscription.updated') {
     console.log('req.body ->', console.log(req.body))
     const subscription = req.body.data.object
@@ -63,7 +64,7 @@ webhooks.post('/stripe-customer-portal', jsonBodyParser, async (req, res) => {
           sub_period_end: current_period_end_ISOString,
         })
 
-        // if the role is the same as the planName then that means they changed their
+        // if the role isnt the same as the planName then that means they changed their
         // plan, so lets update their role in the db
         if (role !== planName && planName !== 'no_plan') {
           await orm.request(updateUserRole, {
