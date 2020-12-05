@@ -13,6 +13,7 @@ const makePairings = ({
   eventId,
   fromLobbyScan,
   userIds,
+  predeterminedPartnersQueryResponse,
 }) => {
   console.log('fromLobbyScan', fromLobbyScan)
   let pairingAttempts = 0
@@ -31,11 +32,11 @@ const makePairings = ({
       calculatedPoints,
       allRoundsDataForOnlineUsers,
       eventId,
+      predeterminedPartnersQueryResponse,
     })
-    console.log('attemptPairings -> adjustedPoints', JSON.stringify(adjustedPoints, null, 2))
-
 
     shuffleArray(adjustedPoints)
+    console.log('attemptPairings -> adjustedPoints', JSON.stringify(adjustedPoints, null, 2))
 
     let reorderedWithNullsInFront
     if (pairingAttempts < 1) {
