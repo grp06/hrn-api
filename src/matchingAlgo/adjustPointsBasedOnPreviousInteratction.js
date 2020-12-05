@@ -78,9 +78,6 @@ const adjustPointsBasedOnPreviousInteratction = ({
       })
       console.log('🚀 ~ scores.forEach ~ userArePredeterminedToMatch', userArePredeterminedToMatch)
 
-      // check if you have a predetermined match for this event
-      // if is a predetermined match, add 150
-      // it'll be like 850 if we've arleady met this event and we are a predetermined match
       if (hasMetPartnerThisEvent) {
         item[partnersUserId] -= 1000
       }
@@ -90,9 +87,6 @@ const adjustPointsBasedOnPreviousInteratction = ({
       }
 
       if (userArePredeterminedToMatch) {
-        console.log(
-          ' WE ADDING 500WE ADDING 500WE ADDING 500WE ADDING 500WE ADDING 500WE ADDING 500'
-        )
         // add a number between 500 - 599 to that users' points object
         item[partnersUserId] += Math.floor(Math.random() * 100) + 500
       }
