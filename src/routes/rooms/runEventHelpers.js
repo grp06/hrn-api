@@ -45,6 +45,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
     console.log('clearing next round job')
   }
   try {
+    // on round 1 dont set to in between rounds
     const updateEventObjectRes = await orm.request(updateEventObject, {
       id: eventId,
       newStatus: 'in-between-rounds',
