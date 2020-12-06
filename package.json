@@ -53,6 +53,7 @@
     "passport": "^0.4.1",
     "path": "^0.12.7",
     "sharp": "^0.26.2",
+    "stripe": "^8.121.0",
     "twilio": "^3.43.1",
     "unsplash-js": "^6.3.0",
     "validator": "^13.1.1",

@@ -31,6 +31,7 @@ const usersRouter = require('./routes/users/users-router')
 const authRouter = require('./routes/auth/auth-router')
 const uploadRouter = require('./routes/upload/upload-router')
 const emailRouter = require('./routes/email/email-router')
+const stripeRouter = require('./routes/stripe/stripe-router')
 
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
@@ -61,7 +62,8 @@ app.use('/api/signup', usersRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/email', emailRouter)
-app.use('/webhooks', webhooks)
+app.use('/api/stripe', stripeRouter)
+app.use('/api/webhooks', webhooks)
 
 app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')

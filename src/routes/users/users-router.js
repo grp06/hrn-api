@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
 import { findUserByEmail } from '../../gql/queries'
-import { signUp } from '../../gql/mutations'
+import { signUp, updateUserRole } from '../../gql/mutations'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
@@ -129,6 +129,26 @@ usersRouter.get('/get-anonymous-token', async (req, res) => {
   try {
     return res.status(201).json({
       token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(500).json({
+      error,
+    })
+  }
+})
+
+usersRouter.post('/upgrade-to-host', async (req, res) => {
+  const { userId } = req.body
+  try {
+    const userRoleResponse = await orm.request(updateUserRole, {
+      user_id: userId,
+      role: 'host',
+    })
+    const userObject = userRoleResponse.data.update_users.returning[0]
+
+    return res.status(201).json({
+      token: await createToken(userObject, process.env.SECRET),
     })
   } catch (error) {
     Sentry.captureException(error)
