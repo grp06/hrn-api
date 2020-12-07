@@ -22,6 +22,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds)
     const predeterminedPartnersQueryResponse = await getPredeterminedPartners({
       userIds,
+      eventId,
     })
 
     let pairings
