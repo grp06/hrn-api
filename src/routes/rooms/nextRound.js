@@ -79,7 +79,10 @@ const nextRound = async ({ req, res, params }) => {
     currentRound,
     useSamyakAlgo: createPairingsRes,
   })
-  scanLobbyForPairings(eventId)
+  // change out eventId 1 for whatever the startupFuel eventId is
+  if (eventId !== 1) {
+    scanLobbyForPairings(eventId)
+  }
 
   if (res) {
     return res

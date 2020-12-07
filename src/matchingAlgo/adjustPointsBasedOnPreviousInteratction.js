@@ -1,8 +1,10 @@
 const checkIfHasGivenOneStarRating = ({ userId, partnersUserId, allRoundsDataForOnlineUsers }) => {
   let hasGivenOneStarRating = false
   allRoundsDataForOnlineUsers.forEach((item) => {
-    const myRowAndIGave1Star = item.user_id === userId && partnersUserId === item.partner_id && item.rating === 1
-    const myPartnersRowAndHeGaveMe1Star = item.user_id === partnersUserId && item.rating === 1 && item.partner_id === userId
+    const myRowAndIGave1Star =
+      item.user_id === userId && partnersUserId === item.partner_id && item.rating === 1
+    const myPartnersRowAndHeGaveMe1Star =
+      item.user_id === partnersUserId && item.rating === 1 && item.partner_id === userId
     if (myRowAndIGave1Star || myPartnersRowAndHeGaveMe1Star) {
       hasGivenOneStarRating = true
     }
@@ -29,10 +31,29 @@ const checkIfHasMetPartnerThisEvent = ({
   return hasMetThisEvent
 }
 
+const checkIfPredeterminedMatch = ({
+  userId,
+  partnersUserId,
+  predeterminedPartnersQueryResponse,
+}) => {
+  let pairingIsPredetermined = false
+  predeterminedPartnersQueryResponse.forEach((pairing) => {
+    if (
+      (pairing.partner_1_id === userId && pairing.partner_2_id === partnersUserId) ||
+      (pairing.partner_1_id === partnersUserId && pairing.partner_2_id === userId)
+    ) {
+      pairingIsPredetermined = true
+    }
+  })
+
+  return pairingIsPredetermined
+}
+
 const adjustPointsBasedOnPreviousInteratction = ({
   allRoundsDataForOnlineUsers,
   eventId,
   calculatedPoints,
+  predeterminedPartnersQueryResponse,
 }) => {
   const adjustedPoints = calculatedPoints.reduce((all, userObj, index) => {
     const { scores, userId } = userObj
@@ -49,11 +70,25 @@ const adjustPointsBasedOnPreviousInteratction = ({
         allRoundsDataForOnlineUsers,
         eventId,
       })
+
+      const userArePredeterminedToMatch = checkIfPredeterminedMatch({
+        userId,
+        partnersUserId,
+        predeterminedPartnersQueryResponse,
+      })
+      console.log('🚀 ~ scores.forEach ~ userArePredeterminedToMatch', userArePredeterminedToMatch)
+
       if (hasMetPartnerThisEvent) {
         item[partnersUserId] -= 1000
       }
+
       if (hasGivenOneStarRating) {
         item[partnersUserId] -= 10000
+      }
+
+      if (userArePredeterminedToMatch) {
+        // add a number between 500 - 599 to that users' points object
+        item[partnersUserId] += Math.floor(Math.random() * 100) + 500
       }
     })
 

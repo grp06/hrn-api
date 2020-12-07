@@ -7,9 +7,9 @@ import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVa
 import { bulkInsertPartners } from '../gql/mutations'
 import getOnlineUsers from './getOnlineUsers'
 import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
+import getPredeterminedPartners from './getPredeterminedPartners'
 
 const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSamyakAlgo }) => {
-  console.log('omniCreatePairings -> useSamyakAlgo', useSamyakAlgo)
   try {
     // get all online users for this eventId
     const [userIds, onlineUsers] = await getOnlineUsers(eventId)
@@ -20,10 +20,15 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     }
 
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds)
+    const predeterminedPartnersQueryResponse = await getPredeterminedPartners({
+      userIds,
+    })
 
     let pairings
     let isSamyakAlgo
-    if (onlineUsers.length < 15 || useSamyakAlgo) {
+
+    // revert 1 to 15
+    if (onlineUsers.length < 1 || useSamyakAlgo) {
       console.log('making assignments with samyak algo')
       pairings = makePairingsFromSamyakAlgo({
         allRoundsDataForOnlineUsers,
@@ -40,6 +45,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
         eventId,
         fromLobbyScan,
         userIds,
+        predeterminedPartnersQueryResponse,
       })
     }
 
