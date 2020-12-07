@@ -3,11 +3,12 @@ import * as Sentry from '@sentry/node'
 import orm from '../services/orm'
 import { getPredeterminedPartnersFromListOfUserIds } from '../gql/queries'
 
-const getPredeterminedPartners = async ({ userIds }) => {
+const getPredeterminedPartners = async ({ userIds, eventId }) => {
   let partnersListResponse
   try {
     partnersListResponse = await orm.request(getPredeterminedPartnersFromListOfUserIds, {
       userIds,
+      eventId,
     })
   } catch (error) {
     console.log('error = ', error)
