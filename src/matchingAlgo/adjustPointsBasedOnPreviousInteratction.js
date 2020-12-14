@@ -59,6 +59,7 @@ const adjustPointsBasedOnPreviousInteratction = ({
     const { scores, userId } = userObj
     scores.forEach((item, idx) => {
       const partnersUserId = parseInt(Object.keys(item)[0], 10)
+
       const hasGivenOneStarRating = checkIfHasGivenOneStarRating({
         userId,
         partnersUserId,
@@ -76,7 +77,6 @@ const adjustPointsBasedOnPreviousInteratction = ({
         partnersUserId,
         predeterminedPartnersQueryResponse,
       })
-      console.log('🚀 ~ scores.forEach ~ userArePredeterminedToMatch', userArePredeterminedToMatch)
 
       if (hasMetPartnerThisEvent) {
         item[partnersUserId] -= 1000
@@ -87,8 +87,15 @@ const adjustPointsBasedOnPreviousInteratction = ({
       }
 
       if (userArePredeterminedToMatch) {
+        console.log('predetermined!!!!');
         // add a number between 500 - 599 to that users' points object
         item[partnersUserId] += Math.floor(Math.random() * 100) + 500
+      }
+
+      if (eventId === 7 && item[partnersUserId] < 100) {
+        // here
+        console.log('less than 100!!!!');
+        item[partnersUserId] -= 1000
       }
     })
 
