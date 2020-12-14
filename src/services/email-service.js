@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/node'
+
 import {
   oneHourReminderTemplate,
   postEventTemplate,

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node'
 import { makeCalendarInvite } from './rsvp'
 
 const path = require('path')
@@ -83,9 +84,7 @@ export const rsvpTemplate = async (fields) => {
   return { from, to, subject, content }
 }
 
-export const oneHourReminderTemplate = async (event, eventUser) => {
-  const { name, email } = eventUser.user
-  const { event_name, id: event_id, start_at } = event
+export const oneHourReminderTemplate = async ({ email, event_name, start_at, event_id }) => {
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
 
   // need to get local time
@@ -101,9 +100,8 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 
     htmlTemplate = ejsResponse
   } catch (error) {
-    __Sentry.captureException(error)
     console.log('oneHourReminderTemplate -> error', error)
-    return error
+    return __Sentry.captureException(error)
   }
 
   const from = process.env.EMAIL_LOGIN
@@ -120,9 +118,8 @@ export const oneHourReminderTemplate = async (event, eventUser) => {
 }
 
 export const postEventTemplate = async (fields) => {
-  const { event, user, partnerData } = fields
+  const { event_name, user, partnerData } = fields
   const { name, email } = user
-  const { event_name } = event
 
   let htmlTemplate
 

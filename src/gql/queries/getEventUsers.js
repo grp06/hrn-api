@@ -16,6 +16,11 @@ const getEventUsers = gql`
           }
         }
       }
+      event {
+        event_name
+        id
+        start_at
+      }
     }
   }
 `
