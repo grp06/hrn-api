@@ -59,7 +59,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
     let tooManyBadPairings = numNullPairings >= onlineUsers.length / 2 || pairings.length === 0
-    if (eventId === 7) {
+    if (eventId === 656) {
       tooManyBadPairings = false
     }
     if (tooManyBadPairings && !fromLobbyScan) {

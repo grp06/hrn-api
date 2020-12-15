@@ -92,9 +92,8 @@ const adjustPointsBasedOnPreviousInteratction = ({
         item[partnersUserId] += Math.floor(Math.random() * 100) + 500
       }
 
-      if (eventId === 7 && item[partnersUserId] < 100) {
+      if (eventId === 656 && item[partnersUserId] < 100) {
         // here
-        console.log('less than 100!!!!');
         item[partnersUserId] -= 1000
       }
     })
