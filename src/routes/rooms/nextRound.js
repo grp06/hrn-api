@@ -80,10 +80,8 @@ const nextRound = async ({ req, res, params }) => {
     useSamyakAlgo: createPairingsRes,
   })
 
-  // remove this IF after startup fuel event
-  if (eventId !== 7) {
-    scanLobbyForPairings(eventId)
-  }
+  scanLobbyForPairings(eventId)
+
 
   if (res) {
     return res
