@@ -19,10 +19,13 @@ const initNextRound = async ({
   console.log('roundLength', round_length)
   console.log('currentRound', currentRound)
   console.log('nextRoundStart', nextRoundStart)
-  let betweenRoundsDelay = 20
+  let betweenRoundsDelay = eventId === 656 ? 300 : 20
   const eventIsOver = currentRound === numRounds
 
-  const timeToEndRound = new Date(new Date().getTime() + round_length)
+  const roundLengthForStartupFuel = 900000
+  const length = eventId === 656 ? roundLengthForStartupFuel : round_length
+  const timeToEndRound = new Date(new Date().getTime() + length)
+  console.log('🚀 ~ timeToEndRound', timeToEndRound)
   console.log('time now =', new Date(new Date().getTime()))
   // used for testing for super short rounds
   // date.setSeconds(date.getSeconds() + 20)

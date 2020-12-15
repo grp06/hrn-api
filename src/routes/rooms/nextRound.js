@@ -27,7 +27,7 @@ const nextRound = async ({ req, res, params }) => {
         return resetEvent(eventId)
       }
       const completedRoomsPromises = await setRoomsCompleted(eventId)
-      console.log("nextRound -> completedRoomsPromises", completedRoomsPromises)
+      console.log('nextRound -> completedRoomsPromises', completedRoomsPromises)
       await Promise.all(completedRoomsPromises)
       await omniFinishRounds(currentRound, eventId)
 
@@ -39,7 +39,7 @@ const nextRound = async ({ req, res, params }) => {
       round_length = params.round_length
       currentRound = params.currentRound
       useSamyakAlgo = params.useSamyakAlgo
-      console.log("nextRound params -> useSamyakAlgo", useSamyakAlgo)
+      console.log('nextRound params -> useSamyakAlgo', useSamyakAlgo)
     }
 
     // createPairingsRes can either be undefined, true, or ended event early'
@@ -79,10 +79,9 @@ const nextRound = async ({ req, res, params }) => {
     currentRound,
     useSamyakAlgo: createPairingsRes,
   })
-  // change out eventId 1 for whatever the startupFuel eventId is
-  if (eventId !== 1) {
-    scanLobbyForPairings(eventId)
-  }
+
+  scanLobbyForPairings(eventId)
+
 
   if (res) {
     return res
