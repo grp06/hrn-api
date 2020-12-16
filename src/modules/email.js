@@ -117,6 +117,42 @@ export const oneHourReminderTemplate = async ({ email, event_name, start_at, eve
   return { from, to, subject, content }
 }
 
+export const twentyFourHourReminderTemplate = async ({ email, event_name, start_at, event_id }) => {
+  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+
+  // need to get local time
+  const eventTime = moment(start_at).format('h:mm')
+
+  let htmlTemplate
+  try {
+    const ejsResponse = await ejs.renderFile(
+      path.join(__dirname, '/views/twenty-four-hour-reminder.ejs'),
+      {
+        event_link: eventLink,
+        event_name: event_name,
+        event_start_time: eventTime,
+      }
+    )
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    console.log('oneHourReminderTemplate -> error', error)
+    return __Sentry.captureException(error)
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = email
+  const subject = `🔥Hi Right Now - ${event_name} starts in one hour!`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+  ]
+
+  return { from, to, subject, content }
+}
+
 export const postEventTemplate = async (fields) => {
   const { event_name, user, partnerData } = fields
   const { name, email } = user

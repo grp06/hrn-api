@@ -8,12 +8,10 @@ import {
   getContactSharesForSendingEmail,
 } from '../gql/queries'
 
-import { oneHourReminderTemplate } from '../modules/email'
-import { sendEmail } from './email-service'
+import { sendEmail, sendEmailsToEventUsers } from './email-service'
 
 const cron = require('node-cron')
 const moment = require('moment')
-const sgMail = require('@sendgrid/mail')
 
 const getEvents55to60MinsFromNow = async () => {
   console.log('check for events in next hour')
@@ -55,43 +53,6 @@ const getEventsStartingIn24Hours = async () => {
   return events55to60MinsFromNow
 }
 
-const sendEmailsToEventUsers = async (eventUsersPromises) => {
-  try {
-    const eventUsersFromOneEvent = await Promise.all(eventUsersPromises)
-    const listOfEmailMessagesPromises = []
-
-    eventUsersFromOneEvent.forEach((eventUserObj) => {
-      eventUserObj.data.event_users.forEach((eventUser) => {
-        const { event } = eventUser
-        const { user } = eventUser
-        const { email } = user
-        const { event_name, start_at, id: event_id } = event
-        listOfEmailMessagesPromises.push(
-          oneHourReminderTemplate({
-            email,
-            event_name,
-            start_at,
-            event_id,
-          })
-        )
-      })
-    })
-
-    const resolvedMessages = await Promise.all(listOfEmailMessagesPromises)
-    const emailsToSendPromies = []
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
-    resolvedMessages.forEach((message) => {
-      emailsToSendPromies.push(sgMail.send(message))
-    })
-
-    // await Promise.all(emailsToSendPromies)
-    console.log('success sending emails')
-  } catch (error) {
-    console.log('error sending email = ', error)
-    return __Sentry.captureException(error)
-  }
-}
 
 const sendEmailsToUpcomingEventParticipants = async () => {
   const events55to60MinsFromNow = await getEvents55to60MinsFromNow()
@@ -108,11 +69,11 @@ const sendEmailsToUpcomingEventParticipants = async () => {
     eventUsersPromises24HoursFromNow.push(orm.request(getEventUsers, { event_id: event.id }))
   })
   if (eventUsersPromisesOneHourFromNow.length) {
-    await sendEmailsToEventUsers(eventUsersPromisesOneHourFromNow)
+    await sendEmailsToEventUsers(eventUsersPromisesOneHourFromNow, 'one hour')
   }
 
   if (eventUsersPromises24HoursFromNow.length) {
-    await sendEmailsToEventUsers(eventUsersPromises24HoursFromNow)
+    await sendEmailsToEventUsers(eventUsersPromises24HoursFromNow, '24 hours')
   }
 }
 
