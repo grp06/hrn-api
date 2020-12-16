@@ -29,7 +29,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     let isSamyakAlgo
 
     // revert 1 to 15
-    if (onlineUsers.length < 1 || useSamyakAlgo) {
+    if (onlineUsers.length < 15 || useSamyakAlgo) {
       console.log('making assignments with samyak algo')
       pairings = makePairingsFromSamyakAlgo({
         allRoundsDataForOnlineUsers,
