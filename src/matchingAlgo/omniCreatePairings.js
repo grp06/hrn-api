@@ -58,10 +58,8 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     }, 0)
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
-    let tooManyBadPairings = numNullPairings >= onlineUsers.length / 2 || pairings.length === 0
-    if (eventId === 656) {
-      tooManyBadPairings = false
-    }
+    const tooManyBadPairings = numNullPairings >= onlineUsers.length / 2 || pairings.length === 0
+  
     if (tooManyBadPairings && !fromLobbyScan) {
       console.log('ended event early')
       return 'ended event early'
