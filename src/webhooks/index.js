@@ -70,6 +70,7 @@ webhooks.post('/stripe-customer-portal', jsonBodyParser, async (req, res) => {
           await orm.request(updateUserRole, {
             user_id,
             role: planName,
+            became_host_at: new Date().toISOString(),
           })
         }
       } catch (error) {
