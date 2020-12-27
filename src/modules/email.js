@@ -1,6 +1,8 @@
 import * as Sentry from '@sentry/node'
 import { makeCalendarInvite } from './rsvp'
 
+const sgMail = require('@sendgrid/mail')
+
 const path = require('path')
 const ejs = require('ejs')
 const moment = require('moment')
@@ -84,7 +86,13 @@ export const rsvpTemplate = async (fields) => {
   return { from, to, subject, content }
 }
 
-export const oneHourReminderTemplate = async ({ email, event_name, start_at, event_id }) => {
+export const oneHourReminderTemplate = async ({
+  email,
+  event_name,
+  start_at,
+  event_id,
+  banner_photo_url,
+}) => {
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
 
   // need to get local time
@@ -94,8 +102,10 @@ export const oneHourReminderTemplate = async ({ email, event_name, start_at, eve
   try {
     const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
       event_link: eventLink,
-      event_name: event_name,
+      event_name,
       event_start_time: eventTime,
+      // not using ... cant figure out ejs formatting for link url. Taking too much time
+      banner_photo_url,
     })
 
     htmlTemplate = ejsResponse
@@ -117,40 +127,37 @@ export const oneHourReminderTemplate = async ({ email, event_name, start_at, eve
   return { from, to, subject, content }
 }
 
-export const twentyFourHourReminderTemplate = async ({ email, event_name, start_at, event_id }) => {
-  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
-
-  // need to get local time
-  const eventTime = moment(start_at).format('h:mm')
-
-  let htmlTemplate
-  try {
-    const ejsResponse = await ejs.renderFile(
-      path.join(__dirname, '/views/twenty-four-hour-reminder.ejs'),
-      {
-        event_link: eventLink,
-        event_name: event_name,
-        event_start_time: eventTime,
+export const sendReminders = async ({ events, filePath, timeframeString }) => {
+  await Promise.all(
+    events.map(async (event) => {
+      const { event_name, start_at, id: event_id } = event
+      const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+      const eventTime = moment(start_at).format('h:mm')
+      return {
+        event,
+        template: await ejs.renderFile(path.join(__dirname, filePath), {
+          event_link: eventLink,
+          event_name: event_name,
+          event_start_time: eventTime,
+        }),
       }
-    )
+    })
+  ).then((resArray) => {
+    resArray.forEach((item) => {
+      const { event, template } = item
+      const eventUserEmails = event.event_users.map((user) => user.user.email)
+      const subject = `🔥Hi Right Now - ${event.event_name} starts in ${timeframeString}!`
 
-    htmlTemplate = ejsResponse
-  } catch (error) {
-    console.log('oneHourReminderTemplate -> error', error)
-    return __Sentry.captureException(error)
-  }
-
-  const from = process.env.EMAIL_LOGIN
-  const to = email
-  const subject = `🔥Hi Right Now - ${event_name} starts in one hour!`
-  const content = [
-    {
-      type: 'text/html',
-      value: htmlTemplate,
-    },
-  ]
-
-  return { from, to, subject, content }
+      const message = {
+        to: eventUserEmails,
+        from: process.env.EMAIL_LOGIN,
+        subject,
+        html: template,
+      }
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+      sgMail.sendMultiple(message)
+    })
+  })
 }
 
 export const postEventTemplate = async (fields) => {

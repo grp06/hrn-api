@@ -20,6 +20,7 @@ const getEventUsers = gql`
         event_name
         id
         start_at
+        banner_photo_url
       }
     }
   }

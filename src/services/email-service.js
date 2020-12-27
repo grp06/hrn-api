@@ -7,8 +7,6 @@ import {
   signUpConfirmationTemplate,
 } from '../modules/email'
 
-
-
 const sgMail = require('@sendgrid/mail')
 
 export const sendEmail = async (fields) => {
@@ -26,24 +24,6 @@ export const sendEmail = async (fields) => {
   } catch (error) {
     __Sentry.captureException(error)
     console.log('Something went wrong sending email', error)
-  }
-}
-
-export const sendOneHourEmailReminder = async (event, eventUser) => {
-  let message
-  try {
-    message = await oneHourReminderTemplate(event, eventUser)
-  } catch (error) {
-    __Sentry.captureException(error)
-    console.log('error making one hour reminder template', error)
-  }
-
-  try {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    await sgMail.send(message)
-  } catch (error) {
-    __Sentry.captureException(error)
-    console.log('Something went wrong sending the one hour reminder email', error)
   }
 }
 
@@ -65,53 +45,52 @@ export const signUpConfirmation = async (user) => {
   }
 }
 
-export const sendEmailsToEventUsers = async (eventUsersPromises, timeframe) => {
-  try {
-    const eventUsersFromOneEvent = await Promise.all(eventUsersPromises)
-    const listOfEmailMessagesPromises = []
-
-    eventUsersFromOneEvent.forEach((eventUserObj) => {
-      eventUserObj.data.event_users.forEach((eventUser) => {
-        const { event } = eventUser
-        const { user } = eventUser
-        const { email } = user
-        const { event_name, start_at, id: event_id } = event
-        if (timeframe === 'one hour') {
-          listOfEmailMessagesPromises.push(
-            oneHourReminderTemplate({
-              email,
-              event_name,
-              start_at,
-              event_id,
-            })
-          )
-
-          if (timeframe === '24 hours') {
-            listOfEmailMessagesPromises.push(
-              twentyFourHourReminderTemplate({
-                email,
-                event_name,
-                start_at,
-                event_id,
-              })
-            )          
-
-        }
-      })
-    })
-
-    const resolvedMessages = await Promise.all(listOfEmailMessagesPromises)
-    const emailsToSendPromies = []
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
-    resolvedMessages.forEach((message) => {
-      emailsToSendPromies.push(sgMail.send(message))
-    })
-
-    // await Promise.all(emailsToSendPromies)
-    console.log('success sending emails')
-  } catch (error) {
-    console.log('error sending email = ', error)
-    return __Sentry.captureException(error)
-  }
+export const sendEmailsToEventUsers = async ({ promises: eventUsersPromises, emailType }) => {
+  // console.log('🚀 ~ sendEmailsToEventUsers ~ eventUsersPromises', eventUsersPromises)
+  // console.log('🚀 ~ sendEmailsToEventUsers ~ emailType', emailType)
+  // try {
+  //   // this is an array of event_users objects (from all events)
+  //   const resolvedEventUsersPromises = await Promise.all(eventUsersPromises)
+  //   const emailsToSendArray = []
+  //   resolvedEventUsersPromises.forEach((eventUsersObj) => {
+  //     console.log('🚀 ~ resolvedEventUsersPromises.forEach ~ eventUsersObj', eventUsersObj)
+  //     eventUsersObj.data.event_users.forEach((eventUser) => {
+  //       const { event } = eventUser
+  //       const { event_name, start_at, id: event_id, banner_photo_url } = event
+  //       // if (emailType === 'one hour reminder') {
+  //       //   emailsToSendArray.push(
+  //       //     oneHourReminderTemplate({
+  //       //       email,
+  //       //       event_name,
+  //       //       start_at,
+  //       //       event_id,
+  //       //       banner_photo_url,
+  //       //     })
+  //       //   )
+  //       // }
+  //       if (emailType === '24 hour reminder') {
+  //         emailsToSendArray.push(
+  //           twentyFourHourReminderTemplate({
+  //             event_name,
+  //             start_at,
+  //             event_id,
+  //           })
+  //         )
+  //       }
+  //     })
+  //   })
+  //   const emailTemplatesPreparedToSend = await Promise.all(emailsToSendArray)
+  //   console.log(
+  //     '🚀 ~ sendEmailsToEventUsers ~ emailTemplatesPreparedToSend',
+  //     emailTemplatesPreparedToSend
+  //   )
+  //   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+  //   emailTemplatesPreparedToSend.forEach((message) => {
+  //     sgMail.send(message)
+  //   })
+  //   console.log('success sending emails')
+  // } catch (error) {
+  //   console.log('error sending email = ', error)
+  //   return __Sentry.captureException(error)
+  // }
 }

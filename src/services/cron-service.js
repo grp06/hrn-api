@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import orm from './orm'
+import { sendEmail, sendEmailsToEventUsers } from './email-service'
 
 import {
   getEventsByStartTime,
@@ -7,11 +8,13 @@ import {
   getEventsByEndTime,
   getContactSharesForSendingEmail,
 } from '../gql/queries'
-
-import { sendEmail, sendEmailsToEventUsers } from './email-service'
+import { twentyFourHourReminderTemplate, sendReminders } from '../modules/email'
+const sgMail = require('@sendgrid/mail')
+const path = require('path')
+const ejs = require('ejs')
+const moment = require('moment')
 
 const cron = require('node-cron')
-const moment = require('moment')
 
 const getEvents55to60MinsFromNow = async () => {
   console.log('check for events in next hour')
@@ -53,57 +56,36 @@ const getEventsStartingIn24Hours = async () => {
   return events55to60MinsFromNow
 }
 
-
 const sendEmailsToUpcomingEventParticipants = async () => {
   const events55to60MinsFromNow = await getEvents55to60MinsFromNow()
-  const eventUsersPromisesOneHourFromNow = []
-
-  events55to60MinsFromNow.forEach(async (event) => {
-    eventUsersPromisesOneHourFromNow.push(orm.request(getEventUsers, { event_id: event.id }))
-  })
-
   const eventsStartingIn24Hours = await getEventsStartingIn24Hours()
-  const eventUsersPromises24HoursFromNow = []
 
-  eventsStartingIn24Hours.forEach(async (event) => {
-    eventUsersPromises24HoursFromNow.push(orm.request(getEventUsers, { event_id: event.id }))
-  })
-  if (eventUsersPromisesOneHourFromNow.length) {
-    await sendEmailsToEventUsers(eventUsersPromisesOneHourFromNow, 'one hour')
+  if (events55to60MinsFromNow.length) {
+    sendReminders({
+      events: events55to60MinsFromNow,
+      filePath: '/views/one-hour-event-reminder.ejs',
+      timeframeString: 'one hour',
+    })
   }
 
-  if (eventUsersPromises24HoursFromNow.length) {
-    await sendEmailsToEventUsers(eventUsersPromises24HoursFromNow, '24 hours')
+  if (eventsStartingIn24Hours.length) {
+    sendReminders({
+      events: eventsStartingIn24Hours,
+      filePath: '/views/24-hour-event-reminder.ejs',
+      timeframeString: '24 hours',
+    })
   }
 }
 
+const sendPostEventConnetionEmails = async () => {
+  const fiveMinutesAgo = moment().subtract(50, 'minutes')
+  const now = moment().subtract(0, 'minutes')
+  const getEventsResponse = await orm.request(getEventsByEndTime, {
+    less_than: now,
+    greater_than: fiveMinutesAgo,
+  })
 
-// check for finished events every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
-  console.log('checking for recently finished events')
-
-
-  try {
-    await sendEmailsToUpcomingEventParticipants()
-  } catch (error) {
-    console.log('error = ', error)
-    return __Sentry.captureException(error)
-  }
-
-  let eventsRecentlyFinished
-  try {
-    const fiveMinutesAgo = moment().subtract(50, 'minutes')
-    const now = moment().subtract(0, 'minutes')
-    const getEventsResponse = await orm.request(getEventsByEndTime, {
-      less_than: now,
-      greater_than: fiveMinutesAgo,
-    })
-
-    eventsRecentlyFinished = getEventsResponse.data.events
-  } catch (error) {
-    __Sentry.captureException(error)
-    console.log('error checking for upcoming events', error)
-  }
+  const eventsRecentlyFinished = getEventsResponse.data.events
 
   const partnersToEmailPromises = []
 
@@ -165,4 +147,17 @@ cron.schedule('*/5 * * * *', async () => {
   })
 
   await Promise.all(sendPostEventMatchesEmailPromises)
+}
+
+// check for finished events every 5 minutes
+cron.schedule('*/5 * * * * * *', async () => {
+  console.log('checking for recently finished events')
+
+  try {
+    await sendEmailsToUpcomingEventParticipants()
+    await sendPostEventConnetionEmails()
+  } catch (error) {
+    console.log('error = ', error)
+    return __Sentry.captureException(error)
+  }
 })
