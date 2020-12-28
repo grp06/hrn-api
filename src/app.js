@@ -11,7 +11,7 @@ import initNextRound from './routes/rooms/initNextRound'
 
 import { getCronJobs } from './gql/queries'
 
-import { updateProfilePic } from './gql/mutations'
+import { newHost } from './discord-bots/new-host'
 
 require('dotenv').config()
 require('es6-promise').polyfill()
@@ -36,7 +36,7 @@ const stripeRouter = require('./routes/stripe/stripe-router')
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
 const app = express()
-
+newHost()
 Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sentry.io/5279031' })
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common'

@@ -6,7 +6,7 @@ import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
 import { signUpConfirmation } from '../../services/email-service'
-
+import { channel } from '../../discord-bots/new-host'
 const express = require('express')
 
 const usersRouter = express.Router()
@@ -144,8 +144,18 @@ usersRouter.post('/upgrade-to-host', async (req, res) => {
     const userRoleResponse = await orm.request(updateUserRole, {
       user_id: userId,
       role: 'host',
+      became_host_at: new Date().toISOString(),
     })
     const userObject = userRoleResponse.data.update_users.returning[0]
+    const { name, email, city, linkedIn_url } = userObject
+    channel.send('🦦🦦🦦')
+    channel.send('**New Host Signup!**')
+    channel.send(`
+    \`\`\`
+${name} from ${city}
+${email} ... ${linkedIn_url || ''}
+\`\`\``)
+    channel.send('🦦🦦🦦')
 
     return res.status(201).json({
       token: await createToken(userObject, process.env.SECRET),
