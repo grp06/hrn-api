@@ -7,16 +7,17 @@ import {
   getEventsByEndTime,
   getContactSharesForSendingEmail,
   getEventAttendeesFromListOfEventIds,
+  getAllEvents,
 } from '../gql/queries'
 
-import { sendEmailsToNoShows, sendReminders } from '../modules/email'
+import { sendEmailsToNoShows, sendReminders, sendFollowupsToHosts } from '../modules/email'
 
-const sgMail = require('@sendgrid/mail')
-const path = require('path')
-const ejs = require('ejs')
 const moment = require('moment')
 
 const cron = require('node-cron')
+
+const oneDayInMs = 86400000
+const fiveMinsInMs = 300000
 
 const getEvents55to60MinsFromNow = async () => {
   console.log('check for events in next hour')
@@ -149,14 +150,14 @@ cron.schedule('*/5 * * * * * *', async () => {
   try {
     const fiveMinutesAgo = moment().subtract(50, 'minutes')
     const now = moment().subtract(0, 'minutes')
-    const recentlyEndedEvents = await orm.request(getEventsByEndTime, {
+    const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
       less_than: now,
       greater_than: fiveMinutesAgo,
     })
 
     await sendEmailsToUpcomingEventParticipants()
 
-    const eventsRecentlyFinished = recentlyEndedEvents.data.events
+    const eventsRecentlyFinished = eventsEndedWithinLastFiveMins.data.events
     await sendPostEventConnetionEmails(eventsRecentlyFinished)
 
     if (eventsRecentlyFinished.length) {
@@ -171,6 +172,22 @@ cron.schedule('*/5 * * * * * *', async () => {
 
       await sendEmailsToNoShows(eventsRecentlyFinished, attendeesOfRecentlyFinishedEvents)
     }
+
+    const oneDayPlusFiveMinsFromNow = new Date(Date.now() - oneDayInMs + fiveMinsInMs).toISOString()
+
+    const oneDayAgo = new Date(Date.now() - oneDayInMs).toISOString()
+
+    const getEventsResponse = await orm.request(getEventsByEndTime, {
+      less_than: oneDayPlusFiveMinsFromNow,
+      greater_than: oneDayAgo,
+    })
+
+    const eventsEndedJustUnderOneDayAgo = getEventsResponse.data.events
+
+    const allEventsResponse = await orm.request(getAllEvents)
+    const hostIdsFromAllEvents = allEventsResponse.data.events
+
+    await sendFollowupsToHosts(eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents)
   } catch (error) {
     console.log('error = ', error)
     return __Sentry.captureException(error)

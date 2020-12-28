@@ -156,6 +156,40 @@ export const sendEmailsToNoShows = async (
   }
 }
 
+export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents) => {
+  try {
+    await Promise.all(
+      eventsEndedJustUnderOneDayAgo.map(async (event) => {
+        return {
+          event,
+          template: await ejs.renderFile(
+            path.join(__dirname, '/views/first-time-host-followup.ejs')
+          ),
+        }
+      })
+    ).then((resArray) => {
+      resArray.forEach((item) => {
+        const { event, template } = item
+        if (!hostIdsFromAllEvents.includes(event.host_id)) {
+          console.log('gonna send that email')
+          const subject = `Following up from your Hi Right Now event`
+          const hostsToEmail = event.host.email
+          const message = {
+            to: hostsToEmail,
+            from: process.env.GEORGE_EMAIL_LOGIN,
+            subject,
+            html: template,
+          }
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+          sgMail.sendMultiple(message)
+        }
+      })
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
+}
+
 export const postEventTemplate = async (fields) => {
   const { event_name, user, partnerData } = fields
   const { name, email } = user

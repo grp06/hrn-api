@@ -17,6 +17,9 @@ const getEventsByEndTime = gql`
           email
         }
       }
+      host {
+        email
+      }
     }
   }
 `
