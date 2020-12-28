@@ -8,6 +8,8 @@ const updateUserRole = gql`
         role
         name
         email
+        city
+        linkedIn_url
       }
     }
   }
