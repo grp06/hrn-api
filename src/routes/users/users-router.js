@@ -7,12 +7,12 @@ import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
 import { signUpConfirmation } from '../../services/email-service'
 import { channel } from '../../discord-bots/new-host'
-const { NODE_ENV } = require('./config')
 
 const express = require('express')
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
+const { NODE_ENV } = require('../../config')
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
   const { name, email, password, role } = req.body
