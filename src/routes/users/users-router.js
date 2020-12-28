@@ -144,6 +144,7 @@ usersRouter.post('/upgrade-to-host', async (req, res) => {
     const userRoleResponse = await orm.request(updateUserRole, {
       user_id: userId,
       role: 'host',
+      became_host_at: new Date().toISOString(),
     })
     const userObject = userRoleResponse.data.update_users.returning[0]
     const { name, email, city, linkedIn_url } = userObject
