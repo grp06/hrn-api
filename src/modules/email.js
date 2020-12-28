@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { makeCalendarInvite } from './rsvp'
+const _ = require('lodash')
 
 const sgMail = require('@sendgrid/mail')
 
@@ -117,6 +118,42 @@ export const sendReminders = async ({ events, filePath, timeframeString }) => {
       sgMail.sendMultiple(message)
     })
   })
+}
+
+export const sendEmailsToNoShows = async (
+  eventsRecentlyFinished,
+  attendeesOfRecentlyFinishedEvents
+) => {
+  try {
+    await Promise.all(
+      eventsRecentlyFinished.map(async (event) => {
+        const { event_name } = event
+        return {
+          event,
+          template: await ejs.renderFile(path.join(__dirname, '/views/no-show-followup.ejs'), {
+            event_name,
+          }),
+        }
+      })
+    ).then((resArray) => {
+      resArray.forEach((item) => {
+        const { event, template } = item
+        const eventUserEmails = event.event_users.map((user) => user.user.email)
+        const subject = `Following up from the Hi Right Now event`
+        const noShows = _.difference(eventUserEmails, attendeesOfRecentlyFinishedEvents)
+        const message = {
+          to: noShows,
+          from: process.env.GEORGE_EMAIL_LOGIN,
+          subject,
+          html: template,
+        }
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+        sgMail.sendMultiple(message)
+      })
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
 }
 
 export const postEventTemplate = async (fields) => {

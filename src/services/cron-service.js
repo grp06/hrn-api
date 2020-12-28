@@ -4,11 +4,13 @@ import { sendEmail, sendEmailsToEventUsers } from './email-service'
 
 import {
   getEventsByStartTime,
-  getEventUsers,
   getEventsByEndTime,
   getContactSharesForSendingEmail,
+  getEventAttendeesFromListOfEventIds,
 } from '../gql/queries'
-import { twentyFourHourReminderTemplate, sendReminders } from '../modules/email'
+
+import { sendEmailsToNoShows, sendReminders } from '../modules/email'
+
 const sgMail = require('@sendgrid/mail')
 const path = require('path')
 const ejs = require('ejs')
@@ -77,16 +79,7 @@ const sendEmailsToUpcomingEventParticipants = async () => {
   }
 }
 
-const sendPostEventConnetionEmails = async () => {
-  const fiveMinutesAgo = moment().subtract(50, 'minutes')
-  const now = moment().subtract(0, 'minutes')
-  const getEventsResponse = await orm.request(getEventsByEndTime, {
-    less_than: now,
-    greater_than: fiveMinutesAgo,
-  })
-
-  const eventsRecentlyFinished = getEventsResponse.data.events
-
+const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
   const partnersToEmailPromises = []
 
   eventsRecentlyFinished.forEach(async (event) => {
@@ -154,8 +147,30 @@ cron.schedule('*/5 * * * * * *', async () => {
   console.log('checking for recently finished events')
 
   try {
+    const fiveMinutesAgo = moment().subtract(50, 'minutes')
+    const now = moment().subtract(0, 'minutes')
+    const recentlyEndedEvents = await orm.request(getEventsByEndTime, {
+      less_than: now,
+      greater_than: fiveMinutesAgo,
+    })
+
     await sendEmailsToUpcomingEventParticipants()
-    await sendPostEventConnetionEmails()
+
+    const eventsRecentlyFinished = recentlyEndedEvents.data.events
+    await sendPostEventConnetionEmails(eventsRecentlyFinished)
+
+    if (eventsRecentlyFinished.length) {
+      console.log('SEND TO NOWSHOWS ')
+      const eventIdsToQuery = eventsRecentlyFinished.map((event) => event.id)
+      const attendees = await orm.request(getEventAttendeesFromListOfEventIds, {
+        eventIds: eventIdsToQuery,
+      })
+      const attendeesOfRecentlyFinishedEvents = attendees.data.partners.map(
+        (partner) => partner.user.email
+      )
+
+      await sendEmailsToNoShows(eventsRecentlyFinished, attendeesOfRecentlyFinishedEvents)
+    }
   } catch (error) {
     console.log('error = ', error)
     return __Sentry.captureException(error)

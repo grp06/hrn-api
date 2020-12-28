@@ -12,6 +12,11 @@ const getEventsByEndTime = gql`
       round_length
       start_at
       status
+      event_users {
+        user {
+          email
+        }
+      }
     }
   }
 `
