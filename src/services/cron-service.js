@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import orm from './orm'
-import { sendEmail, sendEmailsToEventUsers } from './email-service'
+import { sendEmail } from './email-service'
 
 import {
   getEventsByStartTime,
@@ -144,7 +144,7 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
 }
 
 // check for finished events every 5 minutes
-cron.schedule('*/5 * * * * * *', async () => {
+cron.schedule('*/5 * * * * *', async () => {
   console.log('checking for recently finished events')
 
   try {
