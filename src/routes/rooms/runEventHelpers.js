@@ -35,6 +35,7 @@ const killAllJobsByEventId = (eventId) => {
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
+  console.log('🚀 ~ omniFinishRounds ~ currentRound', currentRound)
   if (jobs.lobbyAssignments[eventId]) {
     jobs.lobbyAssignments[eventId].stop()
     jobs.lobbyAssignments[eventId] = null
