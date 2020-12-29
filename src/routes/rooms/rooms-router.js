@@ -6,6 +6,7 @@ import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
 import nextRound from './nextRound'
 import { getAvailableLobbyUsers } from '../../gql/queries'
+import { endEvent } from './runEventHelpers'
 
 const express = require('express')
 
@@ -14,15 +15,7 @@ const jsonBodyParser = express.json()
 
 roomsRouter.post('/end-event/:id', jsonBodyParser, async (req, res) => {
   try {
-    const completedRoomsPromises = await setRoomsCompleted(req.params.id)
-    await Promise.all(completedRoomsPromises)
-
-    await orm.request(updateEventObject, {
-      id: req.params.id,
-      newStatus: 'complete',
-      ended_at: new Date().toISOString(),
-    })
-    console.log('set status to event complete')
+    await endEvent(req.params.id, true)
   } catch (error) {
     console.log('error', error)
     Sentry.captureException(error)

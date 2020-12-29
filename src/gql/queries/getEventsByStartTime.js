@@ -12,6 +12,12 @@ const getEventsByStartTime = gql`
       round_length
       start_at
       status
+      banner_photo_url
+      event_users {
+        user {
+          email
+        }
+      }
     }
   }
 `

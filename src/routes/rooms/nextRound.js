@@ -29,7 +29,6 @@ const nextRound = async ({ req, res, params }) => {
       const completedRoomsPromises = await setRoomsCompleted(eventId)
       console.log('nextRound -> completedRoomsPromises', completedRoomsPromises)
       await Promise.all(completedRoomsPromises)
-      await omniFinishRounds(currentRound, eventId)
 
       currentRound = 1
     } else {
