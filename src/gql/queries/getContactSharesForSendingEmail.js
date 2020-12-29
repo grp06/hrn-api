@@ -19,6 +19,9 @@ const getContactSharesForSendingEmail = gql`
           }
         }
       }
+      event {
+        event_name
+      }
     }
   }
 `

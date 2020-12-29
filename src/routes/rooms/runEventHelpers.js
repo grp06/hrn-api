@@ -35,6 +35,7 @@ const killAllJobsByEventId = (eventId) => {
 
 // ensures that rooms are closed before next round
 export const omniFinishRounds = async (currentRound, eventId) => {
+  console.log('🚀 ~ omniFinishRounds ~ currentRound', currentRound)
   if (jobs.lobbyAssignments[eventId]) {
     jobs.lobbyAssignments[eventId].stop()
     jobs.lobbyAssignments[eventId] = null
@@ -75,7 +76,7 @@ export const omniFinishRounds = async (currentRound, eventId) => {
   // set ended_at in db for the round we just completed
 }
 
-export const endEvent = async (eventId) => {
+export const endEvent = async (eventId, isCompletingEvent) => {
   killAllJobsByEventId(eventId)
   // console.log('jobs = ', jobs)
   try {
@@ -83,6 +84,7 @@ export const endEvent = async (eventId) => {
     await Promise.all(completedRoomsPromises)
 
     const eventInfoRes = await orm.request(getEventInfoByEventId, { eventId })
+    console.log('🚀 ~ endEvent ~ eventInfoRes', eventInfoRes)
 
     const { host_id, group_video_chat } = eventInfoRes.data.events[0]
     console.log('endEvent -> host_id', host_id)
@@ -103,7 +105,7 @@ export const endEvent = async (eventId) => {
     console.log('endEvent -> hostIsOnline', hostIsOnline)
 
     let updateEventObjectRes
-    if (hostIsOnline && group_video_chat) {
+    if (hostIsOnline && group_video_chat && !isCompletingEvent) {
       const createGroupRoomRes = await createGroupRoom(eventId)
       if (createGroupRoomRes.errors) {
         throw new Error(createGroupRoomRes.errors[0].message)

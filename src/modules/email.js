@@ -1,4 +1,8 @@
+import * as Sentry from '@sentry/node'
 import { makeCalendarInvite } from './rsvp'
+const _ = require('lodash')
+
+const sgMail = require('@sendgrid/mail')
 
 const path = require('path')
 const ejs = require('ejs')
@@ -83,46 +87,111 @@ export const rsvpTemplate = async (fields) => {
   return { from, to, subject, content }
 }
 
-export const oneHourReminderTemplate = async (event, eventUser) => {
-  const { name, email } = eventUser.user
-  const { event_name, id: event_id, start_at } = event
-  const eventLink = `https://launch.hirightnow.co/events/${event_id}`
-
-  // need to get local time
-  const eventTime = moment(start_at).format('h:mm')
-
-  let htmlTemplate
-  try {
-    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/one-hour-reminder.ejs'), {
-      event_link: eventLink,
-      event_name: event_name,
-      event_start_time: eventTime,
+export const sendReminders = async ({ events, filePath, timeframeString }) => {
+  await Promise.all(
+    events.map(async (event) => {
+      const { event_name, start_at, id: event_id } = event
+      const eventLink = `https://launch.hirightnow.co/events/${event_id}`
+      const eventTime = moment(start_at).format('h:mm')
+      return {
+        event,
+        template: await ejs.renderFile(path.join(__dirname, filePath), {
+          event_link: eventLink,
+          event_name: event_name,
+          event_start_time: eventTime,
+        }),
+      }
     })
+  ).then((resArray) => {
+    resArray.forEach((item) => {
+      const { event, template } = item
+      const eventUserEmails = event.event_users.map((user) => user.user.email)
+      const subject = `🔥Hi Right Now - ${event.event_name} starts in ${timeframeString}!`
 
-    htmlTemplate = ejsResponse
+      const message = {
+        to: eventUserEmails,
+        from: process.env.EMAIL_LOGIN,
+        subject,
+        html: template,
+      }
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+      sgMail.sendMultiple(message)
+    })
+  })
+}
+
+export const sendEmailsToNoShows = async (
+  eventsRecentlyFinished,
+  attendeesOfRecentlyFinishedEvents
+) => {
+  try {
+    await Promise.all(
+      eventsRecentlyFinished.map(async (event) => {
+        const { event_name } = event
+        return {
+          event,
+          template: await ejs.renderFile(path.join(__dirname, '/views/no-show-followup.ejs'), {
+            event_name,
+          }),
+        }
+      })
+    ).then((resArray) => {
+      resArray.forEach((item) => {
+        const { event, template } = item
+        const eventUserEmails = event.event_users.map((user) => user.user.email)
+        const subject = `Following up from the Hi Right Now event`
+        const noShows = _.difference(eventUserEmails, attendeesOfRecentlyFinishedEvents)
+        const message = {
+          to: noShows,
+          from: process.env.GEORGE_EMAIL_LOGIN,
+          subject,
+          html: template,
+        }
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+        sgMail.sendMultiple(message)
+      })
+    })
   } catch (error) {
-    __Sentry.captureException(error)
-    console.log('oneHourReminderTemplate -> error', error)
-    return error
+    console.log('error = ', error)
   }
+}
 
-  const from = process.env.EMAIL_LOGIN
-  const to = email
-  const subject = `🔥Hi Right Now - ${event_name} starts in one hour!`
-  const content = [
-    {
-      type: 'text/html',
-      value: htmlTemplate,
-    },
-  ]
-
-  return { from, to, subject, content }
+export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents) => {
+  try {
+    await Promise.all(
+      eventsEndedJustUnderOneDayAgo.map(async (event) => {
+        return {
+          event,
+          template: await ejs.renderFile(
+            path.join(__dirname, '/views/first-time-host-followup.ejs')
+          ),
+        }
+      })
+    ).then((resArray) => {
+      resArray.forEach((item) => {
+        const { event, template } = item
+        if (!hostIdsFromAllEvents.includes(event.host_id)) {
+          const subject = `Following up from your Hi Right Now event`
+          const hostsToEmail = event.host.email
+          const message = {
+            to: hostsToEmail,
+            from: process.env.GEORGE_EMAIL_LOGIN,
+            subject,
+            html: template,
+          }
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+          sgMail.sendMultiple(message)
+        }
+      })
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
 }
 
 export const postEventTemplate = async (fields) => {
-  const { event, user, partnerData } = fields
-  const { name, email } = user
-  const { event_name } = event
+  const { event_name, user, partnerData } = fields
+  const { name, email, profile_pic_url } = user
 
   let htmlTemplate
 
@@ -131,6 +200,7 @@ export const postEventTemplate = async (fields) => {
       firstName: name,
       event_name,
       partnerData,
+      profile_pic_url,
     })
 
     htmlTemplate = ejsResponse
