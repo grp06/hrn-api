@@ -41,22 +41,21 @@ const getEvents55to60MinsFromNow = async () => {
 
 const getEventsStartingIn24Hours = async () => {
   console.log('check for events in next day')
-  let events55to60MinsFromNow
+  let eventsOneDayFromNow
   try {
     const oneDayFromNow = moment().add(1, 'day')
     const oneDayMinusFiveMinsFromNow = moment().add(1435, 'minutes')
-
     const getEventsResponse = await orm.request(getEventsByStartTime, {
       less_than: oneDayFromNow,
       greater_than: oneDayMinusFiveMinsFromNow,
     })
-    events55to60MinsFromNow = getEventsResponse.data.events
+    eventsOneDayFromNow = getEventsResponse.data.events
   } catch (error) {
     console.log('error checking for upcoming events', error)
     return __Sentry.captureException(error)
   }
 
-  return events55to60MinsFromNow
+  return eventsOneDayFromNow
 }
 
 const sendEmailsToUpcomingEventParticipants = async () => {
@@ -131,10 +130,11 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
   const sendPostEventMatchesEmailPromises = []
 
   listOfMatchesByUserEmail.forEach((userObj) => {
+    const { event_name, email, name, partners, profile_pic_url } = userObj
     const fields = {
-      event_name: userObj.event_name,
-      user: { name: userObj.name.split(' ')[0], email: userObj.email },
-      partnerData: userObj.partners,
+      event_name: event_name,
+      user: { name: name.split(' ')[0], email, profile_pic_url },
+      partnerData: partners,
     }
 
     sendPostEventMatchesEmailPromises.push(sendEmail(fields))
@@ -145,9 +145,9 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
 
 // check for finished events every 5 minutes
 cron.schedule('*/5 * * * *', async () => {
-  console.log('checking for recently finished events')
-
   try {
+    await sendEmailsToUpcomingEventParticipants()
+
     const fiveMinutesAgo = moment().subtract(50, 'minutes')
     const now = moment().subtract(0, 'minutes')
     const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
@@ -155,13 +155,10 @@ cron.schedule('*/5 * * * *', async () => {
       greater_than: fiveMinutesAgo,
     })
 
-    await sendEmailsToUpcomingEventParticipants()
-
     const eventsRecentlyFinished = eventsEndedWithinLastFiveMins.data.events
     await sendPostEventConnetionEmails(eventsRecentlyFinished)
 
     if (eventsRecentlyFinished.length) {
-      console.log('SEND TO NOWSHOWS ')
       const eventIdsToQuery = eventsRecentlyFinished.map((event) => event.id)
       const attendees = await orm.request(getEventAttendeesFromListOfEventIds, {
         eventIds: eventIdsToQuery,

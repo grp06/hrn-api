@@ -6,11 +6,21 @@ import getOnlineUsers from './getOnlineUsers'
 import createPreEventRooms from './createPreEventRooms'
 import nextRound from './nextRound'
 import { getAvailableLobbyUsers } from '../../gql/queries'
+import { endEvent } from './runEventHelpers'
 
 const express = require('express')
 
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()
+
+roomsRouter.post('/end-event/:id', jsonBodyParser, async (req, res) => {
+  try {
+    await endEvent(req.params.id, true)
+  } catch (error) {
+    console.log('error', error)
+    Sentry.captureException(error)
+  }
+})
 
 roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
   const eventId = req.params.id

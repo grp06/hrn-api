@@ -171,7 +171,6 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
       resArray.forEach((item) => {
         const { event, template } = item
         if (!hostIdsFromAllEvents.includes(event.host_id)) {
-          console.log('gonna send that email')
           const subject = `Following up from your Hi Right Now event`
           const hostsToEmail = event.host.email
           const message = {
@@ -192,7 +191,7 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
 
 export const postEventTemplate = async (fields) => {
   const { event_name, user, partnerData } = fields
-  const { name, email } = user
+  const { name, email, profile_pic_url } = user
 
   let htmlTemplate
 
@@ -201,6 +200,7 @@ export const postEventTemplate = async (fields) => {
       firstName: name,
       event_name,
       partnerData,
+      profile_pic_url,
     })
 
     htmlTemplate = ejsResponse
