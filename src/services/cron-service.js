@@ -144,11 +144,11 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
 }
 
 // check for finished events every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/5 * * * * *', async () => {
   try {
     await sendEmailsToUpcomingEventParticipants()
 
-    const fiveMinutesAgo = moment().subtract(50, 'minutes')
+    const fiveMinutesAgo = moment().subtract(5, 'minutes')
     const now = moment().subtract(0, 'minutes')
     const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
       less_than: now,
