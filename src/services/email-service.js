@@ -5,7 +5,6 @@ import { postEventTemplate, signUpConfirmationTemplate } from '../modules/email'
 const sgMail = require('@sendgrid/mail')
 
 export const sendEmail = async (fields) => {
-  console.log('🚀 ~ sendEmail ~ fields', fields)
   let message
   try {
     message = await postEventTemplate(fields)
