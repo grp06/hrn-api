@@ -63,6 +63,7 @@ const sendEmailsToUpcomingEventParticipants = async () => {
   const eventsStartingIn24Hours = await getEventsStartingIn24Hours()
 
   if (events55to60MinsFromNow.length) {
+    console.log('send out one hour reminder email')
     sendReminders({
       events: events55to60MinsFromNow,
       filePath: '/views/one-hour-event-reminder.ejs',
@@ -71,6 +72,7 @@ const sendEmailsToUpcomingEventParticipants = async () => {
   }
 
   if (eventsStartingIn24Hours.length) {
+    console.log('send out 24 hour reminder email')
     sendReminders({
       events: eventsStartingIn24Hours,
       filePath: '/views/24-hour-event-reminder.ejs',
@@ -144,7 +146,7 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
 }
 
 // check for finished events every 5 minutes
-cron.schedule('*/5 * * * * *', async () => {
+cron.schedule('*/5 * * * *', async () => {
   try {
     await sendEmailsToUpcomingEventParticipants()
 
