@@ -79,8 +79,7 @@ const nextRound = async ({ req, res, params }) => {
     useSamyakAlgo: createPairingsRes,
   })
 
-  scanLobbyForPairings(eventId)
-
+  // scanLobbyForPairings(eventId)
 
   if (res) {
     return res
