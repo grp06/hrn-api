@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
 import { findUserByEmail } from '../../gql/queries'
-import { signUp, updateUserRole } from '../../gql/mutations'
+import { signUp, signUpNew, updateUserRole } from '../../gql/mutations'
 import { hashPassword } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
@@ -77,9 +77,15 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // insert user into db
   try {
-    const insertUserResult = await orm.request(signUp, variables)
-
-    newUser = insertUserResult.data.insert_users.returning[0]
+    const insertUserResult =
+      role === 'celeb'
+        ? await orm.request(signUpNew, variables)
+        : await orm.request(signUp, variables)
+    console.log(insertUserResult)
+    newUser =
+      role === 'celeb'
+        ? insertUserResult.data.insert_users_new.returning[0]
+        : insertUserResult.data.insert_users.returning[0]
     console.log('newUser', newUser)
     signUpConfirmation(newUser)
   } catch (error) {
