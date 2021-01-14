@@ -14,6 +14,7 @@ const roles = {
   host: 'host',
   host_starter: 'host_starter',
   host_premium: 'host_premium',
+  celeb: 'celeb',
 }
 
 export const createToken = async (user, secret, expiresIn) => {
@@ -30,6 +31,7 @@ export const createToken = async (user, secret, expiresIn) => {
     roles.host,
     roles.host_starter,
     roles.host_premium,
+    roles.celeb,
   ]
   tokenContents[constants.claims][constants.userId] = `${user.id}`
   tokenContents[constants.claims][constants.defaultRole] = user.role
