@@ -7,6 +7,7 @@ import { createToken } from '../../extensions/jwtHelper'
 import UsersService from './users-service'
 import { signUpConfirmation } from '../../services/email-service'
 import { channel } from '../../discord-bots/new-host'
+import { configure } from '../../logger'
 
 const express = require('express')
 
@@ -15,8 +16,13 @@ const jsonBodyParser = express.json()
 const { NODE_ENV } = require('../../config')
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { name, email, password, role } = req.body
+  const { name, email, password, role, venmo, cash_app } = req.body
   console.log('req.body at root /signup', req.body)
+
+  if (!req.body['venmo'] && !req.body['cash_app'])
+    return res.status(400).json({
+      error: `Missing either venmo or cash_app in request body`,
+    })
 
   for (const field of ['name', 'email', 'password', 'role'])
     if (!req.body[field]) {
@@ -70,7 +76,12 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  const userObject = { name, email, password: hashedPassword, role }
+  const userObject =
+    role === 'celeb'
+      ? { name, email, password: hashedPassword, role, venmo, cash_app }
+      : { name, email, password: hashedPassword, role }
+
+  console.log({ userObject })
 
   const variables = { objects: [userObject] }
   let newUser
