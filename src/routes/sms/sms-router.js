@@ -82,7 +82,7 @@ smsRouter.post('/send-post-event-text', async (req, res) => {
 
 You can can make a donation to ${celebName} via ${donationString}
 
-Hope to see you soon!
+Hope to see you again soon!
 `
 
   try {
