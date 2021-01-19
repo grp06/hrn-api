@@ -19,7 +19,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   const { name, email, password, role, venmo, cash_app } = req.body
   console.log('req.body at root /signup', req.body)
 
-  if (!req.body['venmo'] && !req.body['cash_app'])
+  if (role === 'celeb' && !req.body['venmo'] && !req.body['cash_app'])
     return res.status(400).json({
       error: `Missing either venmo or cash_app in request body`,
     })
