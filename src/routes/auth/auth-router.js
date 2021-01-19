@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
-import { findUserByEmail } from '../../gql/queries'
+import { findUserByEmail, findUserById, findUserNewById } from '../../gql/queries'
 import { createToken } from '../../extensions/jwtHelper'
 import { comparePasswords } from '../../services/auth-service'
 
@@ -54,6 +54,37 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     role: dbUser.role,
     id: dbUser.id,
   })
+})
+
+authRouter.post('/get-user-by-id', async (req, res) => {
+  const { userId, role } = req.body
+
+  if (!userId) {
+    return res.status(400).json({
+      error: `Missing 'userId' in request body`,
+    })
+  }
+
+  try {
+    const userRes =
+      role === 'celeb' || role === 'fan'
+        ? await orm.request(findUserNewById, { id: userId })
+        : await orm.request(findUserById, { id: userId })
+
+    if (!userRes) {
+      return res.status(400).json({ error: 'Could not find user with that email' })
+    }
+
+    const userObj =
+      role === 'celeb' || role === 'fan' ? userRes.data.users_new[0] : userRes.data.users[0]
+
+    return res.status(200).json({ userObj })
+  } catch (error) {
+    console.log('error = ', error)
+    return res.status(500).json({
+      error,
+    })
+  }
 })
 
 module.exports = authRouter

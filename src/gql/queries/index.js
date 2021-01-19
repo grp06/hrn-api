@@ -1,5 +1,6 @@
 export { default as findUserByEmail } from './findUserByEmail'
 export { default as findUserById } from './findUserById'
+export { default as findUserNewById } from './findUserNewById'
 export { default as findUserByStripeCustomerId } from './findUserByStripeCustomerId'
 export { default as getAvailableLobbyUsers } from './getAvailableLobbyUsers'
 export { default as getEventUsers } from './getEventUsers'

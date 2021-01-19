@@ -85,6 +85,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   const variables = { objects: [userObject] }
   let newUser
+  console.log('🚀 ~ usersRouter.post ~ variables', variables)
 
   // insert user into db
   try {
