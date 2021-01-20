@@ -9,6 +9,10 @@ const insertUserNew = gql`
         created_at
         role
         name
+        cash_app
+        phone_number
+        profile_pic_url
+        venmo
       }
     }
   }

@@ -6,7 +6,7 @@ import { createToken } from '../../extensions/jwtHelper'
 import UsersService from '../users/users-service'
 import { signUpConfirmation } from '../../services/email-service'
 import { hashPassword } from '../../services/auth-service'
-
+import sendConfirmationText from '../sms/sms-router'
 const express = require('express')
 
 const usersNewRouter = express.Router()
@@ -76,7 +76,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
       console.log(insertUserResult)
       newFan = insertUserResult.data.insert_users_new.returning[0]
       console.log('newFan ->', newFan)
-      //TODO Add signup confirmation with number instead of email
+      // await sendConfirmationText(newFan)
     } catch (error) {
       Sentry.captureException(error)
       return res.status(500).json({
@@ -89,7 +89,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     try {
       return res.status(201).json({
         token: await createToken(newFan, process.env.SECRET),
-        // TODO serializeUser with Phone number instead of email
+        ...UsersService.serializeFan(newFan),
       })
     } catch (error) {
       Sentry.captureException(error)
