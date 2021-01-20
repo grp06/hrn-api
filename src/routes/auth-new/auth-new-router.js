@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
-import { findUserByEmail, findUserById } from '../../gql/queries'
+import { findUserNewByEmail, findUserNewById } from '../../gql/queries'
 import { createToken } from '../../extensions/jwtHelper'
 import { comparePasswords } from '../../services/auth-service'
 
@@ -25,8 +25,8 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
   // is the await functionality correct here?
   try {
     // check if user with email exists
-    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-    dbUser = checkEmailRequest.data.users[0]
+    const checkEmailRequest = await orm.request(findUserNewByEmail, { email: email })
+    dbUser = checkEmailRequest.data.users_new[0]
 
     if (!dbUser) {
       return res.status(400).json({ error: 'Incorrect email or password' })
@@ -66,13 +66,13 @@ authRouter.post('/get-user-by-id', async (req, res) => {
   }
 
   try {
-    const userRes = await orm.request(findUserById, { id: userId })
+    const userRes = await orm.request(findUserNewById, { id: userId })
 
     if (!userRes) {
       return res.status(400).json({ error: 'Could not find user with that email' })
     }
 
-    const userObj = userRes.data.users[0]
+    const userObj = userRes.data.users_new[0]
 
     return res.status(200).json({ userObj })
   } catch (error) {
