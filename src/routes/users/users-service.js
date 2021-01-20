@@ -48,6 +48,16 @@ const UsersService = {
       role: xss(user.role),
     }
   },
+
+  serializeFan(user) {
+    return {
+      id: user.id,
+      name: xss(user.name),
+      phone_number: xss(user.phone_number),
+      created_at: new Date(user.created_at),
+      role: xss(user.role),
+    }
+  },
 }
 
 export default UsersService

@@ -89,7 +89,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     try {
       return res.status(201).json({
         token: await createToken(newFan, process.env.SECRET),
-        // TODO serializeUser with Phone number instead of email
+        ...UsersService.serializeUser(newFan),
       })
     } catch (error) {
       Sentry.captureException(error)
