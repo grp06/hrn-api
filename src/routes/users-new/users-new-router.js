@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
 import { findUserByEmail, findUserByPhoneNumber } from '../../gql/queries'
-import { signUp, signUpNew } from '../../gql/mutations'
+import { signUp, signUpNew, insertEventUserNew } from '../../gql/mutations'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from '../users/users-service'
 import { signUpConfirmation } from '../../services/email-service'
@@ -14,7 +14,7 @@ const jsonBodyParser = express.json()
 const { NODE_ENV } = require('../../config')
 
 usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { cash_app, email, name, password, phone_number, role, venmo } = req.body
+  const { cash_app, email, name, password, phone_number, role, venmo, chitChatId } = req.body
   console.log('req.body at root /signup', req.body)
 
   if (role === 'fan' && !req.body['phone_number'])
@@ -76,6 +76,15 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
       console.log(insertUserResult)
       newFan = insertUserResult.data.insert_users_new.returning[0]
       console.log('newFan ->', newFan)
+      try {
+        const insertEventUserNewRes = await orm.request(insertEventUserNew, {
+          event_id: chitChatId,
+          user_id: newFan.id,
+        })
+        console.log('🚀 ~ usersNewRouter.post ~ insertEventUserNewRes', insertEventUserNewRes)
+      } catch (error) {
+        console.log('error = ', error)
+      }
       // await sendConfirmationText(newFan)
     } catch (error) {
       Sentry.captureException(error)
