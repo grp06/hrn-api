@@ -1,21 +1,20 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
 import { findUserByEmail, findUserByPhoneNumber } from '../../gql/queries'
-import { signUp, signUpNew } from '../../gql/mutations'
+import { signUp, signUpNew, insertEventUserNew } from '../../gql/mutations'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from '../users/users-service'
 import { signUpConfirmation } from '../../services/email-service'
 import { hashPassword } from '../../services/auth-service'
-import sendConfirmationText from '../sms/sms-router'
+import { sendConfirmationText } from '../sms/sms-helpers'
+
 const express = require('express')
 
 const usersNewRouter = express.Router()
 const jsonBodyParser = express.json()
-const { NODE_ENV } = require('../../config')
 
 usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { cash_app, email, name, password, phone_number, role, venmo } = req.body
-  console.log('req.body at root /signup', req.body)
+  const { cash_app, email, name, password, phone_number, role, venmo, chitChat } = req.body
 
   if (role === 'fan' && !req.body['phone_number'])
     return res.status(400).json({
@@ -68,16 +67,21 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     console.log('userObject ->', { userObject })
     const variables = { objects: [userObject] }
     let newFan
-    console.log('🚀 ~ usersNewRouter.post ~ variables', variables)
 
     // insert user into db
     try {
       const insertUserResult = await orm.request(signUpNew, variables)
-      console.log(insertUserResult)
+
       newFan = insertUserResult.data.insert_users_new.returning[0]
-      console.log('newFan ->', newFan)
-      // await sendConfirmationText(newFan)
+
+      const eventUsersNewRes = await orm.request(insertEventUserNew, {
+        event_id: chitChat.id,
+        user_id: newFan.id,
+      })
+
+      await sendConfirmationText({ newFan, chitChat, eventUsersNewRes })
     } catch (error) {
+      console.log('🚀 ~ usersNewRouter.post ~ error', error)
       Sentry.captureException(error)
       return res.status(500).json({
         error,
