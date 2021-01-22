@@ -79,9 +79,13 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
         user_id: newFan.id,
       })
 
+      if (eventUsersNewRes.errors) {
+        throw new Error(eventUsersNewRes.errors[0].message)
+      }
+
       await sendConfirmationText({ newFan, chitChat, eventUsersNewRes })
     } catch (error) {
-      console.log('🚀 ~ usersNewRouter.post ~ error', error)
+      console.log('error', error)
       Sentry.captureException(error)
       return res.status(500).json({
         error,
