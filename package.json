@@ -58,7 +58,7 @@
     "twilio": "^3.43.1",
     "unsplash-js": "^6.3.0",
     "validator": "^13.1.1",
-    "webpack": "^4.43.0",
+    "webpack": "^5.17.0",
     "webpack-node-externals": "^1.7.2",
     "winston": "^3.2.1",
     "xss": "^1.0.7"
