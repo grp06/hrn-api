@@ -5,8 +5,14 @@ const insertEventUserNew = gql`
     insert_event_users_new(objects: { event_id: $event_id, user_id: $user_id }) {
       returning {
         id
-        event_id
         user_id
+        event_id
+        event {
+          event_users_new {
+            user_id
+            status
+          }
+        }
       }
     }
   }
