@@ -4,7 +4,6 @@ const hrnTwilioPhoneNumber = '+19518012833'
 const moment = require('moment')
 
 export const sendConfirmationText = ({ newFan, chitChat, eventUsersNewRes }) => {
-  console.log('🚀 ~ sendConfirmationText ~ chitChat', chitChat)
   const event_users_new =
     eventUsersNewRes.data.insert_event_users_new.returning[0].event.event_users_new
 
@@ -12,11 +11,9 @@ export const sendConfirmationText = ({ newFan, chitChat, eventUsersNewRes }) => 
   const { name: hostName } = host
 
   const positionInQueue = event_users_new.findIndex((user) => user.user_id === newFan.id) + 1
-  console.log('🚀 ~ sendConfirmationText ~ positionInQueue', positionInQueue)
   const { phone_number, name } = newFan
   const firstName = name.split(' ')[0]
   const eventDateString = moment(start_at).format('MMMM Do @ h:mma')
-  console.log('🚀 ~ sendConfirmationText ~ eventDateString', eventDateString)
 
   const messageContent = `Hey ${firstName}, we hope you're excited to meet ${hostName}.
 
