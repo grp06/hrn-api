@@ -57,10 +57,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     let existingUsername
     try {
       const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
-      console.log('🚀 ~ usersNewRouter.post ~ phone_number', phone_number)
-      console.log('🚀 ~ usersNewRouter.post ~ checkPhoneNumberRequest', checkPhoneNumberRequest)
       existingPhoneNumber = checkPhoneNumberRequest.data.users_new[0]
-      console.log('existingPhoneNumber', existingPhoneNumber)
 
       if (existingPhoneNumber) {
         const message = 'Phone Number already in use'
@@ -68,10 +65,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
         return res.status(400).json({ error: message })
       }
       const checkUsernameRequest = await orm.request(findUserByUsername, { username })
-      console.log('🚀 ~ usersNewRouter.post ~ username', username)
-      console.log('🚀 ~ usersNewRouter.post ~ checkUsernameRequest', checkUsernameRequest)
       existingUsername = checkUsernameRequest.data.users_new[0]
-      console.log('existingUsername', existingUsername)
 
       if (existingUsername) {
         const message = 'Username already in use'
@@ -105,7 +99,6 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     // insert user into db
     try {
       const insertUserResult = await orm.request(signUpNew, variables)
-      console.log('🚀 ~ usersNewRouter.post ~ insertUserResult', insertUserResult)
 
       newFan = insertUserResult.data.insert_users_new.returning[0]
 

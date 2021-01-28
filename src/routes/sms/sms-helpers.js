@@ -13,7 +13,6 @@ export const sendConfirmationText = ({ newFan, chitChat, eventUsersNewRes }) => 
   const positionInQueue = chit_chat_users.findIndex((user) => user.user_id === newFan.id) + 1
   const { phone_number, name, username } = newFan
   const nameToCallUser = name ? name.split(' ')[0] : username
-  console.log('🚀 ~ sendConfirmationText ~ nameToCallUser', nameToCallUser)
   const eventDateString = moment(start_at).format('MMMM Do @ h:mma')
 
   const messageContent = `Hey ${nameToCallUser}, we hope you're excited to meet ${hostName}.

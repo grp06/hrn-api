@@ -11,6 +11,7 @@ const findUserNewById = gql`
       role
       venmo
       profile_pic_url
+      username
     }
   }
 `
