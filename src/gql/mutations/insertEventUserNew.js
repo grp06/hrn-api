@@ -2,13 +2,13 @@ import gql from 'graphql-tag'
 
 const insertEventUserNew = gql`
   mutation insertEventUserNew($event_id: Int!, $user_id: Int!) {
-    insert_event_users_new(objects: { event_id: $event_id, user_id: $user_id }) {
+    insert_chit_chat_users(objects: { event_id: $event_id, user_id: $user_id }) {
       returning {
         id
         user_id
         event_id
         event {
-          event_users_new {
+          chit_chat_users {
             user_id
             status
           }

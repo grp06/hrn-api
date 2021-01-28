@@ -1,6 +1,7 @@
 export { default as findUserByEmail } from './findUserByEmail'
 export { default as findUserById } from './findUserById'
 export { default as findUserByPhoneNumber } from './findUserByPhoneNumber'
+export { default as findUserByUsername } from './findUserByUsername'
 export { default as findUserNewByEmail } from './findUserNewByEmail'
 export { default as findUserNewById } from './findUserNewById'
 export { default as findUserByStripeCustomerId } from './findUserByStripeCustomerId'
