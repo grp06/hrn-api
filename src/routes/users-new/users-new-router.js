@@ -25,6 +25,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     chitChat,
     username,
   } = req.body
+  console.log('🚀 ~ usersNewRouter.post ~ username', username)
 
   if (role === 'fan' && !req.body['phone_number'])
     return res.status(400).json({
@@ -49,28 +50,37 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // add logging for these errors?
 
-  const usernameError = UsersService.validateUsername(username)
-  if (usernameError) return res.status(400).json({ error: usernameError })
+  if (username) {
+    console.log('🚀 ~ usersNewRouter.post ~ username', username)
+    const usernameError = UsersService.validateUsername(username)
+    if (usernameError) return res.status(400).json({ error: usernameError })
+  }
 
   if (role === 'fan') {
     let existingPhoneNumber
     let existingUsername
     try {
-      const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
-      existingPhoneNumber = checkPhoneNumberRequest.data.users_new[0]
+      if (phone_number) {
+        const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
+        existingPhoneNumber = checkPhoneNumberRequest.data.users_new[0]
 
-      if (existingPhoneNumber) {
-        const message = 'Phone Number already in use'
-        Sentry.captureMessage(message)
-        return res.status(400).json({ error: message })
+        if (existingPhoneNumber) {
+          const message = 'Phone Number already in use'
+          Sentry.captureMessage(message)
+          return res.status(400).json({ error: message })
+        }
       }
-      const checkUsernameRequest = await orm.request(findUserByUsername, { username })
-      existingUsername = checkUsernameRequest.data.users_new[0]
 
-      if (existingUsername) {
-        const message = 'Username already in use'
-        Sentry.captureMessage(message)
-        return res.status(400).json({ error: message })
+      if (username) {
+        const checkUsernameRequest = await orm.request(findUserByUsername, { username })
+        existingUsername = checkUsernameRequest.data.users_new[0]
+        console.log('🚀 ~ usersNewRouter.post ~ existingUsername', existingUsername)
+
+        if (existingUsername) {
+          const message = 'Username already in use'
+          Sentry.captureMessage(message)
+          return res.status(400).json({ error: message })
+        }
       }
     } catch (error) {
       Sentry.captureException(error)

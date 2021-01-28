@@ -14,16 +14,17 @@ const express = require('express')
 const authRouter = express.Router()
 const jsonBodyParser = express.json()
 
-authRouter.post('/phone-or-username-login', jsonBodyParser, async (req, res, next) => {
-  const { phone_number, username, password } = req.body
-  const loginUser = { phone_number, username, password }
+authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
+  const { phone_number, usernameOrEmail, password } = req.body
+  let email
+  let username
+  if (usernameOrEmail.indexOf('@') > -1) {
+    email = usernameOrEmail.toLowerCase()
+  } else {
+    username = usernameOrEmail
+  }
 
-  // make sure all keys are in request body
-  // for (const [key, value] of Object.entries(loginUser))
-  //   if (value == null)
-  //     return res.status(400).json({
-  //       error: `Missing '${key}' in request body`,
-  //     })
+  const loginUser = { phone_number, username, email, password }
 
   let dbUser
 
@@ -34,13 +35,18 @@ authRouter.post('/phone-or-username-login', jsonBodyParser, async (req, res, nex
       dbUser = checkUsernameRequest.data.users_new[0]
     }
 
+    if (email) {
+      const checkEmailRequest = await orm.request(findUserNewByEmail, { email: email })
+      dbUser = checkEmailRequest.data.users_new[0]
+    }
+
     if (phone_number) {
       const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
       dbUser = checkPhoneNumberRequest.data.users_new[0]
     }
 
     if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
+      return res.status(400).json({ error: 'Incorrect login info' })
     }
 
     // compare passwords with hashing
@@ -48,54 +54,7 @@ authRouter.post('/phone-or-username-login', jsonBodyParser, async (req, res, nex
 
     if (!passwordCheck) {
       return res.status(400).json({
-        error: 'Incorrect user_name or password',
-      })
-    }
-  } catch (error) {
-    console.log('Error logging in', error)
-    Sentry.captureException(error)
-    return res.status(500).json({
-      error: 'There was an error logging in',
-    })
-  }
-
-  console.log(dbUser)
-  return res.send({
-    token: await createToken(dbUser, process.env.SECRET),
-    role: dbUser.role,
-    id: dbUser.id,
-  })
-})
-
-authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { email, password } = req.body
-  const loginUser = { email, password }
-
-  // make sure all keys are in request body
-  for (const [key, value] of Object.entries(loginUser))
-    if (value == null)
-      return res.status(400).json({
-        error: `Missing '${key}' in request body`,
-      })
-
-  let dbUser
-
-  // is the await functionality correct here?
-  try {
-    // check if user with email exists
-    const checkEmailRequest = await orm.request(findUserNewByEmail, { email: email })
-    dbUser = checkEmailRequest.data.users_new[0]
-
-    if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
-    }
-
-    // compare passwords with hashing
-    const passwordCheck = await comparePasswords(loginUser.password, dbUser.password)
-
-    if (!passwordCheck) {
-      return res.status(400).json({
-        error: 'Incorrect user_name or password',
+        error: 'Incorrect login info',
       })
     }
   } catch (error) {

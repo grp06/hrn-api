@@ -33,7 +33,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  const userObject = { name, email, password: hashedPassword, role }
+  const userObject = { name, email: email.toLowerCase(), password: hashedPassword, role }
 
   console.log({ userObject })
 

@@ -39,7 +39,7 @@ const UsersService = {
     return null
   },
 
-  validateUsername(username) {
+  validateUsername(username = '') {
     const filtered = profanityFilter.clean(username)
 
     if (username !== filtered) {

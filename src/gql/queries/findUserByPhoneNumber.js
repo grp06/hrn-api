@@ -7,6 +7,7 @@ const findUserByPhoneNumber = gql`
       name
       phone_number
       role
+      password
     }
   }
 `
