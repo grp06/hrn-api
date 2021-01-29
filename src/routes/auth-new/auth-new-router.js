@@ -1,6 +1,11 @@
 import * as Sentry from '@sentry/node'
 import orm from '../../services/orm'
-import { findUserNewByEmail, findUserNewById } from '../../gql/queries'
+import {
+  findUserNewByEmail,
+  findUserNewById,
+  findUserByUsername,
+  findUserByPhoneNumber,
+} from '../../gql/queries'
 import { createToken } from '../../extensions/jwtHelper'
 import { comparePasswords } from '../../services/auth-service'
 
@@ -10,26 +15,38 @@ const authRouter = express.Router()
 const jsonBodyParser = express.json()
 
 authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { email, password } = req.body
-  const loginUser = { email, password }
+  const { phoneNumber, usernameOrEmail, password } = req.body
+  let email
+  let username
+  if (usernameOrEmail.indexOf('@') > -1) {
+    email = usernameOrEmail.toLowerCase()
+  } else {
+    username = usernameOrEmail
+  }
 
-  // make sure all keys are in request body
-  for (const [key, value] of Object.entries(loginUser))
-    if (value == null)
-      return res.status(400).json({
-        error: `Missing '${key}' in request body`,
-      })
+  const loginUser = { phoneNumber, username, email, password }
 
   let dbUser
 
   // is the await functionality correct here?
   try {
-    // check if user with email exists
-    const checkEmailRequest = await orm.request(findUserNewByEmail, { email: email })
-    dbUser = checkEmailRequest.data.users_new[0]
+    if (username) {
+      const checkUsernameRequest = await orm.request(findUserByUsername, { username })
+      dbUser = checkUsernameRequest.data.users_new[0]
+    }
+
+    if (email) {
+      const checkEmailRequest = await orm.request(findUserNewByEmail, { email: email })
+      dbUser = checkEmailRequest.data.users_new[0]
+    }
+
+    if (phoneNumber) {
+      const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phoneNumber })
+      dbUser = checkPhoneNumberRequest.data.users_new[0]
+    }
 
     if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
+      return res.status(400).json({ error: 'Incorrect login info' })
     }
 
     // compare passwords with hashing
@@ -37,7 +54,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
 
     if (!passwordCheck) {
       return res.status(400).json({
-        error: 'Incorrect user_name or password',
+        error: 'Incorrect login info',
       })
     }
   } catch (error) {

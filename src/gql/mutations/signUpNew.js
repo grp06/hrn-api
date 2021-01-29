@@ -13,6 +13,7 @@ const insertUserNew = gql`
         phone_number
         profile_pic_url
         venmo
+        username
       }
     }
   }

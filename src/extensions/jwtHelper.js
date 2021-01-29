@@ -21,7 +21,7 @@ const roles = {
 export const createToken = async (user, secret, expiresIn) => {
   const tokenContents = {
     sub: `${user.id}`,
-    name: user.email || user.phone_number,
+    name: user.email || user.phoneNumber,
     iat: Date.now() / 1000,
   }
 

@@ -39,6 +39,15 @@ const UsersService = {
     return null
   },
 
+  validateUsername(username = '') {
+    const filtered = profanityFilter.clean(username)
+
+    if (username !== filtered) {
+      return 'Please use a different username'
+    }
+    return null
+  },
+
   serializeUser(user) {
     return {
       id: user.id,
@@ -52,8 +61,8 @@ const UsersService = {
   serializeFan(user) {
     return {
       id: user.id,
-      name: xss(user.name),
-      phone_number: xss(user.phone_number),
+      username: xss(user.username),
+      phoneNumber: xss(user.phoneNumber),
       created_at: new Date(user.created_at),
       role: xss(user.role),
     }
