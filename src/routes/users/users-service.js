@@ -62,7 +62,7 @@ const UsersService = {
     return {
       id: user.id,
       username: xss(user.username),
-      phone_number: xss(user.phone_number),
+      phoneNumber: xss(user.phoneNumber),
       created_at: new Date(user.created_at),
       role: xss(user.role),
     }

@@ -14,77 +14,37 @@ const usersNewRouter = express.Router()
 const jsonBodyParser = express.json()
 
 usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
-  const {
-    cash_app,
-    email,
-    name,
-    password,
-    phone_number,
-    role,
-    venmo,
-    chitChat,
-    username,
-  } = req.body
-  console.log('🚀 ~ usersNewRouter.post ~ username', username)
-
-  if (role === 'fan' && !req.body['phone_number'])
-    return res.status(400).json({
-      error: `Missing phone_number in request body`,
-    })
-
-  if (role === 'celeb' && !req.body['venmo'] && !req.body['cash_app'])
-    return res.status(400).json({
-      error: `Missing either venmo or cash_app in request body`,
-    })
-
-  if (role !== 'fan') {
-    for (const field of ['name', 'email', 'password', 'role'])
-      if (!req.body[field]) {
-        return res.status(400).json({
-          error: `Missing '${field}' in request body`,
-        })
-      }
-  }
-
-  // name, email, password validation
-
-  // add logging for these errors?
-
-  if (username) {
-    console.log('🚀 ~ usersNewRouter.post ~ username', username)
-    const usernameError = UsersService.validateUsername(username)
-    if (usernameError) return res.status(400).json({ error: usernameError })
-  }
+  const { cash_app, email, name, password, phoneNumber, role, venmo, chitChat, username } = req.body
 
   if (role === 'fan') {
     let existingPhoneNumber
     let existingUsername
     try {
-      if (phone_number) {
-        const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
-        existingPhoneNumber = checkPhoneNumberRequest.data.users_new[0]
+      const usernameError = UsersService.validateUsername(username)
+      if (usernameError) return res.status(400).json({ error: usernameError })
 
-        if (existingPhoneNumber) {
-          const message = 'Phone Number already in use'
-          Sentry.captureMessage(message)
-          return res.status(400).json({ error: message })
-        }
+      const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phoneNumber })
+
+      existingPhoneNumber = checkPhoneNumberRequest.data.users_new[0]
+
+      if (existingPhoneNumber) {
+        const message = 'Phone Number already in use'
+        Sentry.captureMessage(message)
+        return res.status(400).json({ error: message })
       }
 
-      if (username) {
-        const checkUsernameRequest = await orm.request(findUserByUsername, { username })
-        existingUsername = checkUsernameRequest.data.users_new[0]
-        console.log('🚀 ~ usersNewRouter.post ~ existingUsername', existingUsername)
+      const checkUsernameRequest = await orm.request(findUserByUsername, { username })
 
-        if (existingUsername) {
-          const message = 'Username already in use'
-          Sentry.captureMessage(message)
-          return res.status(400).json({ error: message })
-        }
+      existingUsername = checkUsernameRequest.data.users_new[0]
+
+      if (existingUsername) {
+        const message = 'Username already in use'
+        Sentry.captureMessage(message)
+        return res.status(400).json({ error: message })
       }
     } catch (error) {
+      console.log('🚀 ~ usersNewRouter.post ~ error', error)
       Sentry.captureException(error)
-      console.log('error: ', error)
 
       return res.status(500).json({
         error,
@@ -101,7 +61,13 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
       })
     }
 
-    const userObject = { name, phone_number, username, role: 'fan', password: hashedPassword }
+    const userObject = {
+      name,
+      phone_number: phoneNumber,
+      username,
+      role: 'fan',
+      password: hashedPassword,
+    }
     console.log('userObject ->', { userObject })
     const variables = { objects: [userObject] }
     let newFan
@@ -109,6 +75,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     // insert user into db
     try {
       const insertUserResult = await orm.request(signUpNew, variables)
+      console.log('🚀 ~ usersNewRouter.post ~ insertUserResult', insertUserResult)
 
       newFan = insertUserResult.data.insert_users_new.returning[0]
 
@@ -131,7 +98,7 @@ usersNewRouter.post('/', jsonBodyParser, async (req, res) => {
     }
 
     // send token and user details
-    __logger.info(`Fan with phone number ${phone_number} created`)
+    __logger.info(`Fan with phone number ${phoneNumber} created`)
     try {
       return res.status(201).json({
         token: await createToken(newFan, process.env.SECRET),

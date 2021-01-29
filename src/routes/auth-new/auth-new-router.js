@@ -15,7 +15,7 @@ const authRouter = express.Router()
 const jsonBodyParser = express.json()
 
 authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { phone_number, usernameOrEmail, password } = req.body
+  const { phoneNumber, usernameOrEmail, password } = req.body
   let email
   let username
   if (usernameOrEmail.indexOf('@') > -1) {
@@ -24,7 +24,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     username = usernameOrEmail
   }
 
-  const loginUser = { phone_number, username, email, password }
+  const loginUser = { phoneNumber, username, email, password }
 
   let dbUser
 
@@ -40,8 +40,8 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
       dbUser = checkEmailRequest.data.users_new[0]
     }
 
-    if (phone_number) {
-      const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phone_number })
+    if (phoneNumber) {
+      const checkPhoneNumberRequest = await orm.request(findUserByPhoneNumber, { phoneNumber })
       dbUser = checkPhoneNumberRequest.data.users_new[0]
     }
 
