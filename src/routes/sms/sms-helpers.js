@@ -31,3 +31,21 @@ Reminder, this meet and greet a donation based event, so you can make a donation
     })
     .then((message) => console.log('text message sent'))
 }
+
+export const sendPasswordResetText = ({ user, url }) => {
+  console.log('🚀 ~ sendPasswordResetText ~ user', user)
+  const { phone_number: phoneNumber, name, username } = user
+  const nameToCallUser = name ? name.split(' ')[0] : username
+
+  const messageContent = `Hey ${nameToCallUser}, sorry to hear you forgot your password.
+  
+You can reset it here: ${url}`
+
+  client.messages
+    .create({
+      body: messageContent,
+      from: hrnTwilioPhoneNumber,
+      to: phoneNumber,
+    })
+    .then((message) => console.log('password reset text sent'))
+}
