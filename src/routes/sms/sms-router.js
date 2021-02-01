@@ -94,6 +94,7 @@ smsRouter.post('/reset-password', async (req, res) => {
   try {
     const userResponse = await orm.request(findUserByPhoneNumber, { phoneNumber })
     user = userResponse.data.users_new[0]
+    console.log('🚀 ~ smsRouter.post ~ user', user)
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -110,6 +111,7 @@ smsRouter.post('/reset-password', async (req, res) => {
     await sendPasswordResetText({ user, url })
   } catch (error) {
     console.log('error = ', error)
+    return res.status(400).json({ error })
   }
 
   return res.send('success!')

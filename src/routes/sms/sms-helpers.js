@@ -37,7 +37,7 @@ export const sendPasswordResetText = ({ user, url }) => {
   const { phone_number: phoneNumber, name, username } = user
   const nameToCallUser = name ? name.split(' ')[0] : username
 
-  const messageContent = `Hey ${nameToCallUser}, sorry to hear you forgot your password.
+  const messageContent = `Hey ${nameToCallUser}, a little humming bird told us you forgot your password.
   
 You can reset it here: ${url}`
 
