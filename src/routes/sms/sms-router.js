@@ -15,34 +15,15 @@ const express = require('express')
 const smsRouter = express.Router()
 const hrnTwilioPhoneNumber = '+19518012833'
 
-smsRouter.post('/send-ten-minute-reminder-text', async (req, res) => {
-  console.log('hey')
-  const recipientPhoneNumber = req.body.recipientPhoneNumber || '+13219176436'
-  const recipientName = req.body.recipientName.split(' ')[0] || 'George'
-  const celebName = req.body.celebName || 'Johhny Bravo'
-  const eventId = req.body.eventId || 47
-  const messageContent = `Hey ${recipientName}, in about 10 minutes you get to meet ${celebName}!
-
-You can wait for your turn here: https://launch.hirightnow.co/meet-and-greet/${eventId}.
-
-Reminder, this meet and greet a donation based event, so you can make a donation to ${celebName} right after your chat via Venmo or Cash app. See you soon!`
-
-  try {
-    client.messages
-      .create({
-        body: messageContent,
-        from: hrnTwilioPhoneNumber,
-        to: recipientPhoneNumber,
-      })
-      .then((message) => console.log(message.sid))
-    return res.status(201).send({ success: 'true' })
-  } catch (error) {
-    return res.status(500).send({ error })
-  }
-})
+export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId, created_at }) => {
+  const secret = `${passwordHash}-${created_at}`
+  const token = jwt.sign({ userId }, secret, {
+    expiresIn: 3600, // 1 hour
+  })
+  return token
+}
 
 smsRouter.post('/send-post-event-text', async (req, res) => {
-  console.log('hey')
   const recipientPhoneNumber = req.body.recipientPhoneNumber || '+13219176436'
   const recipientName = req.body.recipientName.split(' ')[0] || 'George'
   const celebName = req.body.celebName || 'Johhny Bravo'
@@ -76,14 +57,6 @@ Hope to see you again soon!
     return res.status(500).send({ error })
   }
 })
-
-export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId, created_at }) => {
-  const secret = `${passwordHash}-${created_at}`
-  const token = jwt.sign({ userId }, secret, {
-    expiresIn: 3600, // 1 hour
-  })
-  return token
-}
 
 smsRouter.post('/reset-password', async (req, res) => {
   const { phoneNumber } = req.body
@@ -176,6 +149,40 @@ smsRouter.post('/set-new-password-via-sms/:userId/:token', async (req, res) => {
     })
   }
   return res.status(404).json({ error: 'Something went wrong with the link you used.' })
+})
+
+smsRouter.post('/send-event-started-reminder', async (req, res) => {
+  const { chitChatRSVPs, chitChat } = req.body
+
+  const { host } = chitChat
+  const { name: hostName } = host
+  const hostFirstName = hostName.split(' ')[0]
+
+  const messageContent = `Hey   ${hostFirstName}'s event just started. Get there soon!`
+
+  const sendMessage = async (eventUser) => {
+    await client.messages
+      .create({
+        body: messageContent,
+        from: hrnTwilioPhoneNumber,
+        to: eventUser.user.phone_number,
+      })
+      .then((message) => console.log('text message sent'))
+  }
+  const promises = []
+
+  chitChatRSVPs.forEach((eventUser) => {
+    promises.push(sendMessage(eventUser))
+  })
+
+  try {
+    await Promise.all(promises)
+  } catch (error) {
+    return res.status(200).send({
+      error: 'error sending text messages',
+    })
+  }
+  return res.status(200).send({ success: true })
 })
 
 module.exports = smsRouter
