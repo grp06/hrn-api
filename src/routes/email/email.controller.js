@@ -13,6 +13,7 @@ const sgMail = require('@sendgrid/mail')
 // so if someones gets a user token they still need a timestamp to intercept.
 export const usePasswordHashToMakeToken = ({ password: passwordHash, id: userId, created_at }) => {
   const secret = `${passwordHash}-${created_at}`
+  console.log('🚀 ~ usePasswordHashToMakeToken ~ secret', secret)
   const token = jwt.sign({ userId }, secret, {
     expiresIn: 3600, // 1 hour
   })
@@ -52,7 +53,6 @@ export const sendPasswordResetEmail = async (req, res) => {
 }
 
 export const receiveNewPassword = async (req, res) => {
-  console.log('receiveNewPassword -> receiveNewPassword', receiveNewPassword)
   const { userId, token } = req.params
 
   const { password } = req.body
@@ -65,6 +65,7 @@ export const receiveNewPassword = async (req, res) => {
   try {
     const checkIdRequest = await orm.request(findUserById, { id: userId })
     user = checkIdRequest.data.users[0]
+    console.log('🚀 ~ receiveNewPassword ~ user', user)
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
@@ -75,7 +76,12 @@ export const receiveNewPassword = async (req, res) => {
   let payload
   try {
     const secret = `${user.password}-${user.created_at}`
+    console.log('🚀 ~ smsRouter.post ~ user.created_at', user.created_at.length)
+    console.log('🚀 ~ smsRouter.post ~ user.password', user.password.length)
+    console.log('🚀 ~ smsRouter.post ~ token type', token.length)
+    console.log('🚀 ~ smsRouter.post ~ secret type', secret.length)
     payload = jwt.verify(token, secret)
+    console.log('🚀 ~ receiveNewPassword ~ payload', payload)
   } catch (error) {
     return res.status(401).json({ error: 'Unauthorized request' })
   }

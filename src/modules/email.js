@@ -9,7 +9,7 @@ const ejs = require('ejs')
 const moment = require('moment')
 
 // API endpoint
-export const getPasswordResetURL = (user, token) => {
+export const getPasswordResetURL = (user, token, isSMS) => {
   let frontendUrl
 
   switch (process.env.DEPLOYED_ENV) {
@@ -26,7 +26,9 @@ export const getPasswordResetURL = (user, token) => {
       frontendUrl = 'http://localhost:3000'
   }
 
-  return `${frontendUrl}/set-new-password/${user.id}/${token}`
+  return isSMS
+    ? `${frontendUrl}/set-new-password-phone/${user.id}/${token}`
+    : `${frontendUrl}/set-new-password/${user.id}/${token}`
 }
 
 export const resetPasswordTemplate = (user, url) => {
