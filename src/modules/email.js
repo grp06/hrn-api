@@ -27,7 +27,7 @@ export const getPasswordResetURL = (user, token, isSMS) => {
   }
 
   return isSMS
-    ? `${frontendUrl}/set-new-password-phone/${user.id}/${token}`
+    ? `${frontendUrl}/set-new-password-via-sms/${user.id}/${token}`
     : `${frontendUrl}/set-new-password/${user.id}/${token}`
 }
 

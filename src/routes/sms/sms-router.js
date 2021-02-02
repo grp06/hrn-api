@@ -117,7 +117,7 @@ smsRouter.post('/reset-password', async (req, res) => {
   return res.send('success!')
 })
 
-smsRouter.post('/set-new-password-phone/:userId/:token', async (req, res) => {
+smsRouter.post('/set-new-password-via-sms/:userId/:token', async (req, res) => {
   const { userId, token } = req.params
 
   const { password } = req.body
