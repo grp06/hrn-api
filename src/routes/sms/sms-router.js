@@ -158,7 +158,7 @@ smsRouter.post('/send-event-started-reminder', async (req, res) => {
   const { name: hostName } = host
   const hostFirstName = hostName.split(' ')[0]
 
-  const messageContent = `Hey   ${hostFirstName}'s event just started. Get there soon!`
+  const messageContent = `Hey ${hostFirstName}'s event just started. Go here: https://launch.hirightnow.co/chit-chat/${chitChat.id} to see your real time spot in the queue!`
 
   const sendMessage = async (eventUser) => {
     await client.messages
@@ -181,6 +181,40 @@ smsRouter.post('/send-event-started-reminder', async (req, res) => {
     return res.status(200).send({
       error: 'error sending text messages',
     })
+  }
+  return res.status(200).send({ success: true })
+})
+
+smsRouter.post('/send-reminder-to-upcoming-participants', async (req, res) => {
+  const { chitChatRSVPs, chitChat } = req.body
+  const indexOfFanChatting = chitChatRSVPs.findIndex((eventUser) => eventUser.status === 'in-chat')
+  const nextInQueue = chitChatRSVPs[indexOfFanChatting + 1]
+  const fifthInQueue = chitChatRSVPs[indexOfFanChatting + 3]
+  const { host } = chitChat
+  const { name: hostName } = host
+  const hostFirstName = hostName.split(' ')[0]
+
+  const messageToFirstInQueue = `Hey you're next in line to meet ${hostFirstName}. Go here: https://launch.hirightnow.co/chit-chat/${chitChat.id} to chat!`
+  const messageToFifthInQueue = `Hey you're 5th in line to meet ${hostFirstName}. Go here: https://launch.hirightnow.co/chit-chat/${chitChat.id} see the real time queue. If you miss your turn you're fucked!`
+
+  if (nextInQueue) {
+    await client.messages
+      .create({
+        body: messageToFirstInQueue,
+        from: hrnTwilioPhoneNumber,
+        to: nextInQueue.user.phone_number,
+      })
+      .then((message) => console.log('text message sent to first in queue'))
+  }
+
+  if (fifthInQueue) {
+    await client.messages
+      .create({
+        body: messageToFifthInQueue,
+        from: hrnTwilioPhoneNumber,
+        to: fifthInQueue.user.phone_number,
+      })
+      .then((message) => console.log('text message sent to fifth in queue'))
   }
   return res.status(200).send({ success: true })
 })
