@@ -189,6 +189,7 @@ smsRouter.post('/send-reminder-to-upcoming-participants', async (req, res) => {
   const { chitChatRSVPs, chitChat } = req.body
   const indexOfFanChatting = chitChatRSVPs.findIndex((eventUser) => eventUser.status === 'in-chat')
   const nextInQueue = chitChatRSVPs[indexOfFanChatting + 1]
+  // I put +3 here so you don't have to have 5 people to try it. You can try with 3 people. Put 2 phone numbers you know in positions 1 and 3
   const fifthInQueue = chitChatRSVPs[indexOfFanChatting + 3]
   const { host } = chitChat
   const { name: hostName } = host
