@@ -1,6 +1,10 @@
 import * as Sentry from '@sentry/node'
 
-import { postEventTemplate, signUpConfirmationTemplate } from '../modules/email'
+import {
+  postEventTemplate,
+  signUpConfirmationTemplate,
+  stripeSubscriptionConfirmationTemplate,
+} from '../modules/email'
 
 const sgMail = require('@sendgrid/mail')
 
@@ -26,6 +30,24 @@ export const signUpConfirmation = async (user) => {
   let message
   try {
     message = await signUpConfirmationTemplate(user)
+  } catch (error) {
+    console.log('error making signup email template', error)
+    __Sentry.captureException(error)
+  }
+
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    await sgMail.send(message)
+  } catch (error) {
+    console.log('Something went wrong sending the signup template email', error)
+    __Sentry.captureException(error)
+  }
+}
+
+export const stripeSubscriptionConfirmation = async (stripeEmailFieldsObject) => {
+  let message
+  try {
+    message = await stripeSubscriptionConfirmationTemplate(stripeEmailFieldsObject)
   } catch (error) {
     console.log('error making signup email template', error)
     __Sentry.captureException(error)

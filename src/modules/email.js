@@ -32,7 +32,7 @@ export const getPasswordResetURL = (user, token) => {
 export const resetPasswordTemplate = (user, url) => {
   const from = process.env.EMAIL_LOGIN
   const to = user.email
-  const subject = '🔥 Hi Right Now Password Reset 🌻'
+  const subject = '🔐 Hi Right Now - Super Secret Password Reset'
   const html = `
   <p>Hey ${user.name || user.email},</p>
   <p>We heard that you lost your HiRightNow password. Sorry about that!</p>
@@ -72,7 +72,7 @@ export const rsvpTemplate = async (fields) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `🔥Hi Right Now - ${event_name} confirmation`
+  const subject = `✅ Hi Right Now - ${event_name} confirmation`
   const content = [
     {
       type: 'text/html',
@@ -106,7 +106,7 @@ export const sendReminders = async ({ events, filePath, timeframeString }) => {
     resArray.forEach((item) => {
       const { event, template } = item
       const eventUserEmails = event.event_users.map((user) => user.user.email)
-      const subject = `🔥Hi Right Now - ${event.event_name} starts in ${timeframeString}!`
+      const subject = `⏰ Hi Right Now - ${event.event_name} starts in ${timeframeString}!`
 
       const message = {
         to: eventUserEmails,
@@ -139,7 +139,7 @@ export const sendEmailsToNoShows = async (
       resArray.forEach((item) => {
         const { event, template } = item
         const eventUserEmails = event.event_users.map((user) => user.user.email)
-        const subject = `Following up from the Hi Right Now event`
+        const subject = `🚶‍♂️ 🏃‍♀️ Following up from the Hi Right Now event`
         const noShows = _.difference(eventUserEmails, attendeesOfRecentlyFinishedEvents)
         const message = {
           to: noShows,
@@ -171,7 +171,7 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
       resArray.forEach((item) => {
         const { event, template } = item
         if (!hostIdsFromAllEvents.includes(event.host_id)) {
-          const subject = `Following up from your Hi Right Now event`
+          const subject = `📝 Following up from your Hi Right Now event`
           const hostsToEmail = event.host.email
           const message = {
             to: hostsToEmail,
@@ -210,7 +210,7 @@ export const postEventTemplate = async (fields) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `🔥Hi Right Now - Your connections from ${event_name} `
+  const subject = `👩🏼‍🤝‍👨🏻 Hi Right Now - Your connections from ${event_name} `
   const content = [
     {
       type: 'text/html',
@@ -243,7 +243,47 @@ export const signUpConfirmationTemplate = async (user) => {
 
   const from = process.env.EMAIL_LOGIN
   const to = email
-  const subject = `🔥Hi Right Now - Welcome to the family!`
+  const subject = `👋 Hi Right Now - Welcome to the family!`
+  const content = [
+    {
+      type: 'text/html',
+      value: htmlTemplate,
+    },
+  ]
+
+  return { from, to, subject, content }
+}
+
+export const stripeSubscriptionConfirmationTemplate = async (stripeEmailFieldsObject) => {
+  const { plan, priceOfPlan, subPeriodEnd, userEmail } = stripeEmailFieldsObject
+  // subPeriodEnd is something like "2013-03-10T02:00:00Z"
+  // we want to get the first ten chars and that is our recurring_payment_date
+  // plan is like STARTER_MONTHLY,  PREMIUM_YEARLY
+  let htmlTemplate
+
+  const planArray = plan.toLowerCase().split('_')
+  const plan_type = `HRN ${planArray[0]} ${planArray[1]}`
+  try {
+    const ejsResponse = await ejs.renderFile(
+      path.join(__dirname, '/views/stripe-subscription-confirmation-email.ejs'),
+      {
+        create_event_link: 'https://launch.hirightnow.co/create-event',
+        charge_amount: `$${priceOfPlan} USD`,
+        plan_type,
+        recurring_payment_date: subPeriodEnd.substring(0, 10),
+      }
+    )
+
+    htmlTemplate = ejsResponse
+  } catch (error) {
+    console.log('sendStripeSubscriptionConfirmation -> error', error)
+    __Sentry.captureException(error)
+    return error
+  }
+
+  const from = process.env.EMAIL_LOGIN
+  const to = userEmail
+  const subject = `💰 Hi Right Now - We've confirmed your payment! 🤝`
   const content = [
     {
       type: 'text/html',
