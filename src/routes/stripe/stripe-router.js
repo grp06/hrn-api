@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import orm from '../../services/orm'
 import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
 import { createToken } from '../../extensions/jwtHelper'
+import { stripeSubscriptionConfirmation } from '../../services/email-service'
 
 const express = require('express')
 
@@ -58,14 +59,24 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   })
 
   // Create the subscription
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [{ price: process.env[plan] }],
-    expand: ['latest_invoice.payment_intent'],
-  })
+  let subscription
+  try {
+    subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: process.env[plan] }],
+      expand: ['latest_invoice.payment_intent'],
+    })
+  } catch (error) {
+    console.log('[stripe.subscriptions.create error] ->', error)
+    Sentry.captureException(error)
+    return res.status(402).send({ error: { message: error.message } })
+  }
 
   const subPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString()
+  const priceOfPlan = subscription.items.data[0].price.unit_amount / 100
   console.log(subPeriodEnd)
+
+  stripeSubscriptionConfirmation({ plan, priceOfPlan, subPeriodEnd, userEmail })
 
   // Update the user role and sub_period_end in our DB
   try {
