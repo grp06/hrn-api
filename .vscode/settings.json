@@ -1,5 +1,7 @@
 {
   "cSpell.words": ["finish", "omni", "omni finish rounds", "rounds"],
 
-  "terminal.integrated.cursorBlinking": true
+  "terminal.integrated.cursorBlinking": true,
+  "javascript.implicitProjectConfig.checkJs": true
+
 }
