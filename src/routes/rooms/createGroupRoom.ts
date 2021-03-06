@@ -1,6 +1,6 @@
 import client from '../../extensions/twilioClient'
 
-const createGroupRoom = async (eventId) => {
+const createGroupRoom = async (eventId: Number) => {
   return client.video.rooms.create({
     uniqueName: `${eventId}-post-event`,
     type: 'group',

@@ -29,25 +29,24 @@
       {
         "allow": ["__logger"]
       }
+    ],
+    "overrides": [
+      {
+        "extends": ["plugin:@typescript-eslint/recommended"],
+        "files": ["*.ts"],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+          "project": "./tsconfig.json"
+        },
+        "plugins": ["@typescript-eslint"],
+        "rules": {
+          "@typescript-eslint/no-inferrable-types": "off",
+          "@typescript-eslint/no-explicit-any": "off",
+          "@typescript-eslint/ban-ts-ignore": "warn",
+          "@typescript-eslint/no-use-before-define": ["error", { "functions": false }],
+          "no-invalid-this": "off"
+        }
+      }
     ]
-    // "import/order": [
-    //   "error",
-    //   {
-    //     "groups": ["builtin", "external", "internal"],
-    //     "pathGroups": [
-    //       {
-    //         "pattern": "react",
-    //         "group": "external",
-    //         "position": "before"
-    //       }
-    //     ],
-    //     "pathGroupsExcludedImportTypes": ["react"],
-    //     "newlines-between": "always",
-    //     "alphabetize": {
-    //       "order": "asc",
-    //       "caseInsensitive": true
-    //     }
-    //   }
-    // ]
   }
 }

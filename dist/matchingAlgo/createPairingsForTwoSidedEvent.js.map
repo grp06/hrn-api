@@ -1,0 +1,1 @@
+{"version":3,"file":"createPairingsForTwoSidedEvent.js","sourceRoot":"","sources":["../../src/matchingAlgo/createPairingsForTwoSidedEvent.js"],"names":[],"mappings":";;;;;;;;;;;;;;AAAA,sEAA6C;AAE7C,MAAM,8BAA8B,GAAG,CAAO,EAAE,OAAO,EAAE,EAAE,EAAE;IAC3D,MAAM,CAAC,OAAO,EAAE,WAAW,CAAC,GAAG,MAAM,wBAAc,CAAC,OAAO,CAAC,CAAA;AAC9D,CAAC,CAAA,CAAA"}
