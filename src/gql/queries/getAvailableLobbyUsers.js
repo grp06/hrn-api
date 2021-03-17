@@ -6,6 +6,7 @@ const getAvailableLobbyUsers = gql`
       event_id
       last_seen
       user_id
+      side
       tags_users {
         tag {
           name

@@ -8,3 +8,4 @@ node_modules
 .serverless
 info.log
 .vscode/settings.json
+./dist

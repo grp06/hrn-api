@@ -10,6 +10,7 @@ const getAvailableLobbyUsers = graphql_tag_1.default `
       event_id
       last_seen
       user_id
+      side
       tags_users {
         tag {
           name

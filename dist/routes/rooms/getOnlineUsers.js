@@ -46,6 +46,7 @@ const getOnlineUsers = (eventId) => __awaiter(void 0, void 0, void 0, function* 
             later_than: seenAfter,
             event_id: eventId,
         });
+        //@ts-ignore
         onlineEventUsers = eventUsersResponse.data.event_users.map((user) => user.user.id);
     }
     catch (error) {

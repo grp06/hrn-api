@@ -26,7 +26,9 @@ const makePairings = ({ onlineUsers, allRoundsDataForOnlineUsers, currentRound, 
             allRoundsDataForOnlineUsers,
             eventId,
             predeterminedPartnersQueryResponse,
+            onlineUsers,
         });
+        console.log('🚀 ~ attemptPairings ~ adjustedPoints', adjustedPoints);
         shuffleArray_1.default(adjustedPoints);
         console.log('attemptPairings -> adjustedPoints', JSON.stringify(adjustedPoints, null, 2));
         let reorderedWithNullsInFront;

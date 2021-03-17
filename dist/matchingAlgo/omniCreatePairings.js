@@ -48,6 +48,8 @@ const omniCreatePairings = ({ eventId, currentRound, fromLobbyScan, useSamyakAlg
             console.log('not enough to pair from lobby scan');
             return null;
         }
+        const isTwoSidedEvent = onlineUsers.find((eventUser) => eventUser.side);
+        console.log('🚀 ~ omniCreatePairings ~ isTwoSidedEvent', isTwoSidedEvent);
         const allRoundsDataForOnlineUsers = yield getAllRoundsDataForOnlineUsers_1.default(userIds);
         const predeterminedPartnersQueryResponse = yield getPredeterminedPartners_1.default({
             userIds,
@@ -56,7 +58,7 @@ const omniCreatePairings = ({ eventId, currentRound, fromLobbyScan, useSamyakAlg
         let pairings;
         let isSamyakAlgo;
         // revert 1 to 15
-        if (onlineUsers.length < 15 || useSamyakAlgo) {
+        if ((onlineUsers.length < 15 || useSamyakAlgo) && !isTwoSidedEvent) {
             console.log('making assignments with samyak algo');
             pairings = makePairingsFromSamyakAlgo_1.default({
                 allRoundsDataForOnlineUsers,

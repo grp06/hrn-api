@@ -32,7 +32,6 @@ const authRouter = require('./routes/auth/auth-router')
 const uploadRouter = require('./routes/upload/upload-router')
 const emailRouter = require('./routes/email/email-router')
 const stripeRouter = require('./routes/stripe/stripe-router')
-
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
 const app = express()

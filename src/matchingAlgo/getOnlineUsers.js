@@ -14,7 +14,6 @@ const getOnlineUsers = async (eventId) => {
 
   const onlineUsers = onlineUsersResponse.data.online_event_users
   console.log(`found ${onlineUsers.length} online users`)
-
   const userIds = onlineUsers.map((user) => user.user_id)
   return [userIds, onlineUsers]
 }
