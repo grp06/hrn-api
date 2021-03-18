@@ -1,1 +1,0 @@
-{"version":3,"file":"twilioClient.js","sourceRoot":"","sources":["../../src/extensions/twilioClient.js"],"names":[],"mappings":";;AAAA,MAAM,MAAM,GAAG,OAAO,CAAC,QAAQ,CAAC,CAAA;AAEhC,OAAO,CAAC,GAAG,CAAC,8BAA8B,EAAE,OAAO,CAAC,GAAG,CAAC,gBAAgB,CAAC,CAAA;AACzE,MAAM,MAAM,GAAG,IAAI,MAAM,CAAC,oCAAoC,EAAE,kCAAkC,CAAC,CAAA;AAEnG,kBAAe,MAAM,CAAA"}
