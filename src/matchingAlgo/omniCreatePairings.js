@@ -18,6 +18,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
       console.log('not enough to pair from lobby scan')
       return null
     }
+    const isTwoSidedEvent = onlineUsers.find((eventUser) => eventUser.side)
 
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds)
     const predeterminedPartnersQueryResponse = await getPredeterminedPartners({
@@ -29,7 +30,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     let isSamyakAlgo
 
     // revert 1 to 15
-    if (onlineUsers.length < 15 || useSamyakAlgo) {
+    if ((onlineUsers.length < 15 || useSamyakAlgo) && !isTwoSidedEvent) {
       console.log('making assignments with samyak algo')
       pairings = makePairingsFromSamyakAlgo({
         allRoundsDataForOnlineUsers,
@@ -59,7 +60,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
 
     // don't end it if we're just dealing with 3 people, we're most likely testing
     const tooManyBadPairings = numNullPairings >= onlineUsers.length / 2 || pairings.length === 0
-  
+
     if (tooManyBadPairings && !fromLobbyScan) {
       console.log('ended event early')
       return 'ended event early'

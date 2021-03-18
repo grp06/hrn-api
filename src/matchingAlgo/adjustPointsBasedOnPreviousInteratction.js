@@ -87,7 +87,7 @@ const adjustPointsBasedOnPreviousInteratction = ({
       }
 
       if (userArePredeterminedToMatch) {
-        console.log('predetermined!!!!');
+        console.log('predetermined!!!!')
         // add a number between 500 - 599 to that users' points object
         item[partnersUserId] += Math.floor(Math.random() * 100) + 500
       }

@@ -1,37 +1,33 @@
 import * as Sentry from '@sentry/node'
-import { startServer } from './server-graphql'
-import logger from './logger'
-import './services/cron-service'
-import webhooks from './webhooks'
-import orm from './services/orm'
-// import { bulkInsertPartners } from './gql/mutations'
 import Unsplash, { toJson } from 'unsplash-js'
 
-import initNextRound from './routes/rooms/initNextRound'
-
-import { getCronJobs } from './gql/queries'
-
 import { newHost } from './discord-bots/new-host'
+import { getCronJobs } from './gql/queries'
+import logger from './logger'
+import initNextRound from './routes/rooms/initNextRound'
+import { startServer } from './server-graphql'
+import orm from './services/orm'
+import webhooks from './webhooks'
+
+import './services/cron-service'
 
 require('dotenv').config()
 require('es6-promise').polyfill()
 require('isomorphic-fetch')
+
+const bodyParser = require('body-parser')
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
-const bodyParser = require('body-parser')
-const fs = require('fs')
-const fileType = require('file-type')
-const multiparty = require('multiparty')
-const sharp = require('sharp')
-const { NODE_ENV, PORT } = require('./config.js')
-const roomsRouter = require('./routes/rooms/rooms-router')
-const tokenRouter = require('./routes/twilio-token/twilio-token-router')
-const usersRouter = require('./routes/users/users-router')
+
+const { PORT, NODE_ENV } = require('./config.js')
 const authRouter = require('./routes/auth/auth-router')
-const uploadRouter = require('./routes/upload/upload-router')
 const emailRouter = require('./routes/email/email-router')
+const roomsRouter = require('./routes/rooms/rooms-router')
 const stripeRouter = require('./routes/stripe/stripe-router')
+const tokenRouter = require('./routes/twilio-token/twilio-token-router')
+const uploadRouter = require('./routes/upload/upload-router')
+const usersRouter = require('./routes/users/users-router')
 
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
@@ -69,10 +65,6 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
-app.get('/event-trigger-test', () => {
-  console.log('hiii from event trigger test')
-})
-
 app.post('/get-unsplash-image', (req, res) => {
   try {
     unsplash.search
@@ -108,9 +100,13 @@ app.use(function errorHandler(error, req, res, next) {
 })
 
 const checkForInterruptedEvents = async () => {
-  console.log('checking for interrupted events')
+  // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
+  // when an event ends we remove it from this table
   const cronJobs = await orm.request(getCronJobs)
+
+  console.log('checking for interrupted events')
   console.log('cronJobs.data.cron_jobs = ', cronJobs.data.cron_jobs)
+
   if (cronJobs.data.cron_jobs.length) {
     cronJobs.data.cron_jobs.forEach((event) => {
       const { next_round_start: nextRoundStart } = event
