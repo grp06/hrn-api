@@ -1,6 +1,4 @@
 import * as Sentry from '@sentry/node'
-import orm from './orm'
-import { sendEmail } from './email-service'
 
 import {
   getEventsByStartTime,
@@ -9,11 +7,11 @@ import {
   getEventAttendeesFromListOfEventIds,
   getAllEvents,
 } from '../gql/queries'
-
 import { sendEmailsToNoShows, sendReminders, sendFollowupsToHosts } from '../modules/email'
+import { sendEmail } from './email-service'
+import orm from './orm'
 
 const moment = require('moment')
-
 const cron = require('node-cron')
 
 const oneDayInMs = 86400000
