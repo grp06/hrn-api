@@ -52,10 +52,13 @@ export const rsvpTemplate = async (fields) => {
   const { name, email, event_name, event_id, description, host_name, event_start_time } = fields
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
   try {
-    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/rsvp-email.ejs'), {
-      event_link: eventLink,
-      event_name: event_name,
-    })
+    const ejsResponse = await ejs.renderFile(
+      path.join(__dirname, '../../src/modules/views/rsvp-email.ejs'),
+      {
+        event_link: eventLink,
+        event_name: event_name,
+      }
+    )
 
     htmlTemplate = ejsResponse
   } catch (error) {
@@ -163,7 +166,7 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
         return {
           event,
           template: await ejs.renderFile(
-            path.join(__dirname, '/views/first-time-host-followup.ejs')
+            path.join(__dirname, '../../src/modules/views/first-time-host-followup.ejs')
           ),
         }
       })
@@ -196,12 +199,15 @@ export const postEventTemplate = async (fields) => {
   let htmlTemplate
 
   try {
-    const ejsResponse = await ejs.renderFile(path.join(__dirname, '/views/post-event-email.ejs'), {
-      firstName: name,
-      event_name,
-      partnerData,
-      profile_pic_url,
-    })
+    const ejsResponse = await ejs.renderFile(
+      path.join(__dirname, '../../src/modules/views/post-event-email.ejs'),
+      {
+        firstName: name,
+        event_name,
+        partnerData,
+        profile_pic_url,
+      }
+    )
 
     htmlTemplate = ejsResponse
   } catch (error) {
@@ -228,7 +234,7 @@ export const signUpConfirmationTemplate = async (user) => {
   let htmlTemplate
   try {
     const ejsResponse = await ejs.renderFile(
-      path.join(__dirname, '/views/sign-up-confirmation.ejs'),
+      path.join(__dirname, '../../src/modules/views/sign-up-confirmation.ejs'),
       {
         firstName,
       }
@@ -265,7 +271,7 @@ export const stripeSubscriptionConfirmationTemplate = async (stripeEmailFieldsOb
   const plan_type = `HRN ${planArray[0]} ${planArray[1]}`
   try {
     const ejsResponse = await ejs.renderFile(
-      path.join(__dirname, '/views/stripe-subscription-confirmation-email.ejs'),
+      path.join(__dirname, '../../src/modules/views/stripe-subscription-confirmation-email.ejs'),
       {
         create_event_link: 'https://launch.hirightnow.co/create-event',
         charge_amount: `$${priceOfPlan} USD`,

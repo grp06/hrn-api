@@ -64,7 +64,7 @@ const sendEmailsToUpcomingEventParticipants = async () => {
     console.log('send out one hour reminder email')
     sendReminders({
       events: events55to60MinsFromNow,
-      filePath: '/views/one-hour-event-reminder.ejs',
+      filePath: '../../src/modules/views/one-hour-event-reminder.ejs',
       timeframeString: 'one hour',
     })
   }
@@ -73,7 +73,7 @@ const sendEmailsToUpcomingEventParticipants = async () => {
     console.log('send out 24 hour reminder email')
     sendReminders({
       events: eventsStartingIn24Hours,
-      filePath: '/views/24-hour-event-reminder.ejs',
+      filePath: '../../src/modules/views/24-hour-event-reminder.ejs',
       timeframeString: '24 hours',
     })
   }
