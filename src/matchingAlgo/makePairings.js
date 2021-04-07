@@ -1,8 +1,8 @@
-import shuffleArray from './shuffleArray'
-import generateFinalMatchesArray from './generateFinalMatchesArray'
-import calculatePoints from './calculatePoints'
-import moveNullsToTheFront from './moveNullsToTheFront'
 import adjustPointsBasedOnPreviousInteratction from './adjustPointsBasedOnPreviousInteratction'
+import calculatePoints from './calculatePoints'
+import generateFinalMatchesArray from './generateFinalMatchesArray'
+import moveNullsToTheFront from './moveNullsToTheFront'
+import shuffleArray from './shuffleArray'
 
 const _ = require('lodash')
 

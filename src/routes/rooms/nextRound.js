@@ -1,13 +1,11 @@
 import * as Sentry from '@sentry/node'
 
-import { resetEvent, omniFinishRounds, endEvent } from './runEventHelpers'
-import orm from '../../services/orm'
-import setRoomsCompleted from './set-rooms-completed'
-
 import { updateEventObject } from '../../gql/mutations'
-import initNextRound from './initNextRound'
 import omniCreatePairings from '../../matchingAlgo/omniCreatePairings'
-import scanLobbyForPairings from './scanLobbyForPairings'
+import orm from '../../services/orm'
+import initNextRound from './initNextRound'
+import { resetEvent, endEvent } from './runEventHelpers'
+import setRoomsCompleted from './set-rooms-completed'
 
 const nextRound = async ({ req, res, params }) => {
   const oneMinuteInMs = 60000
@@ -78,8 +76,6 @@ const nextRound = async ({ req, res, params }) => {
     currentRound,
     useSamyakAlgo: createPairingsRes,
   })
-
-  scanLobbyForPairings(eventId)
 
   if (res) {
     return res
