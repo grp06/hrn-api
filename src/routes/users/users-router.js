@@ -51,7 +51,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     if (existingUser) {
       const message = 'Email already in use'
       Sentry.captureMessage(message)
-      return res.status(400).json({ error: message })
+      return res.status(400).send({ error: message })
     }
   } catch (error) {
     Sentry.captureException(error)

@@ -194,7 +194,7 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
 
 export const postEventTemplate = async (fields) => {
   const { event_name, user, partnerData } = fields
-  const { name, email, profile_pic_url } = user
+  const { first_name: firstName, email, profile_pic_url } = user
 
   let htmlTemplate
 
@@ -202,7 +202,7 @@ export const postEventTemplate = async (fields) => {
     const ejsResponse = await ejs.renderFile(
       path.join(__dirname, '../../src/modules/views/post-event-email.ejs'),
       {
-        firstName: name,
+        firstName,
         event_name,
         partnerData,
         profile_pic_url,
@@ -228,9 +228,7 @@ export const postEventTemplate = async (fields) => {
 }
 
 export const signUpConfirmationTemplate = async (user) => {
-  const { name, email } = user
-  const firstName = name.split(' ')[0]
-
+  const { first_name: firstName, email } = user
   let htmlTemplate
   try {
     const ejsResponse = await ejs.renderFile(
