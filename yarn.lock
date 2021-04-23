@@ -2537,10 +2537,10 @@ available-typed-arrays@^1.0.2:
   dependencies:
     array-filter "^1.0.0"
 
-aws-sdk@^2.778.0:
-  version "2.804.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.804.0.tgz#ff7e6f91b86b4878ec69e3de895c10eb8203fc4b"
-  integrity sha512-a02pZdjL06MunElAZPPEjpghOp/ZA+16f+t4imh1k9FCDpsNVQrT23HRq/PMvRADA5uZZRkYwX8r9o6oH/1RlA==
+aws-sdk@^2.891.0:
+  version "2.891.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.891.0.tgz#02cc2cc6adb94e0d471a5be6dd5668d0c5aacd9e"
+  integrity sha512-st6bKbmA1iWyAz9Fn7CHHNVk/6d51aemPBNpg5sK0kkOSYEob/pCAVSLiN1tGVX6qvjtD41ljeeJDQ3pwRTJfA==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
