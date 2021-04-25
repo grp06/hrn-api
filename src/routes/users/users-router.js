@@ -1,12 +1,13 @@
 import * as Sentry from '@sentry/node'
-import orm from '../../services/orm'
-import { findUserByEmail } from '../../gql/queries'
-import { signUp, updateUserRole } from '../../gql/mutations'
-import { hashPassword } from '../../services/auth-service'
-import { createToken } from '../../extensions/jwtHelper'
-import UsersService from './users-service'
-import { signUpConfirmation } from '../../services/email-service'
+
 import { channel } from '../../discord-bots/new-host'
+import { createToken } from '../../extensions/jwtHelper'
+import { signUp, updateUserRole } from '../../gql/mutations'
+import { findUserByEmail } from '../../gql/queries'
+import { hashPassword } from '../../services/auth-service'
+import { signUpConfirmation } from '../../services/email-service'
+import orm from '../../services/orm'
+import UsersService from './users-service'
 
 const express = require('express')
 
