@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import Unsplash, { toJson } from 'unsplash-js'
 
 import { newHost } from './discord-bots/new-host'
+import { updateNames } from './gql/mutations'
 import { getCronJobs } from './gql/queries'
 import logger from './logger'
 import initNextRound from './routes/rooms/initNextRound'
@@ -71,7 +72,6 @@ app.post('/get-unsplash-image', (req, res) => {
       .photos(req.body.keyword, 1, 10, { orientation: 'landscape' })
       .then(toJson)
       .then((json) => {
-        console.log('json', json)
         const randomIndex = Math.floor(Math.random() * 10)
         return res.status(200).send({ image: json.results[randomIndex] })
       })
@@ -123,5 +123,40 @@ const checkForInterruptedEvents = async () => {
 }
 
 checkForInterruptedEvents()
+
+// const bulkUpdateNames = async () => {
+//   const userObjects = [
+//     {
+//       id: 2431,
+//       name: 'Mariya Chukas',
+//     },
+//   ]
+//   const namesToUpdatePromises = []
+//   console.log(Date.now())
+//   userObjects.forEach(async (user) => {
+//     // query the event users and send emails from response
+//     namesToUpdatePromises.push(
+//       orm.request(updateNames, {
+//         userId: user.id,
+//         firstName: user.name.split(' ')[0],
+//         lastName: user.name.split(' ')[1] || null,
+//       })
+//     )
+//   })
+
+//   try {
+//     const namesToUpdate = await Promise.all(namesToUpdatePromises)
+//     console.log(
+//       '🚀 ~ bulkUpdateNames ',
+//       namesToUpdate[namesToUpdate.length - 1].data.update_users.returning
+//     )
+//   } catch (error) {
+//     console.log('error = ', error)
+//   }
+
+//   console.log(Date.now())
+// }
+
+// bulkUpdateNames()
 
 module.exports = app

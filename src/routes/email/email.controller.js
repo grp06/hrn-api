@@ -120,6 +120,7 @@ export const sendCalendarInvite = async (req, res) => {
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
     await sgMail.send(message)
+    console.log('rsvp message sent')
     return res.send('rsvp message sent')
   } catch (error) {
     console.log('Something went wrong sending the iCal email', error)
