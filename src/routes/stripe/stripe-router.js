@@ -11,8 +11,8 @@ const stripeRouter = express.Router()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 stripeRouter.post('/create-customer', async (req, res) => {
-  const { email, name, userId } = req.body
-  const customer = await stripe.customers.create({ email, name })
+  const { email, first_name, last_name, userId } = req.body
+  const customer = await stripe.customers.create({ email, name: `${first_name} ${last_name}` })
   try {
     await orm.request(updateStripeCustomerId, {
       user_id: userId,

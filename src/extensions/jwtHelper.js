@@ -10,10 +10,8 @@ export const constants = {
 
 const roles = {
   anonymous: 'anonymous',
-  user: 'user',
-  host: 'host',
-  host_starter: 'host_starter',
-  host_premium: 'host_premium',
+  free: 'free',
+  premium: 'premium',
 }
 
 export const createToken = async (user, secret, expiresIn) => {
@@ -26,13 +24,11 @@ export const createToken = async (user, secret, expiresIn) => {
   tokenContents[constants.claims] = {}
   tokenContents[constants.claims][constants.allowedRoles] = [
     roles.anonymous,
-    roles.user,
-    roles.host,
-    roles.host_starter,
-    roles.host_premium,
+    roles.free,
+    roles.premium,
   ]
   tokenContents[constants.claims][constants.userId] = `${user.id}`
   tokenContents[constants.claims][constants.defaultRole] = user.role
 
-  return await jwt.sign(tokenContents, secret)
+  return jwt.sign(tokenContents, secret)
 }

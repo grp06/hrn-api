@@ -130,10 +130,10 @@ const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
   const sendPostEventMatchesEmailPromises = []
 
   listOfMatchesByUserEmail.forEach((userObj) => {
-    const { event_name, email, name, partners, profile_pic_url } = userObj
+    const { event_name, email, first_name, partners, profile_pic_url } = userObj
     const fields = {
       event_name: event_name,
-      user: { name: name.split(' ')[0], email, profile_pic_url },
+      user: { name: first_name, email, profile_pic_url },
       partnerData: partners,
     }
 

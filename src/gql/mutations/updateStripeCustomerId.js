@@ -7,7 +7,8 @@ const updateStripeCustomerId = gql`
       _set: { stripe_customer_id: $stripe_customer_id }
     ) {
       returning {
-        name
+        first_name
+        last_name
         email
         stripe_customer_id
         id
