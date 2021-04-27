@@ -16,10 +16,10 @@ const jsonBodyParser = express.json()
 const { NODE_ENV } = require('../../config')
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { name, email, password, role } = req.body
+  const { first_name, last_name, email, password, role } = req.body
   console.log('req.body at root /signup', req.body)
 
-  for (const field of ['name', 'email', 'password', 'role'])
+  for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
     if (!req.body[field]) {
       return res.status(400).json({
         error: `Missing '${field}' in request body`,
@@ -30,7 +30,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // add logging for these errors?
 
-  const nameError = UsersService.validateName(name)
+  const nameError = UsersService.validateName(first_name)
   if (nameError) return res.status(400).json({ error: nameError })
 
   const emailError = UsersService.validateEmail(email)
@@ -71,7 +71,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 
-  const userObject = { name, email, password: hashedPassword, role }
+  const userObject = { first_name, last_name, email, password: hashedPassword, role }
 
   const variables = { objects: [userObject] }
   let newUser
@@ -132,38 +132,6 @@ usersRouter.get('/get-anonymous-token', async (req, res) => {
   try {
     return res.status(201).json({
       token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({
-      error,
-    })
-  }
-})
-
-usersRouter.post('/upgrade-to-host', async (req, res) => {
-  const { userId } = req.body
-  try {
-    const userRoleResponse = await orm.request(updateUserRole, {
-      user_id: userId,
-      role: 'host',
-      became_host_at: new Date().toISOString(),
-    })
-    const userObject = userRoleResponse.data.update_users.returning[0]
-    const { name, email, city, linkedIn_url } = userObject
-    if (NODE_ENV === 'production') {
-      channel.send('🦦🦦🦦')
-      channel.send('**New Host Signup!**')
-      channel.send(`
-\`\`\`
-${name} from ${city}
-${email} ... ${linkedIn_url || ''}
-\`\`\``)
-      channel.send('🦦🦦🦦')
-    }
-
-    return res.status(201).json({
-      token: await createToken(userObject, process.env.SECRET),
     })
   } catch (error) {
     Sentry.captureException(error)

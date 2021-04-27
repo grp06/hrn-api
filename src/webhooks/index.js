@@ -10,9 +10,7 @@ const webhooks = express.Router()
 const jsonBodyParser = express.json()
 
 const getPlanNameFromId = (id) => {
-  if (id === process.env.STARTER_MONTHLY || id === process.env.STARTER_YEARLY) return 'host_starter'
-  if (id === process.env.PREMIUM_MONTHLY || id === process.env.PREMIUM_MONTHLY)
-    return 'host_premium'
+  if (id === process.env.PREMIUM_MONTHLY || id === process.env.PREMIUM_MONTHLY) return 'premium'
   return 'no_plan'
 }
 

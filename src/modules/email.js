@@ -49,7 +49,16 @@ export const resetPasswordTemplate = (user, url) => {
 export const rsvpTemplate = async (fields) => {
   let htmlTemplate
 
-  const { name, email, event_name, event_id, description, host_name, event_start_time } = fields
+  const {
+    first_name,
+    last_name,
+    email,
+    event_name,
+    event_id,
+    description,
+    host_name,
+    event_start_time,
+  } = fields
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
   try {
     const ejsResponse = await ejs.renderFile(
@@ -194,7 +203,7 @@ export const sendFollowupsToHosts = async (eventsEndedJustUnderOneDayAgo, hostId
 
 export const postEventTemplate = async (fields) => {
   const { event_name, user, partnerData } = fields
-  const { name, email, profile_pic_url } = user
+  const { first_name, email, profile_pic_url } = user
 
   let htmlTemplate
 
@@ -202,7 +211,7 @@ export const postEventTemplate = async (fields) => {
     const ejsResponse = await ejs.renderFile(
       path.join(__dirname, '../../src/modules/views/post-event-email.ejs'),
       {
-        firstName: name,
+        firstName: first_name,
         event_name,
         partnerData,
         profile_pic_url,
@@ -228,15 +237,14 @@ export const postEventTemplate = async (fields) => {
 }
 
 export const signUpConfirmationTemplate = async (user) => {
-  const { name, email } = user
-  const firstName = name.split(' ')[0]
+  const { first_name, email } = user
 
   let htmlTemplate
   try {
     const ejsResponse = await ejs.renderFile(
       path.join(__dirname, '../../src/modules/views/sign-up-confirmation.ejs'),
       {
-        firstName,
+        firstName: first_name,
       }
     )
 

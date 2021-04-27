@@ -11,8 +11,8 @@ const stripeRouter = express.Router()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 stripeRouter.post('/create-customer', async (req, res) => {
-  const { email, name, userId } = req.body
-  const customer = await stripe.customers.create({ email, name })
+  const { email, first_name, last_name, userId } = req.body
+  const customer = await stripe.customers.create({ email, name: `${first_name} ${last_name}` })
   try {
     await orm.request(updateStripeCustomerId, {
       user_id: userId,
@@ -38,7 +38,6 @@ stripeRouter.post('/create-customer-portal', async (req, res) => {
 
 stripeRouter.post('/create-subscription', async (req, res) => {
   const { customerId, paymentMethodId, plan, userId, userEmail } = req.body
-  const planTypeName = plan.split('_')[0].toLowerCase()
 
   // set the default payment method on the customer
   try {
@@ -82,7 +81,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
-      role: `host_${planTypeName}`,
+      role: 'premium',
       became_host_at: new Date().toISOString(),
     })
 
@@ -98,7 +97,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   }
 
   // create a new token and send both token and sub obj back
-  const userObject = { email: userEmail, id: userId, role: `host_${planTypeName}` }
+  const userObject = { email: userEmail, id: userId, role: 'premium' }
   try {
     const token = await createToken(userObject, process.env.SECRET)
     console.log(token)
@@ -112,8 +111,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
 })
 
 stripeRouter.post('/retry-invoice', async (req, res) => {
-  const { customerId, paymentMethodId, invoiceId, plan, userId, userEmail } = req.body
-  const planTypeName = plan.split('_')[0].toLowerCase()
+  const { customerId, paymentMethodId, invoiceId, userId, userEmail } = req.body
   // reconfigure the default payment method on the user since the
   // last one presumably failed if we're retrying
   try {
@@ -143,7 +141,7 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   try {
     await orm.request(updateUserRole, {
       user_id: userId,
-      role: `host_${planTypeName}`,
+      role: 'premium',
       became_host_at: new Date().toISOString(),
     })
 
@@ -158,7 +156,7 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   }
 
   // create a new token and send both token and invoice obj back
-  const userObject = { email: userEmail, id: userId, role: `host_${planTypeName}` }
+  const userObject = { email: userEmail, id: userId, role: 'premium' }
   try {
     const token = await createToken(userObject, process.env.SECRET)
     console.log(token)
