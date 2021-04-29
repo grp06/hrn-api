@@ -47,8 +47,6 @@ export const resetPasswordTemplate = (user, url) => {
 }
 
 export const rsvpTemplate = async (fields) => {
-  let htmlTemplate
-
   const {
     first_name,
     last_name,
@@ -60,20 +58,6 @@ export const rsvpTemplate = async (fields) => {
     event_start_time,
   } = fields
   const eventLink = `https://launch.hirightnow.co/events/${event_id}`
-  try {
-    const ejsResponse = await ejs.renderFile(
-      path.join(__dirname, '../../src/modules/views/rsvp-email.ejs'),
-      {
-        event_link: eventLink,
-        event_name: event_name,
-      }
-    )
-
-    htmlTemplate = ejsResponse
-  } catch (error) {
-    __Sentry.captureException(error)
-    return error
-  }
 
   let iCalString
   try {
@@ -85,16 +69,11 @@ export const rsvpTemplate = async (fields) => {
   const from = process.env.EMAIL_LOGIN
   const to = email
   const subject = `✅ Hi Right Now - ${event_name} confirmation`
-  const content = [
-    {
-      type: 'text/html',
-      value: htmlTemplate,
-    },
-    {
-      type: 'text/calendar',
-      value: iCalString,
-    },
-  ]
+  const content = {
+    eventName: event_name,
+    eventLink,
+    iCalString,
+  }
 
   return { from, to, subject, content }
 }

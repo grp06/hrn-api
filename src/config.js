@@ -4,5 +4,9 @@ module.exports = {
   HASURA_ENDPOINT:
     process.env.NODE_ENV === 'production'
       ? process.env.HASURA_ENDPOINT
-      : 'http://localhost:8080/v1/graphql',
+      : 'http://localhost:5000/v1/graphql',
+  emailTemplateID: {
+    forgotPasswordEmail: '3',
+    rsvpTemplate: '4'
+  },
 }

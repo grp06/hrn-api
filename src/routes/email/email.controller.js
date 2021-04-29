@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { getPasswordResetURL, resetPasswordTemplate, rsvpTemplate } from '../../modules/email'
+import { sendEmailWithCIO } from '../../services/email-service'
 import orm from '../../services/orm'
 import { updatePasswordByUserId } from '../../gql/mutations'
 
@@ -7,6 +8,9 @@ import { hashPassword, verifyJwt } from '../../services/auth-service'
 import { createToken } from '../../extensions/jwtHelper'
 import UsersService from '../users/users-service'
 import { findUserByEmail, findUserById } from '../../gql/queries'
+
+/* Config */
+import { emailTemplateID } from '../../config'
 
 const sgMail = require('@sendgrid/mail')
 // `secret` is passwordHash concatenated with user's createdAt,
@@ -38,13 +42,16 @@ export const sendPasswordResetEmail = async (req, res) => {
   // make the relevant items to send in an email
   const token = usePasswordHashToMakeToken(user)
   const url = getPasswordResetURL(user, token)
-  const emailTemplate = resetPasswordTemplate(user, url)
 
   // send email
   try {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
-    const sendRes = await sgMail.send(emailTemplate)
+    const msgData = {
+      customer: {
+        email: user.name || user.email,
+      },
+      resetPasswordURL: url,
+    }
+    sendEmailWithCIO(user.email, msgData, emailTemplateID.forgotPasswordEmail)
   } catch (error) {
     return res.status(400).json({ error: error.response.body.errors[0].message })
   }
@@ -118,8 +125,18 @@ export const sendCalendarInvite = async (req, res) => {
   }
 
   try {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    await sgMail.send(message)
+    /** Variables for rsvp template */
+    const msgData = {
+      eventName: message.content?.eventName,
+      eventLink: message.content?.eventLink,
+    }
+
+    /** Files sent with the email (example: .ics) */
+    const attachments = {
+      'invite.ics': Buffer.from(message.content?.iCalString)?.toString('base64'),
+    }
+
+    sendEmailWithCIO(message.to, msgData, emailTemplateID.rsvpTemplate, attachments)
     return res.send('rsvp message sent')
   } catch (error) {
     console.log('Something went wrong sending the iCal email', error)
