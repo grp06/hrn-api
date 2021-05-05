@@ -66,17 +66,20 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
-app.post('/get-unsplash-image', (req, res) => {
+app.post('/getUnsplashImageUrl', async (req, res) => {
+  const { keyword } = req.body.input
+
   try {
     unsplash.search
-      .photos(req.body.keyword, 1, 10, { orientation: 'landscape' })
+      .photos(keyword, 1, 10, { orientation: 'landscape' })
       .then(toJson)
       .then((json) => {
         const randomIndex = Math.floor(Math.random() * 10)
-        return res.status(200).send({ image: json.results[randomIndex] })
+        const url = json.results[randomIndex].urls.regular
+        return res.json({ url })
       })
   } catch (error) {
-    return res.status(500).send(error)
+    return res.status(400).send(error)
   }
 })
 
@@ -88,7 +91,7 @@ app.get('/debug-sentry', () => {
 app.use(Sentry.Handlers.errorHandler())
 app.set('view engine', 'ejs')
 
-app.use(function errorHandler(error, req, res, next) {
+app.use((error, req, res, next) => {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
