@@ -128,14 +128,15 @@ usersRouter.post('/reset-password', async (req, res) => {
   }
 })
 
-usersRouter.get('/get-anonymous-token', async (req, res) => {
+usersRouter.post('/getAnonymousToken', async (req, res) => {
+  console.log('getAnonymousToken')
   try {
-    return res.status(201).json({
+    return res.json({
       token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
     })
   } catch (error) {
     Sentry.captureException(error)
-    return res.status(500).json({
+    return res.status(400).json({
       error,
     })
   }
