@@ -9,8 +9,10 @@ const express = require('express')
 const authRouter = express.Router()
 const jsonBodyParser = express.json()
 
-authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { email, password } = req.body
+// Request Handler
+authRouter.post('/getLoginDetails', async (req, res) => {
+  const { email, password } = req.body.input
+
   const loginUser = { email, password }
 
   // make sure all keys are in request body
@@ -49,7 +51,8 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
   }
 
   console.log(dbUser)
-  return res.send({
+
+  return res.json({
     token: await createToken(dbUser, process.env.SECRET),
     role: dbUser.role,
     id: dbUser.id,
