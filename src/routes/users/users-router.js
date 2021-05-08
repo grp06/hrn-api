@@ -128,7 +128,7 @@ usersRouter.post('/reset-password', async (req, res) => {
   }
 })
 
-usersRouter.post('/getAnonymousToken', async (req, res) => {
+usersRouter.get('/get-anonymous-token', async (req, res) => {
   console.log('getAnonymousToken')
   try {
     return res.json({

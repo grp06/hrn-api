@@ -66,7 +66,7 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
-app.post('/getUnsplashImageUrl', async (req, res) => {
+app.post('/get-unsplash-image-url', async (req, res) => {
   const { keyword } = req.body.input
 
   try {
