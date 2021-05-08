@@ -30,7 +30,7 @@ tokenRouter.post('/get-token', (req, res) => {
   token.addGrant(videoGrant)
 
   // Serialize the token to a JWT string
-  res.status(200).send(JSON.stringify({ token: token.toJwt() }))
+  res.json(JSON.stringify({ token: token.toJwt() }))
 })
 
 module.exports = tokenRouter

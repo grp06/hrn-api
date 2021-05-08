@@ -1,8 +1,7 @@
 import * as Sentry from '@sentry/node'
 
-import { channel } from '../../discord-bots/new-host'
 import { createToken } from '../../extensions/jwtHelper'
-import { signUp, updateUserRole } from '../../gql/mutations'
+import { signUp } from '../../gql/mutations'
 import { findUserByEmail } from '../../gql/queries'
 import { hashPassword } from '../../services/auth-service'
 import { signUpConfirmation } from '../../services/email-service'
@@ -13,16 +12,14 @@ const express = require('express')
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
-const { NODE_ENV } = require('../../config')
 
-usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body
-  console.log('req.body at root /signup', req.body)
+usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
+  const { first_name, last_name, email, password, role } = req.body.input
 
   for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
-    if (!req.body[field]) {
+    if (!req.body.input[field]) {
       return res.status(400).json({
-        error: `Missing '${field}' in request body`,
+        message: `Missing '${field}' in request body`,
       })
     }
 
@@ -31,29 +28,29 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // add logging for these errors?
 
   const nameError = UsersService.validateName(first_name)
-  if (nameError) return res.status(400).json({ error: nameError })
+  if (nameError) return res.status(400).json({ message: nameError })
 
   const emailError = UsersService.validateEmail(email)
-  if (emailError) return res.status(400).json({ error: emailError })
+  if (emailError) return res.status(400).json({ message: emailError })
 
   const passwordError = UsersService.validatePassword(password)
-  if (passwordError) return res.status(400).json({ error: passwordError })
+  if (passwordError) return res.status(400).json({ message: passwordError })
 
   // check if user with email exists
   let existingUser
   try {
-    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
+    const checkEmailRequest = await orm.request(findUserByEmail, { email })
     existingUser = checkEmailRequest.data.users[0]
     console.log('checkEmailRequest', checkEmailRequest)
 
     if (existingUser) {
       const message = 'Email already in use'
       Sentry.captureMessage(message)
-      return res.status(400).json({ error: message })
+      return res.status(400).json({ message })
     }
   } catch (error) {
     Sentry.captureException(error)
-    console.log('error: ', error)
+    console.log('message: ', error)
 
     return res.status(500).json({
       error,
@@ -93,7 +90,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // send token and user details
   __logger.info(`User with email ${email} created`)
   try {
-    return res.status(201).json({
+    return res.json({
       token: await createToken(newUser, process.env.SECRET),
       ...UsersService.serializeUser(newUser),
     })

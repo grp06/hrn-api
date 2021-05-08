@@ -6,7 +6,7 @@ import { findUserByEmail, findUserById } from '../../gql/queries'
 import { getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
 import { hashPassword } from '../../services/auth-service'
 import orm from '../../services/orm'
-import UsersService from '../users/users-service'
+import UsersService from '../signup/users-service'
 
 const sgMail = require('@sendgrid/mail')
 const express = require('express')
