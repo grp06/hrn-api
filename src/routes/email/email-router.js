@@ -53,10 +53,8 @@ emailRouter.post('/reset-password', async (req, res) => {
   return res.json({ success: 'true' })
 })
 
-emailRouter.post('/receive_new_password/:userId/:token', async (req, res) => {
-  const { userId, token } = req.params
-
-  const { password } = req.body
+emailRouter.post('/set-new-password', async (req, res) => {
+  const { userId, token, password } = req.body.input
 
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
@@ -101,7 +99,7 @@ emailRouter.post('/receive_new_password/:userId/:token', async (req, res) => {
       return res.send('error inserting new password')
     }
 
-    return res.status(200).send({
+    return res.json({
       token: await createToken(updatedUser, process.env.SECRET),
       role: updatedUser.role,
       id: updatedUser.id,

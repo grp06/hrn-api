@@ -31,7 +31,7 @@ authRouter.post('/get-login-details', async (req, res) => {
     dbUser = checkEmailRequest.data.users[0]
 
     if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
+      return res.status(400).json({ message: 'Incorrect email or password' })
     }
 
     // compare passwords with hashing
@@ -39,14 +39,14 @@ authRouter.post('/get-login-details', async (req, res) => {
 
     if (!passwordCheck) {
       return res.status(400).json({
-        error: 'Incorrect user_name or password',
+        message: 'Incorrect user_name or password',
       })
     }
   } catch (error) {
     console.log('Error logging in', error)
     Sentry.captureException(error)
     return res.status(500).json({
-      error: 'There was an error logging in',
+      message: 'There was an error logging in',
     })
   }
 
