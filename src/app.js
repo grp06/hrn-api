@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import Unsplash, { toJson } from 'unsplash-js'
 
 import { newHost } from './discord-bots/new-host'
+import { updateNames } from './gql/mutations'
 import { getCronJobs } from './gql/queries'
 import logger from './logger'
 import initNextRound from './routes/rooms/initNextRound'
@@ -25,9 +26,9 @@ const authRouter = require('./routes/auth/auth-router')
 const emailRouter = require('./routes/email/email-router')
 const roomsRouter = require('./routes/rooms/rooms-router')
 const stripeRouter = require('./routes/stripe/stripe-router')
-const tokenRouter = require('./routes/twilio-token/twilio-token-router')
+const twilioRouter = require('./routes/twilio/twilio-router')
 const uploadRouter = require('./routes/upload/upload-router')
-const usersRouter = require('./routes/users/users-router')
+const signupRouter = require('./routes/signup/signup-router')
 
 const unsplash = new Unsplash({ accessKey: process.env.UNSPLASH_ACCESS_KEY })
 
@@ -53,8 +54,8 @@ app.use(morgan(morganOption))
 app.use(cors())
 startServer(app, PORT)
 app.use('/api/rooms', roomsRouter)
-app.use('/api/token', tokenRouter)
-app.use('/api/signup', usersRouter)
+app.use('/api/twilio', twilioRouter)
+app.use('/api/signup', signupRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/upload', uploadRouter)
 app.use('/api/email', emailRouter)
@@ -65,18 +66,20 @@ app.get('/', (req, res) => {
   res.send('Looks like the HiRightNow API is working!')
 })
 
-app.post('/get-unsplash-image', (req, res) => {
+app.post('/get-unsplash-image-url', async (req, res) => {
+  const { keyword } = req.body.input
+
   try {
     unsplash.search
-      .photos(req.body.keyword, 1, 10, { orientation: 'landscape' })
+      .photos(keyword, 1, 10, { orientation: 'landscape' })
       .then(toJson)
       .then((json) => {
-        console.log('json', json)
         const randomIndex = Math.floor(Math.random() * 10)
-        return res.status(200).send({ image: json.results[randomIndex] })
+        const url = json.results[randomIndex].urls.regular
+        return res.json({ url })
       })
   } catch (error) {
-    return res.status(500).send(error)
+    return res.status(400).send(error)
   }
 })
 
@@ -88,7 +91,7 @@ app.get('/debug-sentry', () => {
 app.use(Sentry.Handlers.errorHandler())
 app.set('view engine', 'ejs')
 
-app.use(function errorHandler(error, req, res, next) {
+app.use((error, req, res, next) => {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
@@ -123,5 +126,40 @@ const checkForInterruptedEvents = async () => {
 }
 
 checkForInterruptedEvents()
+
+// const bulkUpdateNames = async () => {
+//   const userObjects = [
+//     {
+//       id: 2431,
+//       name: 'Mariya Chukas',
+//     },
+//   ]
+//   const namesToUpdatePromises = []
+//   console.log(Date.now())
+//   userObjects.forEach(async (user) => {
+//     // query the event users and send emails from response
+//     namesToUpdatePromises.push(
+//       orm.request(updateNames, {
+//         userId: user.id,
+//         firstName: user.name.split(' ')[0],
+//         lastName: user.name.split(' ')[1] || null,
+//       })
+//     )
+//   })
+
+//   try {
+//     const namesToUpdate = await Promise.all(namesToUpdatePromises)
+//     console.log(
+//       '🚀 ~ bulkUpdateNames ',
+//       namesToUpdate[namesToUpdate.length - 1].data.update_users.returning
+//     )
+//   } catch (error) {
+//     console.log('error = ', error)
+//   }
+
+//   console.log(Date.now())
+// }
+
+// bulkUpdateNames()
 
 module.exports = app

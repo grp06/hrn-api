@@ -1,7 +1,7 @@
 import validator from 'validator'
 
-const xss = require('xss')
 const Filter = require('bad-words')
+const xss = require('xss')
 
 const profanityFilter = new Filter()
 
