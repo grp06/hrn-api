@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node ./dist/app.js",
-    "dev": "nodemon ./src/app.ts",
+    "start": "tsc && node dist/app.js",
+    "dev": "tsc -w & nodemon -q -w dist dist/app.js",
     "build": "tsc -p .",
     "lint": "estlint"
   },
