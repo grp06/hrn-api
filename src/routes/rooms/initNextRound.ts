@@ -13,14 +13,14 @@ type InitNextRoundParams = {
   eventId: number
   roundLength: number
   currentRound: number
-  nextRoundStart: string // TODO: change to something that indicates date
+  nextRoundStart?: string // TODO: change to something that indicates date
   useSamyakAlgo: boolean
 }
 
 type InitNextRound = (params: InitNextRoundParams) => Promise<void>
 
 /**
- * Handler that takes care of when a new round should start
+ * Handler that takes care of when the next round should start
  * @returns {Promise<*>}
  * @param params
  */
