@@ -59,6 +59,7 @@ module.exports = {
         'eslint:recommended',
         'plugin:@typescript-eslint/eslint-recommended',
         'plugin:@typescript-eslint/recommended',
+        'plugin:import/typescript', // Typescript support for the `eslint-plugin-import` rules
       ],
       globals: { Atomics: 'readonly', SharedArrayBuffer: 'readonly' },
       parser: '@typescript-eslint/parser',
@@ -75,6 +76,19 @@ module.exports = {
         quotes: ['error', 'single'],
         'comma-dangle': ['error', 'always-multiline'],
         '@typescript-eslint/no-explicit-any': 0,
+
+        // Define extensions that shouldn't specified on import
+        'import/extensions': [
+          'error',
+          'ignorePackages',
+          {
+            js: 'never',
+            mjs: 'never',
+            jsx: 'never',
+            ts: 'never',
+            tsx: 'never',
+          },
+        ],
       },
     },
   ],
