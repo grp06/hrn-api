@@ -7,7 +7,7 @@ import initNextRound from './initNextRound'
 import { resetEvent, endEvent } from './runEventHelpers'
 import setRoomsCompleted from './set-rooms-completed'
 
-const nextRound = async ({ req, res, params }) => {
+const nextRound = async ({ req = undefined, res = undefined, params }) => {
   const oneMinuteInMs = 60000
   let eventId
   let numRounds
