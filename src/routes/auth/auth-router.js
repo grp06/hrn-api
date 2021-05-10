@@ -1,10 +1,10 @@
-import * as Sentry from '@sentry/node'
-import orm from '../../services/orm'
-import { findUserByEmail } from '../../gql/queries'
-import { createToken } from '../../extensions/jwtHelper'
-import { comparePasswords } from '../../services/auth-service'
-
+const Sentry = require('@sentry/node')
 const express = require('express')
+
+const { createToken } = require('../../extensions/jwtHelper')
+const { findUserByEmail } = require('../../gql/queries')
+const { comparePasswords } = require('../../services/auth-service')
+const orm = require('../../services/orm')
 
 const authRouter = express.Router()
 const jsonBodyParser = express.json()

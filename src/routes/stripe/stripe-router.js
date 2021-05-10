@@ -1,11 +1,15 @@
-import * as Sentry from '@sentry/node'
-import Stripe from 'stripe'
-import orm from '../../services/orm'
-import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
-import { createToken } from '../../extensions/jwtHelper'
-import { stripeSubscriptionConfirmation } from '../../services/email-service'
-
+const Sentry = require('@sentry/node')
 const express = require('express')
+const Stripe = require('stripe')
+
+const { createToken } = require('../../extensions/jwtHelper')
+const {
+  updateStripeCustomerId,
+  updateUserRole,
+  updateUserSubPeriod,
+} = require('../../gql/mutations')
+const { stripeSubscriptionConfirmation } = require('../../services/email-service')
+const orm = require('../../services/orm')
 
 const stripeRouter = express.Router()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -51,7 +55,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   // this needs to be a part of this even though we dont use the result for anything
   // in the code. The default payment needs to be configured on the stripe API
   // for payments to process.
-  let updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
+  const updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
     invoice_settings: {
       default_payment_method: paymentMethodId,
     },

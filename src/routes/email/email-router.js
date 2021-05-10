@@ -1,7 +1,8 @@
 const express = require('express')
-import * as emailController from './email.controller'
+const emailController = require('./email.controller')
 
 const emailRouter = express.Router()
+
 emailRouter.route('/send-calendar-invite').post(emailController.sendCalendarInvite)
 
 emailRouter.route('/reset_password/user/:email').post(emailController.sendPasswordResetEmail)

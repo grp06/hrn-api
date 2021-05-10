@@ -1,14 +1,13 @@
-import * as Sentry from '@sentry/node'
-import setRoomsCompleted from './set-rooms-completed'
-import orm from '../../services/orm'
-import { updateEventObject } from '../../gql/mutations'
-import getOnlineUsers from './getOnlineUsers'
-import createPreEventRooms from './createPreEventRooms'
 import nextRound from './nextRound'
-import { getAvailableLobbyUsers } from '../../gql/queries'
-import { endEvent } from './runEventHelpers'
 
+const Sentry = require('@sentry/node')
 const express = require('express')
+
+const { updateEventObject } = require('../../gql/mutations')
+const { getAvailableLobbyUsers } = require('../../gql/queries')
+const orm = require('../../services/orm')
+const createPreEventRooms = require('./createPreEventRooms')
+const { endEvent } = require('./runEventHelpers')
 
 const roomsRouter = express.Router()
 const jsonBodyParser = express.json()

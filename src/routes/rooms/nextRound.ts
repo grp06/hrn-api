@@ -17,7 +17,7 @@ type NextRoundParams = {
     currentRound: number
     round_length: number
     numRounds: number
-    useSamyakAlgo: boolean
+    useSamyakAlgo?: boolean
   }
 }
 

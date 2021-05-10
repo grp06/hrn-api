@@ -14,7 +14,7 @@ type InitNextRoundParams = {
   roundLength: number
   currentRound: number
   nextRoundStart?: string // TODO: change to something that indicates date
-  useSamyakAlgo: boolean
+  useSamyakAlgo?: boolean
 }
 
 type InitNextRound = (params: InitNextRoundParams) => Promise<void>

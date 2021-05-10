@@ -7,7 +7,7 @@ export const makeCalendarInvite = (event_name, host_name, event_id, event_start_
     prodId: { company: 'HiRightNow', product: 'ical-generator' },
     timezone: 'UTC',
   })
-  
+
   // create a new event
   const event = cal.createEvent({
     start: moment(event_start_time),
@@ -15,9 +15,9 @@ export const makeCalendarInvite = (event_name, host_name, event_id, event_start_
     timestamp: moment(),
     summary: event_name,
     organizer: `${host_name} <info@hirightnow.co>`,
-    location: `https://launch.hirightnow.co/events/${event_id}`
+    location: `https://launch.hirightnow.co/events/${event_id}`,
   })
-  
+
   // get the iCal string
   const iCalString = cal.toString() // --> "BEGIN:VCALENDAR…"
   return iCalString
