@@ -1,14 +1,15 @@
+import * as Sentry from '@sentry/node'
+
+import { updateProfilePic } from '../../gql/mutations'
+import orm from '../../services/orm'
+
 const fs = require('fs')
 
-const Sentry = require('@sentry/node')
 const AWS = require('aws-sdk')
 const express = require('express')
 const fileType = require('file-type')
 const multiparty = require('multiparty')
 const sharp = require('sharp')
-
-const { updateProfilePic } = require('../../gql/mutations')
-const orm = require('../../services/orm')
 
 const uploadRouter = express.Router()
 

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import Unsplash, { toJson } from 'unsplash-js'
 
+// TODO: convert this routers to Typescript, and the errors will disappear
 import authRouter from './auth/auth-router'
 import emailRouter from './email/email-router'
 import roomsRouter from './rooms/rooms-router'
@@ -11,18 +12,21 @@ import usersRouter from './users/users-router'
 import webhooks from './webhooks'
 
 const router = Router()
+const apiRouter = Router()
 
 /**
- * Categorised routes
+ * API routes
  */
-router.use('/rooms', roomsRouter)
-router.use('/token', tokenRouter)
-router.use('/signup', usersRouter)
-router.use('/auth', authRouter)
-router.use('/upload', uploadRouter)
-router.use('/email', emailRouter)
-router.use('/stripe', stripeRouter)
-router.use('/webhooks', webhooks)
+apiRouter.use('/rooms', roomsRouter)
+apiRouter.use('/token', tokenRouter)
+apiRouter.use('/signup', usersRouter)
+apiRouter.use('/auth', authRouter)
+apiRouter.use('/upload', uploadRouter)
+apiRouter.use('/email', emailRouter)
+apiRouter.use('/stripe', stripeRouter)
+apiRouter.use('/webhooks', webhooks)
+
+router.use('/api', apiRouter)
 
 /**
  * Misc routes

@@ -1,15 +1,12 @@
-const Sentry = require('@sentry/node')
-const express = require('express')
-const Stripe = require('stripe')
+import * as Sentry from '@sentry/node'
+import Stripe from 'stripe'
 
-const { createToken } = require('../../extensions/jwtHelper')
-const {
-  updateStripeCustomerId,
-  updateUserRole,
-  updateUserSubPeriod,
-} = require('../../gql/mutations')
-const { stripeSubscriptionConfirmation } = require('../../services/email-service')
-const orm = require('../../services/orm')
+import { createToken } from '../../extensions/jwtHelper'
+import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
+import { stripeSubscriptionConfirmation } from '../../services/email-service'
+import orm from '../../services/orm'
+
+const express = require('express')
 
 const stripeRouter = express.Router()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)

@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 
 import { bulkInsertPartners } from '../gql/mutations'
-import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
+import transformPairingsToGqlVars from '../services/rooms/transformPairingsToGqlVars'
 import orm from '../services/orm'
 import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
 import getOnlineUsers from './getOnlineUsers'

@@ -1,5 +1,6 @@
+import * as emailController from './email.controller'
+
 const express = require('express')
-const emailController = require('./email.controller')
 
 const emailRouter = express.Router()
 

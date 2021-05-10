@@ -1,13 +1,14 @@
-const Sentry = require('@sentry/node')
-const express = require('express')
+import * as Sentry from '@sentry/node'
 
-const { createToken } = require('../../extensions/jwtHelper')
-const { signUp } = require('../../gql/mutations')
-const { findUserByEmail } = require('../../gql/queries')
-const { hashPassword } = require('../../services/auth-service')
-const { signUpConfirmation } = require('../../services/email-service')
-const orm = require('../../services/orm')
-const UsersService = require('./users-service')
+import { createToken } from '../../extensions/jwtHelper'
+import { signUp } from '../../gql/mutations'
+import { findUserByEmail } from '../../gql/queries'
+import { hashPassword } from '../../services/auth-service'
+import { signUpConfirmation } from '../../services/email-service'
+import orm from '../../services/orm'
+import UsersService from './users-service'
+
+const express = require('express')
 
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()

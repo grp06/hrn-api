@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/node'
-import setRoomsCompleted from './set-rooms-completed'
-import orm from '../../services/orm'
+
 import {
   updateEventObject,
   resetEventStatus,
@@ -8,9 +7,10 @@ import {
   deleteCronTimestamp,
 } from '../../gql/mutations'
 import { getEventInfoByEventId, getAvailableLobbyUsers } from '../../gql/queries'
-import createGroupRoom from './createGroupRoom'
-
-import jobs from '../../services/jobs'
+import jobs from '../jobs'
+import orm from '../orm'
+import createTwilioVideoRoom from '../twilio/createTwilioVideoRoom'
+import setRoomsAsCompleted from '../twilio/setRoomsAsCompleted'
 
 const killAllJobsByEventId = (eventId) => {
   // console.log('jobs = ', jobs)
@@ -80,7 +80,7 @@ export const endEvent = async (eventId, isCompletingEvent) => {
   killAllJobsByEventId(eventId)
   // console.log('jobs = ', jobs)
   try {
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    const completedRoomsPromises = await setRoomsAsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
 
     const eventInfoRes = await orm.request(getEventInfoByEventId, { eventId })
@@ -106,7 +106,7 @@ export const endEvent = async (eventId, isCompletingEvent) => {
 
     let updateEventObjectRes
     if (hostIsOnline && group_video_chat && !isCompletingEvent) {
-      const createGroupRoomRes = await createGroupRoom(eventId)
+      const createGroupRoomRes = await createTwilioVideoRoom(eventId)
       if (createGroupRoomRes.errors) {
         throw new Error(createGroupRoomRes.errors[0].message)
       }
@@ -148,7 +148,7 @@ export const resetEvent = async (eventId) => {
   killAllJobsByEventId(eventId)
 
   try {
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    const completedRoomsPromises = await setRoomsAsCompleted(eventId)
 
     await Promise.all(completedRoomsPromises)
 

@@ -3,11 +3,11 @@ import { Request, Response } from 'express'
 
 import { updateEventObject } from '../../gql/mutations'
 import omniCreatePairings from '../../matchingAlgo/omniCreatePairings'
-import orm from '../../services/orm'
+import orm from '../orm'
+import setRoomsAsCompleted from '../twilio/setRoomsAsCompleted'
 // TODO: (IMPORTANT) fix this circular dependency
 import initNextRound from './initNextRound'
 import { resetEvent, endEvent } from './runEventHelpers'
-import setRoomsCompleted from './set-rooms-completed'
 
 type NextRoundParams = {
   req?: Request
@@ -58,7 +58,7 @@ const nextRound: NextRound = async ({ req, res, params }) => {
       }
 
       // Complete all the in-progress rooms
-      const completedRoomsRes = await Promise.all(await setRoomsCompleted(eventId))
+      const completedRoomsRes = await Promise.all(await setRoomsAsCompleted(eventId))
       console.log('(nextRound) ☑️ `completedRoomsRes`:', completedRoomsRes)
     } else {
       // In this case, this is at least the 2nd round
@@ -94,7 +94,7 @@ const nextRound: NextRound = async ({ req, res, params }) => {
       throw new Error(updateEventObjectRes.errors[0].message)
     }
   } catch (error) {
-    console.log('(nextRound) 🙊 There was an error:', error)
+    console.error('(nextRound) 🙊 There was an error:', error)
 
     // If a `res` was passed, propagate the error
     if (res) {
