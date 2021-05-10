@@ -7,7 +7,7 @@
 // import { getOnlineUsersByEventId } from '../../gql/queries'
 // import orm from '../orm'
 //
-// // TODO: create a generic type for Hasura result type
+// // TODO: use GraphQlResponse type with generics
 // type OnlineUsers = {
 //   data: {
 //     event_users: {

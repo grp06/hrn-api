@@ -1,15 +1,8 @@
 import * as Sentry from '@sentry/node'
 
 import { getAvailableLobbyUsers } from '../../gql/queries'
+import { GraphQlResponse } from '../../types'
 import orm from '../orm'
-
-// TODO: create a generic type for Hasura result type
-type GraphQlResponse<Data = unknown> = {
-  data: Data
-  errors: {
-    message: string
-  }[]
-}
 
 type OnlineUser = {
   event_id: number
@@ -23,7 +16,7 @@ type OnlineUser = {
   }[]
 }
 
-type GetOnlineEventUsers = GraphQlResponse<{
+type OnlineEventUsersResponse = GraphQlResponse<{
   online_event_users: OnlineUser[]
 }>
 
@@ -31,7 +24,7 @@ type GetOnlineEventUsers = GraphQlResponse<{
  * Get available users in a lobby
  */
 const getOnlineEventUsers = async (eventId: number): Promise<[number[], OnlineUser[]]> => {
-  const onlineUsersResponse: GetOnlineEventUsers = await orm.request(getAvailableLobbyUsers, {
+  const onlineUsersResponse: OnlineEventUsersResponse = await orm.request(getAvailableLobbyUsers, {
     eventId,
   })
 
