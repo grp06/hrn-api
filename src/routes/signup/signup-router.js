@@ -13,11 +13,12 @@ const express = require('express')
 const usersRouter = express.Router()
 const jsonBodyParser = express.json()
 
+// createUser action
 usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body.input
+  const { first_name, last_name, email, password, role } = req.body.input.input
 
   for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
-    if (!req.body.input[field]) {
+    if (!req.body.input.input[field]) {
       return res.status(400).json({
         message: `Missing '${field}' in request body`,
       })
