@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import Unsplash, { toJson } from 'unsplash-js'
 
-import webhooks from '../webhooks'
 import authRouter from './auth/auth-router'
 import emailRouter from './email/email-router'
 import roomsRouter from './rooms/rooms-router'
@@ -9,6 +8,7 @@ import stripeRouter from './stripe/stripe-router'
 import tokenRouter from './twilio-token/twilio-token-router'
 import uploadRouter from './upload/upload-router'
 import usersRouter from './users/users-router'
+import webhooks from './webhooks'
 
 const router = Router()
 
