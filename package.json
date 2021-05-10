@@ -38,6 +38,7 @@
     "graphql-iso-date": "^3.6.1",
     "graphql-resolvers": "^0.4.2",
     "graphql-tag": "^2.10.3",
+    "graphql-tools": "^7.0.4",
     "ical-generator": "^1.11.0",
     "ics": "^2.22.1",
     "isomorphic-fetch": "^3.0.0",
