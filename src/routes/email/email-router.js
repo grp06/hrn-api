@@ -54,7 +54,7 @@ emailRouter.post('/reset-password', async (req, res) => {
 })
 
 emailRouter.post('/set-new-password', async (req, res) => {
-  const { userId, token, password } = req.body.input
+  const { userId, token, password } = req.body.input.input
 
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
