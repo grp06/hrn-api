@@ -11,7 +11,7 @@ const jsonBodyParser = express.json()
 
 // Request Handler
 authRouter.post('/get-login-details', async (req, res) => {
-  const { email, password } = req.body.input
+  const { email, password } = req.body.input.input
 
   const loginUser = { email, password }
 
