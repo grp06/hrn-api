@@ -1,10 +1,11 @@
 import * as Sentry from '@sentry/node'
 
-import { getPartnersFromListOfUserIds } from '../gql/queries'
-import orm from '../services/orm'
+import { getPartnersFromListOfUserIds } from '../../gql/queries'
+import orm from '../orm'
 
 const getAllRoundsDataForOnlineUsers = async (userIds) => {
-  console.log('getAllRoundsDataForOnlineUsers -> userIds', userIds)
+  console.log('(getAllRoundsDataForOnlineUsers) 🔢 User ids:', userIds)
+
   const partnersListResponse = await orm.request(getPartnersFromListOfUserIds, {
     userIds,
   })

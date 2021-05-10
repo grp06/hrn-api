@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 
-import orm from '../services/orm'
-import { getPredeterminedPartnersFromListOfUserIds } from '../gql/queries'
+import { getPredeterminedPartnersFromListOfUserIds } from '../../gql/queries'
+import orm from '../orm'
 
 const getPredeterminedPartners = async ({ userIds, eventId }) => {
   let partnersListResponse
