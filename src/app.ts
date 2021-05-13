@@ -17,6 +17,7 @@ import {
   insertRoomUser,
   updateRoom,
   insertRoomChatMessage,
+  updateRoomName,
 } from './gql/mutations'
 import logger from './logger'
 import router from './routes/router'
@@ -278,6 +279,33 @@ app.post('/send-chat-to-room', async (req, res) => {
   }
   return res.json({
     messageId,
+  })
+})
+
+// Request Handler
+app.post('/update-room-name', async (req, res) => {
+  // get request input
+  const { name, roomId } = req.body.input
+
+  try {
+    const updateRoomNameRes = await orm.request(updateRoomName, {
+      name,
+      roomId,
+    })
+    console.log('🚀 ~ app.post ~ insertRoomChatMessageRes', updateRoomNameRes)
+
+    if (updateRoomNameRes.errors) {
+      throw new Error(updateRoomNameRes.errors[0].message)
+    }
+  } catch (error) {
+    console.log('error = ', error)
+    return res.status(400).json({
+      error,
+    })
+  }
+  return res.json({
+    success: true,
+    error: null,
   })
 })
 
