@@ -10,13 +10,18 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
-import { insertRoomMode, insertUser, insertRoom, insertRoomUser, updateRoom } from './gql/mutations'
-import { getCronJobs } from './gql/queries'
+import {
+  insertRoomMode,
+  insertUser,
+  insertRoom,
+  insertRoomUser,
+  updateRoom,
+  insertRoomChatMessage,
+} from './gql/mutations'
 import logger from './logger'
 import router from './routes/router'
 import { startApolloServer } from './server-graphql'
 import orm from './services/orm'
-import initNextRound from './services/rooms/initNextRound'
 
 /**
  * Initialise & configure libraries
@@ -244,6 +249,35 @@ app.post('/change-room-mode', async (req, res) => {
   // success
   return res.json({
     success: true,
+  })
+})
+
+// Request Handler
+app.post('/send-chat-to-room', async (req, res) => {
+  // get request input
+  const { senderId, roomId, content } = req.body.input.input
+  let messageId
+  try {
+    const insertRoomChatMessageRes = await orm.request(insertRoomChatMessage, {
+      senderId,
+      roomId,
+      content,
+    })
+    console.log('🚀 ~ app.post ~ insertRoomChatMessageRes', insertRoomChatMessageRes)
+    messageId = insertRoomChatMessageRes.data.insert_room_chat_messages.returning[0].id
+    console.log('🚀 ~ app.post ~ messageId', messageId)
+
+    if (insertRoomChatMessageRes.errors) {
+      throw new Error(insertRoomChatMessageRes.errors[0].message)
+    }
+  } catch (error) {
+    console.log('error = ', error)
+    return res.status(400).json({
+      error,
+    })
+  }
+  return res.json({
+    messageId,
   })
 })
 
