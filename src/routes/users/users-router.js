@@ -14,13 +14,13 @@ const usersRouter = express.Router()
 const jsonBodyParser = express.json()
 
 usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body
-  console.log('req.body at root /signup', req.body)
+  const { first_name, last_name, email, password, role } = req.body.input.input
+  console.log('🚀 ~ usersRouter.post ~ req.body', req.body)
 
   for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
-    if (!req.body[field]) {
+    if (!req.body.input.input[field]) {
       return res.status(400).json({
-        error: `Missing '${field}' in request body`,
+        message: `Missing '${field}' in request body`,
       })
     }
 
@@ -29,29 +29,29 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // add logging for these errors?
 
   const nameError = UsersService.validateName(first_name)
-  if (nameError) return res.status(400).json({ error: nameError })
+  if (nameError) return res.status(400).json({ message: nameError })
 
   const emailError = UsersService.validateEmail(email)
-  if (emailError) return res.status(400).json({ error: emailError })
+  if (emailError) return res.status(400).json({ message: emailError })
 
   const passwordError = UsersService.validatePassword(password)
-  if (passwordError) return res.status(400).json({ error: passwordError })
+  if (passwordError) return res.status(400).json({ message: passwordError })
 
   // check if user with email exists
   let existingUser
   try {
-    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-    existingUser = checkEmailRequest.data.users[0]
+    const checkEmailRequest = await orm.request(findUserByEmail, { email })
     console.log('checkEmailRequest', checkEmailRequest)
+    existingUser = checkEmailRequest.data.users[0]
 
     if (existingUser) {
       const message = 'Email already in use'
       Sentry.captureMessage(message)
-      return res.status(400).json({ error: message })
+      return res.status(400).json({ message })
     }
   } catch (error) {
     Sentry.captureException(error)
-    console.log('error: ', error)
+    console.log('message: ', error)
 
     return res.status(500).json({
       error,
@@ -82,6 +82,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     console.log('newUser', newUser)
     signUpConfirmation(newUser)
   } catch (error) {
+    console.log('🚀 ~ usersRouter.post ~ error', error)
     Sentry.captureException(error)
     return res.status(500).json({
       error,
@@ -91,7 +92,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   // send token and user details
   __logger.info(`User with email ${email} created`)
   try {
-    return res.status(201).json({
+    return res.json({
       token: await createToken(newUser, process.env.SECRET),
       ...UsersService.serializeUser(newUser),
     })
@@ -102,7 +103,6 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     })
   }
 })
-
 usersRouter.post('/reset-password', async (req, res) => {
   const { email } = req.body
   if (!email) {
