@@ -7,7 +7,7 @@ import dotenv from 'dotenv'
 import es6Promise from 'es6-promise'
 import express, { ErrorRequestHandler } from 'express'
 
-import { insertRoomMode, insertUser, insertRoom, insertRoomUser } from './gql/mutations'
+import { insertRoomMode, insertUser, insertRoom, insertRoomUser, updateRoom } from './gql/mutations'
 
 import morgan from 'morgan'
 
@@ -179,35 +179,70 @@ app.post('/create-guest-user', async (req, res) => {
   })
 })
 
-// // TODO: move definition
-// const checkForInterruptedEvents = async () => {
-//   // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
-//   // when an event ends we remove it from this table
-//   const cronJobs = await orm.request(getCronJobs)
+// Request Handler
+app.post('/change-room-mode', async (req, res) => {
+  // get request input
+  const { roomId, modeName, totalRounds, roundNumber, roundLength } = req.body.input.input
 
-//   console.log('checking for interrupted events')
-//   console.log('cronJobs.data.cron_jobs = ', cronJobs.data.cron_jobs)
+  try {
 
-//   if (cronJobs.data.cron_jobs.length) {
-//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//     // @ts-ignore
-//     cronJobs.data.cron_jobs.forEach((event) => {
-//       console.log('🚀 ~ app.post ~ error', error)
-//       console.log('🚀 ~ app.post ~ error', error)
-//       console.log('🚀 ~ app.post ~ error', error)
-//       const { next_round_start: nextRoundStart } = event
-//       const {
-//         num_rounds: numRounds,
-//         id: eventId,
-//         round_length,
-//         current_round: currentRound,
-//       } = event.event
-//       const roundLength = round_length * 60000
-//       initNextRound({ numRounds, eventId, roundLength, currentRound, nextRoundStart })
-//     })
-//   }
-// }
+    try {
+      const roomModeRes = await orm.request(insertRoomMode, {
+        objects: {
+          round_number: null,
+          round_length: null,
+          total_rounds: null,
+          mode_name: modeName
+        },
+      })
+      console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
 
-// checkForInterruptedEvents().then()
+      if (roomModeRes.errors) {
+        throw new Error(roomModeRes.errors[0].message)
+      }
+
+      const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
+      console.log("🚀 ~ app.post ~ roomModesId", roomModesId)
+      
+      const updateRoomRes = await orm.request(updateRoom, {
+        roomId,
+        roomModesId
+      })
+      console.log("🚀 ~ app.post ~ updateRoomRes", updateRoomRes)
+
+      // set timeout for 30 seconds
+  
+    // do everything needed for speed_chats
+      // get online users
+      // make assignments
+      // insert into partners table
+      // 
+
+      // set `break` to false after 30 seconds elapses
+      // round number to 1
+
+      //and start all your complicated cron job logic stuff
+      // setTimeout for round_length
+
+      // wait 5 mins
+
+      /// set break to true
+      // wait 20 seconds
+
+      // set break to false
+      
+      //wait 5 mins
+
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+    })
+  }
+
+  // success
+  return res.json({
+    success: true,
+  })
+})
 
 module.exports = app
