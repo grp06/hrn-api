@@ -182,16 +182,16 @@ app.post('/create-guest-user', async (req, res) => {
 // Request Handler
 app.post('/change-room-mode', async (req, res) => {
   // get request input
-  const { roomId, modeName, totalRounds, roundNumber, roundLength } = req.body.input.input
+  const { roomId, modeName, totalRounds = null, roundNumber = null, roundLength = null } = req.body.input.input
 
   try {
 
     try {
       const roomModeRes = await orm.request(insertRoomMode, {
         objects: {
-          round_number: null,
-          round_length: null,
-          total_rounds: null,
+          round_number: roundNumber,
+          round_length: roundLength,
+          total_rounds: totalRounds,
           mode_name: modeName
         },
       })
