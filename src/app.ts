@@ -6,16 +6,19 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import es6Promise from 'es6-promise'
 import express, { ErrorRequestHandler } from 'express'
+
+import { insertRoomMode, insertUser, insertRoom, insertRoomUser } from './gql/mutations'
+
 import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
 import { getCronJobs } from './gql/queries'
 import logger from './logger'
-import initNextRound from './services/rooms/initNextRound'
 import router from './routes/router'
 import { startApolloServer } from './server-graphql'
 import orm from './services/orm'
+import initNextRound from './services/rooms/initNextRound'
 
 /**
  * Initialise & configure libraries
@@ -73,32 +76,138 @@ app.use(((error, req, res, next) => {
 // Start the sever
 startApolloServer(app, PORT).then()
 
-// TODO: move definition
-const checkForInterruptedEvents = async () => {
-  // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
-  // when an event ends we remove it from this table
-  const cronJobs = await orm.request(getCronJobs)
+app.post('/create-room', async (req, res) => {
+  const { firstName, roomName } = req.body.input
 
-  console.log('checking for interrupted events')
-  console.log('cronJobs.data.cron_jobs = ', cronJobs.data.cron_jobs)
+  try {
+    const roomModeRes = await orm.request(insertRoomMode, {
+      objects: {
+        round_number: null,
+        round_length: null,
+        total_rounds: null,
+      },
+    })
+    console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
 
-  if (cronJobs.data.cron_jobs.length) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    cronJobs.data.cron_jobs.forEach((event) => {
-      const { next_round_start: nextRoundStart } = event
-      const {
-        num_rounds: numRounds,
-        id: eventId,
-        round_length,
-        current_round: currentRound,
-      } = event.event
-      const roundLength = round_length * 60000
-      initNextRound({ numRounds, eventId, roundLength, currentRound, nextRoundStart })
+    if (roomModeRes.errors) {
+      throw new Error(roomModeRes.errors[0].message)
+    }
+
+    const insertUserRes = await orm.request(insertUser, {
+      objects: {
+        first_name: firstName,
+      },
+    })
+    console.log('🚀 ~ app.post ~ insertUserRes', insertUserRes)
+    if (insertUserRes.errors) {
+      throw new Error(insertUserRes.errors[0].message)
+    }
+
+    const insertRoomRes = await orm.request(insertRoom, {
+      objects: {
+        name: roomName,
+        room_modes_id: roomModeRes.data.insert_room_modes.returning[0].id,
+        owner_id: insertUserRes.data.insert_users.returning[0].id,
+      },
+    })
+    console.log('🚀 ~ app.post ~ insertRoomRes', insertRoomRes)
+
+    if (insertRoomRes.errors) {
+      if (insertRoomRes.errors[0].message.indexOf('rooms_name_key') > -1) {
+        return res.json({ success: false, message: 'room name unavailable' })
+      }
+      if (insertUserRes.errors) {
+        throw new Error(insertUserRes.errors[0].message)
+      }
+    }
+
+    const insertRoomUserRes = await orm.request(insertRoomUser, {
+      objects: {
+        room_id: insertRoomRes.data.insert_rooms.returning[0].id,
+        user_id: insertUserRes.data.insert_users.returning[0].id,
+      },
+    })
+
+    if (insertRoomUserRes.errors) {
+      throw new Error(insertRoomUserRes.errors[0].message)
+    }
+  } catch (error) {
+    console.log('error = ', error)
+
+    return res.json({ success: false })
+  }
+
+  return res.json({
+    success: true,
+  })
+})
+
+// Request Handler
+app.post('/create-guest-user', async (req, res) => {
+  // get request input
+  const { firstName, roomId } = req.body.input
+  try {
+    const insertUserRes = await orm.request(insertUser, {
+      objects: {
+        first_name: firstName,
+      },
+    })
+    console.log('🚀 ~ app.post ~ insertUserRes', insertUserRes)
+    if (insertUserRes.errors) {
+      throw new Error(insertUserRes.errors[0].message)
+    }
+
+    const insertRoomUserRes = await orm.request(insertRoomUser, {
+      objects: {
+        room_id: roomId,
+        user_id: insertUserRes.data.insert_users.returning[0].id,
+      },
+    })
+
+    if (insertRoomUserRes.errors) {
+      throw new Error(insertRoomUserRes.errors[0].message)
+    }
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
     })
   }
-}
 
-checkForInterruptedEvents().then()
+  // success
+  return res.json({
+    success: true,
+  })
+})
+
+// // TODO: move definition
+// const checkForInterruptedEvents = async () => {
+//   // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
+//   // when an event ends we remove it from this table
+//   const cronJobs = await orm.request(getCronJobs)
+
+//   console.log('checking for interrupted events')
+//   console.log('cronJobs.data.cron_jobs = ', cronJobs.data.cron_jobs)
+
+//   if (cronJobs.data.cron_jobs.length) {
+//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//     // @ts-ignore
+//     cronJobs.data.cron_jobs.forEach((event) => {
+//       console.log('🚀 ~ app.post ~ error', error)
+//       console.log('🚀 ~ app.post ~ error', error)
+//       console.log('🚀 ~ app.post ~ error', error)
+//       const { next_round_start: nextRoundStart } = event
+//       const {
+//         num_rounds: numRounds,
+//         id: eventId,
+//         round_length,
+//         current_round: currentRound,
+//       } = event.event
+//       const roundLength = round_length * 60000
+//       initNextRound({ numRounds, eventId, roundLength, currentRound, nextRoundStart })
+//     })
+//   }
+// }
+
+// checkForInterruptedEvents().then()
 
 module.exports = app
