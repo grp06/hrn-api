@@ -6,13 +6,11 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import es6Promise from 'es6-promise'
 import express, { ErrorRequestHandler } from 'express'
-
-import { insertRoomMode, insertUser, insertRoom, insertRoomUser, updateRoom } from './gql/mutations'
-
 import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
+import { insertRoomMode, insertUser, insertRoom, insertRoomUser, updateRoom } from './gql/mutations'
 import { getCronJobs } from './gql/queries'
 import logger from './logger'
 import router from './routes/router'
@@ -182,57 +180,61 @@ app.post('/create-guest-user', async (req, res) => {
 // Request Handler
 app.post('/change-room-mode', async (req, res) => {
   // get request input
-  const { roomId, modeName, totalRounds = null, roundNumber = null, roundLength = null } = req.body.input.input
+  const {
+    roomId,
+    modeName,
+    totalRounds = null,
+    roundNumber = null,
+    roundLength = null,
+  } = req.body.input.input
 
   try {
+    const roomModeRes = await orm.request(insertRoomMode, {
+      objects: {
+        round_number: roundNumber,
+        round_length: roundLength,
+        total_rounds: totalRounds,
+        mode_name: modeName,
+      },
+    })
+    console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
 
-    try {
-      const roomModeRes = await orm.request(insertRoomMode, {
-        objects: {
-          round_number: roundNumber,
-          round_length: roundLength,
-          total_rounds: totalRounds,
-          mode_name: modeName
-        },
-      })
-      console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
+    if (roomModeRes.errors) {
+      throw new Error(roomModeRes.errors[0].message)
+    }
 
-      if (roomModeRes.errors) {
-        throw new Error(roomModeRes.errors[0].message)
-      }
+    const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
+    console.log('🚀 ~ app.post ~ roomModesId', roomModesId)
 
-      const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
-      console.log("🚀 ~ app.post ~ roomModesId", roomModesId)
-      
-      const updateRoomRes = await orm.request(updateRoom, {
-        roomId,
-        roomModesId
-      })
-      console.log("🚀 ~ app.post ~ updateRoomRes", updateRoomRes)
+    const updateRoomRes = await orm.request(updateRoom, {
+      roomId,
+      roomModesId,
+    })
+    console.log('🚀 ~ app.post ~ updateRoomRes', updateRoomRes)
 
-      // set timeout for 30 seconds
-  
+    // set timeout for 30 seconds
+
     // do everything needed for speed_chats
-      // get online users
-      // make assignments
-      // insert into partners table
-      // 
+    // get online users
+    // make assignments
+    // insert into partners table
+    //
 
-      // set `break` to false after 30 seconds elapses
-      // round number to 1
+    // set `break` to false after 30 seconds elapses
+    // round number to 1
 
-      //and start all your complicated cron job logic stuff
-      // setTimeout for round_length
+    // and start all your complicated cron job logic stuff
 
-      // wait 5 mins
+    // setTimeout for round_length
 
-      /// set break to true
-      // wait 20 seconds
+    // wait 5 mins
 
-      // set break to false
-      
-      //wait 5 mins
+    /// set break to true
+    // wait 20 seconds
 
+    // set break to false
+
+    // wait 5 mins
   } catch (error) {
     return res.status(400).json({
       success: false,
