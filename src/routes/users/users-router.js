@@ -104,4 +104,4 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   }
 })
 
-module.exports = usersRouter
+export default usersRouter

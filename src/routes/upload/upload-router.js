@@ -87,4 +87,4 @@ uploadRouter.post('/save-profile-pic-url', async (req, res) => {
   }
 })
 
-module.exports = uploadRouter
+export default uploadRouter

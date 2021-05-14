@@ -34,4 +34,4 @@ twilioRouter.post('/get-token', (req, res) => {
   res.json({ token: tokenAsJwt })
 })
 
-module.exports = twilioRouter
+export default twilioRouter

@@ -170,4 +170,4 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   }
 })
 
-module.exports = stripeRouter
+export default stripeRouter

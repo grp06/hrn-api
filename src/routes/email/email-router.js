@@ -6,7 +6,7 @@ import { findUserByEmail, findUserById } from '../../gql/queries'
 import { getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
 import { hashPassword } from '../../services/auth-service'
 import orm from '../../services/orm'
-import UsersService from '../signup/users-service'
+import UsersService from '../users/users-service'
 
 const sgMail = require('@sendgrid/mail')
 const express = require('express')
@@ -113,4 +113,4 @@ emailRouter.post('/set-new-password', async (req, res) => {
   return res.status(404).json({ error: 'Something went wrong with the link you used.' })
 })
 
-module.exports = emailRouter
+export default emailRouter

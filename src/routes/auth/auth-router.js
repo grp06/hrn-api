@@ -71,4 +71,4 @@ authRouter.post('/get-anonymous-token', async (req, res) => {
   }
 })
 
-module.exports = authRouter
+export default authRouter

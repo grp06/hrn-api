@@ -57,4 +57,4 @@ roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
   return nextRound({ req, res })
 })
 
-module.exports = roomsRouter
+export default roomsRouter
