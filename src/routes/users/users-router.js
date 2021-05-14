@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 
 import { createToken } from '../../extensions/jwtHelper'
-import { signUp } from '../../gql/mutations'
+import { signUp, completeUserProfile } from '../../gql/mutations'
 import { findUserByEmail } from '../../gql/queries'
 import { hashPassword } from '../../services/auth-service'
 import { signUpConfirmation } from '../../services/email-service'
@@ -11,13 +11,14 @@ import UsersService from './users-service'
 const express = require('express')
 
 const usersRouter = express.Router()
-const jsonBodyParser = express.json()
 
-usersRouter.post('/', jsonBodyParser, async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body.input.input
-  console.log('🚀 ~ usersRouter.post ~ req.body', req.body)
+// Request Handler
+usersRouter.post('/complete-user-profile', async (req, res) => {
+  // get request input
+  const { first_name: firstName, last_name: lastName, email, password, id } = req.body.input.input
+  console.log('🚀 ~ usersRouter.post ~ req.body.input', req.body.input)
 
-  for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
+  for (const field of ['first_name', 'last_name', 'email', 'password'])
     if (!req.body.input.input[field]) {
       return res.status(400).json({
         message: `Missing '${field}' in request body`,
@@ -28,7 +29,7 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
 
   // add logging for these errors?
 
-  const nameError = UsersService.validateName(first_name)
+  const nameError = UsersService.validateName(firstName)
   if (nameError) return res.status(400).json({ message: nameError })
 
   const emailError = UsersService.validateEmail(email)
@@ -41,8 +42,8 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   let existingUser
   try {
     const checkEmailRequest = await orm.request(findUserByEmail, { email })
-    console.log('checkEmailRequest', checkEmailRequest)
     existingUser = checkEmailRequest.data.users[0]
+    console.log('checkEmailRequest', checkEmailRequest)
 
     if (existingUser) {
       const message = 'Email already in use'
@@ -64,26 +65,25 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
     hashedPassword = await hashPassword(password)
   } catch (error) {
     Sentry.captureException(error)
+    console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
       error,
     })
   }
 
-  const userObject = { first_name, last_name, email, password: hashedPassword, role }
-
-  const variables = { objects: [userObject] }
-  let newUser
+  const variables = { firstName, lastName, email, password: hashedPassword, id }
+  let updatedUser
 
   // insert user into db
   try {
-    const insertUserResult = await orm.request(signUp, variables)
+    const updatedUserResult = await orm.request(completeUserProfile, variables)
+    console.log('🚀 ~ usersRouter.post ~ updatedUserResult', updatedUserResult)
 
-    newUser = insertUserResult.data.insert_users.returning[0]
-    console.log('newUser', newUser)
-    signUpConfirmation(newUser)
+    updatedUser = updatedUserResult.data.update_users.returning[0]
+    console.log('updatedUser', updatedUser)
   } catch (error) {
-    console.log('🚀 ~ usersRouter.post ~ error', error)
     Sentry.captureException(error)
+    console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
       error,
     })
@@ -93,43 +93,8 @@ usersRouter.post('/', jsonBodyParser, async (req, res) => {
   __logger.info(`User with email ${email} created`)
   try {
     return res.json({
-      token: await createToken(newUser, process.env.SECRET),
-      ...UsersService.serializeUser(newUser),
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(500).json({
-      error,
-    })
-  }
-})
-usersRouter.post('/reset-password', async (req, res) => {
-  const { email } = req.body
-  if (!email) {
-    return res.status(400).json({
-      error: `Missing 'email' in request body`,
-    })
-  }
-
-  let existingUser
-  try {
-    const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
-    existingUser = checkEmailRequest.data.users[0]
-
-    if (!existingUser) {
-      return res.status(400).json({ error: 'Could not find user with that email' })
-    }
-  } catch (error) {
-    return res.status(500).json({
-      error,
-    })
-  }
-})
-
-usersRouter.get('/get-anonymous-token', async (req, res) => {
-  try {
-    return res.status(201).json({
-      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+      token: await createToken(updatedUser, process.env.SECRET),
+      ...UsersService.serializeUser(updatedUser),
     })
   } catch (error) {
     Sentry.captureException(error)

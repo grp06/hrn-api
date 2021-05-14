@@ -6,7 +6,7 @@ import authRouter from './auth/auth-router'
 import emailRouter from './email/email-router'
 import roomsRouter from './rooms/rooms-router'
 import stripeRouter from './stripe/stripe-router'
-import tokenRouter from './twilio-token/twilio-token-router'
+import twilioRouter from './twilio/twilio-router'
 import uploadRouter from './upload/upload-router'
 import usersRouter from './users/users-router'
 import webhooks from './webhooks'
@@ -18,7 +18,7 @@ const apiRouter = Router()
  * API routes
  */
 apiRouter.use('/rooms', roomsRouter)
-apiRouter.use('/token', tokenRouter)
+apiRouter.use('/twilio', twilioRouter)
 apiRouter.use('/signup', usersRouter)
 apiRouter.use('/auth', authRouter)
 apiRouter.use('/upload', uploadRouter)

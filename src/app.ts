@@ -118,7 +118,7 @@ app.post('/create-room', async (req, res) => {
 
     if (insertRoomRes.errors) {
       if (insertRoomRes.errors[0].message.indexOf('rooms_name_key') > -1) {
-        return res.json({ success: false, message: 'room name unavailable' })
+        return res.json({ success: false, error: 'room name unavailable' })
       }
       if (insertUserRes.errors) {
         throw new Error(insertUserRes.errors[0].message)
@@ -195,6 +195,7 @@ app.post('/change-room-mode', async (req, res) => {
   } = req.body.input.input
 
   try {
+    // insert a new row into the room_mode table
     const roomModeRes = await orm.request(insertRoomMode, {
       objects: {
         round_number: roundNumber,
@@ -209,9 +210,11 @@ app.post('/change-room-mode', async (req, res) => {
       throw new Error(roomModeRes.errors[0].message)
     }
 
+    // grab the id from the row we just inserted
     const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
     console.log('🚀 ~ app.post ~ roomModesId', roomModesId)
 
+    // make sure to use that id to update the room_modes_id on the room table
     const updateRoomRes = await orm.request(updateRoom, {
       roomId,
       roomModesId,

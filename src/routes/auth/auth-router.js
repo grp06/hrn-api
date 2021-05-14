@@ -8,10 +8,10 @@ import orm from '../../services/orm'
 const express = require('express')
 
 const authRouter = express.Router()
-const jsonBodyParser = express.json()
 
-authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { email, password } = req.body
+authRouter.post('/get-login-details', async (req, res) => {
+  const { email, password } = req.body.input.input
+
   const loginUser = { email, password }
 
   // make sure all keys are in request body
@@ -30,7 +30,7 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     dbUser = checkEmailRequest.data.users[0]
 
     if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
+      return res.status(400).json({ message: 'Incorrect email or password' })
     }
 
     // compare passwords with hashing
@@ -38,23 +38,37 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
 
     if (!passwordCheck) {
       return res.status(400).json({
-        error: 'Incorrect user_name or password',
+        message: 'Incorrect user_name or password',
       })
     }
   } catch (error) {
     console.log('Error logging in', error)
     Sentry.captureException(error)
     return res.status(500).json({
-      error: 'There was an error logging in',
+      message: 'There was an error logging in',
     })
   }
 
   console.log(dbUser)
-  return res.send({
+
+  return res.json({
     token: await createToken(dbUser, process.env.SECRET),
     role: dbUser.role,
     id: dbUser.id,
   })
+})
+
+authRouter.post('/get-anonymous-token', async (req, res) => {
+  try {
+    return res.json({
+      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(400).json({
+      error,
+    })
+  }
 })
 
 module.exports = authRouter
