@@ -90,7 +90,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   }
 
   // send token and user details
-  __logger.info(`User with email ${email} created`)
+  __logger.info(`User with email ${email} updated`)
   try {
     return res.json({
       token: await createToken(updatedUser, process.env.SECRET),
