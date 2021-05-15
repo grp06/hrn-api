@@ -259,7 +259,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
         roomId,
         roomModeId: roomModesId,
         roundNumber,
-        roundLength: 1,
+        roundLength,
         totalRounds,
       })
 
@@ -267,22 +267,6 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     })
 
     jobs.countdown[roomId].start()
-
-    // set `break` to false after 30 seconds elapses
-    // round number to 1
-
-    // and start all your complicated cron job logic stuff
-
-    // setTimeout for round_length
-
-    // wait 5 mins
-
-    /// set break to true
-    // wait 20 seconds
-
-    // set break to false
-
-    // wait 5 mins
   } catch (error) {
     console.log(error)
     return res.status(400).json({
