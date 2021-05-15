@@ -10,19 +10,12 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
-import {
-  insertRoomMode,
-  insertUser,
-  insertRoom,
-  insertRoomUser,
-  updateRoom,
-  insertRoomChatMessage,
-  updateRoomName,
-} from './gql/mutations'
+import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
 import router from './routes/router'
 import { startApolloServer } from './server-graphql'
 import orm from './services/orm'
+import { initNextRound } from './services/room-modes/speed-rounds'
 
 /**
  * Initialise & configure libraries
@@ -80,236 +73,29 @@ app.use(((error, req, res, next) => {
 // Start the sever
 startApolloServer(app, PORT).then()
 
-app.post('/create-room', async (req, res) => {
-  const { firstName, roomName } = req.body.input
+// TODO: move definition
+const checkForInterruptedEvents = async () => {
+  // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
+  // when an event ends we remove it from this table
+  const cronJobs: GetRoomModeCronjobs = await orm.request(getRoomModeCronjobs)
 
-  try {
-    const roomModeRes = await orm.request(insertRoomMode, {
-      objects: {
-        round_number: null,
-        round_length: null,
-        total_rounds: null,
-      },
-    })
-    console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
+  console.log('(checkForInterruptedEvents) Checking for interrupted events')
+  console.log('(checkForInterruptedEvents) Cronjobs data:', cronJobs.data.room_mode_cronjobs)
 
-    if (roomModeRes.errors) {
-      throw new Error(roomModeRes.errors[0].message)
-    }
-
-    const insertUserRes = await orm.request(insertUser, {
-      objects: {
-        first_name: firstName,
-      },
-    })
-    console.log('🚀 ~ app.post ~ insertUserRes', insertUserRes)
-    if (insertUserRes.errors) {
-      throw new Error(insertUserRes.errors[0].message)
-    }
-
-    const insertRoomRes = await orm.request(insertRoom, {
-      objects: {
-        name: roomName,
-        room_modes_id: roomModeRes.data.insert_room_modes.returning[0].id,
-        owner_id: insertUserRes.data.insert_users.returning[0].id,
-      },
-    })
-    console.log('🚀 ~ app.post ~ insertRoomRes', insertRoomRes)
-
-    if (insertRoomRes.errors) {
-      if (insertRoomRes.errors[0].message.indexOf('rooms_name_key') > -1) {
-        return res.json({ success: false, error: 'room name unavailable' })
-      }
-      if (insertUserRes.errors) {
-        throw new Error(insertUserRes.errors[0].message)
-      }
-    }
-
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
-      objects: {
-        room_id: insertRoomRes.data.insert_rooms.returning[0].id,
-        user_id: insertUserRes.data.insert_users.returning[0].id,
-      },
-    })
-
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
-    }
-  } catch (error) {
-    console.log('error = ', error)
-
-    return res.json({ success: false })
-  }
-
-  return res.json({
-    success: true,
-  })
-})
-
-// Request Handler
-app.post('/create-guest-user', async (req, res) => {
-  // get request input
-  const { firstName, roomId } = req.body.input
-  try {
-    const insertUserRes = await orm.request(insertUser, {
-      objects: {
-        first_name: firstName,
-      },
-    })
-    console.log('🚀 ~ app.post ~ insertUserRes', insertUserRes)
-    if (insertUserRes.errors) {
-      throw new Error(insertUserRes.errors[0].message)
-    }
-
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
-      objects: {
-        room_id: roomId,
-        user_id: insertUserRes.data.insert_users.returning[0].id,
-      },
-    })
-
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
-    }
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
+  if (cronJobs.data.room_mode_cronjobs.length) {
+    cronJobs.data.room_mode_cronjobs.forEach((cronJob) => {
+      initNextRound({
+        totalRounds: cronJob.room_mode.total_rounds,
+        roomId: cronJob.room_id,
+        roomModeId: cronJob.room_modes_id,
+        roundLength: cronJob.room_mode.round_length,
+        roundNumber: cronJob.round_number,
+        nextRoundStart: cronJob.timestamp,
+      })
     })
   }
+}
 
-  // success
-  return res.json({
-    success: true,
-  })
-})
-
-// Request Handler
-app.post('/change-room-mode', async (req, res) => {
-  // get request input
-  const {
-    roomId,
-    modeName,
-    totalRounds = null,
-    roundNumber = null,
-    roundLength = null,
-  } = req.body.input.input
-
-  try {
-    // insert a new row into the room_mode table
-    const roomModeRes = await orm.request(insertRoomMode, {
-      objects: {
-        round_number: roundNumber,
-        round_length: roundLength,
-        total_rounds: totalRounds,
-        mode_name: modeName,
-      },
-    })
-    console.log('🚀 ~ app.post ~ roomModeRes', roomModeRes)
-
-    if (roomModeRes.errors) {
-      throw new Error(roomModeRes.errors[0].message)
-    }
-
-    // grab the id from the row we just inserted
-    const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
-    console.log('🚀 ~ app.post ~ roomModesId', roomModesId)
-
-    // make sure to use that id to update the room_modes_id on the room table
-    const updateRoomRes = await orm.request(updateRoom, {
-      roomId,
-      roomModesId,
-    })
-    console.log('🚀 ~ app.post ~ updateRoomRes', updateRoomRes)
-
-    // set timeout for 30 seconds
-
-    // do everything needed for speed_chats
-    // get online users
-    // make assignments
-    // insert into partners table
-    //
-
-    // set `break` to false after 30 seconds elapses
-    // round number to 1
-
-    // and start all your complicated cron job logic stuff
-
-    // setTimeout for round_length
-
-    // wait 5 mins
-
-    /// set break to true
-    // wait 20 seconds
-
-    // set break to false
-
-    // wait 5 mins
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-    })
-  }
-
-  // success
-  return res.json({
-    success: true,
-  })
-})
-
-// Request Handler
-app.post('/send-chat-to-room', async (req, res) => {
-  // get request input
-  const { senderId, roomId, content } = req.body.input.input
-  let messageId
-  try {
-    const insertRoomChatMessageRes = await orm.request(insertRoomChatMessage, {
-      senderId,
-      roomId,
-      content,
-    })
-    console.log('🚀 ~ app.post ~ insertRoomChatMessageRes', insertRoomChatMessageRes)
-    messageId = insertRoomChatMessageRes.data.insert_room_chat_messages.returning[0].id
-    console.log('🚀 ~ app.post ~ messageId', messageId)
-
-    if (insertRoomChatMessageRes.errors) {
-      throw new Error(insertRoomChatMessageRes.errors[0].message)
-    }
-  } catch (error) {
-    console.log('error = ', error)
-    return res.status(400).json({
-      error,
-    })
-  }
-  return res.json({
-    messageId,
-  })
-})
-
-// Request Handler
-app.post('/update-room-name', async (req, res) => {
-  // get request input
-  const { name, roomId } = req.body.input
-
-  try {
-    const updateRoomNameRes = await orm.request(updateRoomName, {
-      name,
-      roomId,
-    })
-    console.log('🚀 ~ app.post ~ insertRoomChatMessageRes', updateRoomNameRes)
-
-    if (updateRoomNameRes.errors) {
-      throw new Error(updateRoomNameRes.errors[0].message)
-    }
-  } catch (error) {
-    console.log('error = ', error)
-    return res.status(400).json({
-      error,
-    })
-  }
-  return res.json({
-    success: true,
-    error: null,
-  })
-})
+checkForInterruptedEvents().then()
 
 module.exports = app

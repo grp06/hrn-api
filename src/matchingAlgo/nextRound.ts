@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/node'
 import { Request, Response } from 'express'
 
-import { updateEventObject } from '../../gql/mutations'
-import omniCreatePairings from '../../matchingAlgo/omniCreatePairings'
-import orm from '../orm'
-import setRoomsAsCompleted from '../twilio/setRoomsAsCompleted'
+import { updateEventObject } from '../gql/mutations'
+import omniCreatePairings from './omniCreatePairings'
+import orm from '../services/orm'
+import setRoomsAsCompleted from '../services/twilio/setRoomsAsCompleted'
 // TODO: (IMPORTANT) fix this circular dependency
 import initNextRound from './initNextRound'
 import { resetEvent, endEvent } from './runEventHelpers'
@@ -12,7 +12,7 @@ import { resetEvent, endEvent } from './runEventHelpers'
 type NextRoundParams = {
   req?: Request
   res?: Response
-  params: {
+  params?: {
     eventId: number
     currentRound: number
     round_length: number
@@ -60,13 +60,15 @@ const nextRound: NextRound = async ({ req, res, params }) => {
       // Complete all the in-progress rooms
       const completedRoomsRes = await Promise.all(await setRoomsAsCompleted(eventId))
       console.log('(nextRound) ☑️ `completedRoomsRes`:', completedRoomsRes)
-    } else {
+    } else if (params) {
       // In this case, this is at least the 2nd round
       currentRound = params.currentRound
       eventId = params.eventId
       numRounds = params.numRounds
       round_length = params.round_length
       useSamyakAlgo = params.useSamyakAlgo
+    } else {
+      return Sentry.captureException(new Error('"params" or "req" must be defined'))
     }
 
     // Create the pairing for this event

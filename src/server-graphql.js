@@ -26,7 +26,7 @@ export const startApolloServer = async (app, port) => {
   server.applyMiddleware({ app, path: '/graphql' })
 
   return app.listen({ port }, () => {
-    console.log('Apollo server running on /graphql')
+    console.log(`Apollo server running at http(s)://host:${port}/graphql`)
   })
 }
 

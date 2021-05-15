@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/node'
 
-import { getAvailableLobbyUsers } from '../../gql/queries'
-import { GraphQlResponse } from '../../types'
-import orm from '../orm'
+import { getAvailableLobbyUsers } from '../gql/queries'
+import orm from '../services/orm'
+import { GraphQlResponse } from '../types'
 
 type OnlineUser = {
   event_id: number

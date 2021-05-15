@@ -11,7 +11,7 @@ type PredeterminedPartners = {
 
 type GetPredeterminedPartners = (params: {
   userIds: number[]
-  eventId: number
+  roomId: number
 }) => Promise<string | PredeterminedPartners[]> // TODO: string shouldn't be a return type in here
 
 type PartnersListResponse = GraphQlResponse<{
@@ -21,13 +21,13 @@ type PartnersListResponse = GraphQlResponse<{
 /**
  * Get predetermined partners
  */
-const getPredeterminedPartners: GetPredeterminedPartners = async ({ userIds, eventId }) => {
+const getPredeterminedPartners: GetPredeterminedPartners = async ({ userIds, roomId }) => {
   let partnersListResponse: PartnersListResponse
 
   try {
     partnersListResponse = await orm.request(getPredeterminedPartnersFromListOfUserIds, {
       userIds,
-      eventId,
+      roomId,
     })
   } catch (error) {
     console.log('(getPredeterminedPartners) 🙊 There was an error:', error)

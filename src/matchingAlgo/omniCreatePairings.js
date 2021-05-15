@@ -3,17 +3,17 @@ import * as Sentry from '@sentry/node'
 import { bulkInsertPartners } from '../gql/mutations'
 import orm from '../services/orm'
 import getAllRoundsDataForOnlineUsers from '../services/rooms/getAllRoundsDataForOnlineUsers'
-import getOnlineEventUsers from '../services/rooms/getOnlineEventUsers'
 import getPredeterminedPartners from '../services/rooms/getPredeterminedPartners'
-import transformPairingsToGqlVars from '../services/rooms/transformPairingsToGqlVars'
+import getOnlineEventUsers from './getOnlineEventUsers'
 import makePairings from './makePairings'
 import makePairingsFromSamyakAlgo from './makePairingsFromSamyakAlgo'
+import transformPairingsToGqlVars from './transformPairingsToGqlVars'
 
 const omniCreatePairings = async ({
   eventId,
   currentRound,
   fromLobbyScan = undefined,
-  useSamyakAlgo,
+  useSamyakAlgo = true,
 }) => {
   try {
     // get all online users for this eventId

@@ -4,7 +4,7 @@ import Unsplash, { toJson } from 'unsplash-js'
 // TODO: convert this routers to Typescript, and the errors will disappear
 import authRouter from './auth/auth-router'
 import emailRouter from './email/email-router'
-import roomsRouter from './rooms/rooms-router'
+import roomsRouter from './rooms/rooms.router'
 import stripeRouter from './stripe/stripe-router'
 import twilioRouter from './twilio/twilio-router'
 import uploadRouter from './upload/upload-router'

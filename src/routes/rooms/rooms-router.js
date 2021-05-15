@@ -3,9 +3,9 @@ import express from 'express'
 
 import { updateEventObject } from '../../gql/mutations'
 import { getAvailableLobbyUsers } from '../../gql/queries'
+import nextRound from '../../matchingAlgo/nextRound'
+import { endEvent } from '../../matchingAlgo/runEventHelpers'
 import orm from '../../services/orm'
-import nextRound from '../../services/rooms/nextRound'
-import { endEvent } from '../../services/rooms/runEventHelpers'
 import createPreEventRooms from '../../services/twilio/createPreEventRooms'
 
 const roomsRouter = express.Router()

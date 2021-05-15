@@ -5,7 +5,9 @@ const bulkInsertPartners = gql`
     insert_partners(objects: $objects) {
       returning {
         id
-        event_id
+        user_id
+        partner_id
+        room_modes_id
       }
     }
   }
