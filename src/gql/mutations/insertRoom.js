@@ -5,6 +5,9 @@ const insertRoom = gql`
     insert_rooms(objects: $objects) {
       returning {
         id
+        name
+        owner_id
+        room_modes_id
       }
     }
   }

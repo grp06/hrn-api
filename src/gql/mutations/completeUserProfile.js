@@ -2,24 +2,24 @@ import gql from 'graphql-tag'
 
 const completeUserProfile = gql`
   mutation updateUser(
-    $firstName: String!
-    $lastName: String!
+    $first_name: String!
+    $last_name: String!
     $password: String
     $id: Int!
     $email: String!
   ) {
     update_users(
       where: { id: { _eq: $id } }
-      _set: { email: $email, last_name: $lastName, password: $password, first_name: $firstName }
+      _set: { email: $email, last_name: $last_name, password: $password, first_name: $first_name }
     ) {
       returning {
-        created_at
-        email
-        first_name
         id
+        first_name
         last_name
+        email
         password
         role
+        created_at
       }
     }
   }
