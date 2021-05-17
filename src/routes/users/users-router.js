@@ -142,4 +142,31 @@ usersRouter.post('/create-guest-user', async (req, res) => {
     })
   }
 })
+
+usersRouter.post('/fetch-user-by-token', async (req, res) => {
+  // get request input
+  console.log('req.body.input = ', req.body.input)
+  console.log('req.body.session_variables = ', req.body.session_variables)
+
+  // run some business logic
+
+  /*
+  // In case of errors:
+  return res.status(400).json({
+    message: "error happened"
+  })
+  */
+
+  // success
+  return res.json({
+    created_at: '<value>',
+    email: '<value>',
+    error: '<value>',
+    first_name: '<value>',
+    id: '<value>',
+    last_name: '<value>',
+    role: '<value>',
+    token: '<value>',
+  })
+})
 export default usersRouter
