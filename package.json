@@ -74,7 +74,7 @@
     "@types/express": "^4.17.11",
     "@types/lodash": "^4.14.168",
     "@types/morgan": "^1.9.2",
-    "@types/node": "^14.14.31",
+    "@types/node": "^15.3.0",
     "@types/sharp": "^0.27.1",
     "@types/unsplash-js": "^7.0.0",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
