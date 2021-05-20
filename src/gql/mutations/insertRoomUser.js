@@ -5,6 +5,10 @@ const insertRoomUser = gql`
     insert_room_users(objects: $objects) {
       returning {
         id
+        user_id
+        last_seen
+        room_id
+        updated_at
       }
     }
   }

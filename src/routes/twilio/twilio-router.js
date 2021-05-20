@@ -11,8 +11,9 @@ const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SI
 twilioRouter.post('/get-token', (req, res) => {
   // Create an access token which we will sign and return to the client,
   // containing the grant we just created
-  const { userId, uniqueName } = req.body.input.input
-
+  const { uniqueName } = req.body.input
+  console.log('req.body.session_variables = ', req.body.session_variables)
+  const userId = req.body.session_variables.user_id
   const token = new AccessToken(
     twilioAccountSid,
     process.env.TWILIO_API_KEY,

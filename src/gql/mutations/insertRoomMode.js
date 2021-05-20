@@ -5,6 +5,11 @@ const insertRoomMode = gql`
     insert_room_modes(objects: $objects) {
       returning {
         id
+        mode_name
+        break_time
+        total_rounds
+        round_number
+        round_length
       }
     }
   }
