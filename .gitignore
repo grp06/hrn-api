@@ -8,6 +8,7 @@ node_modules
 .serverless
 info.log
 dist
+yarn-error.log
 
 # IDEs
 .vscode/settings.json

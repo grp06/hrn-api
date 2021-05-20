@@ -6,7 +6,7 @@ import { findUserByEmail, findUserById } from '../../gql/queries'
 import { getPasswordResetURL, resetPasswordTemplate } from '../../modules/email'
 import { hashPassword } from '../../services/auth-service'
 import orm from '../../services/orm'
-import UsersService from '../signup/users-service'
+import UsersService from '../users/users-service'
 
 const sgMail = require('@sendgrid/mail')
 const express = require('express')
@@ -48,13 +48,16 @@ emailRouter.post('/reset-password', async (req, res) => {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
     await sgMail.send(emailTemplate)
   } catch (error) {
+    console.log('🚀 ~ emailRouter.post ~ error', error)
     return res.status(400).json({ error: error.response.body.errors[0].message })
   }
   return res.json({ success: 'true' })
 })
 
 emailRouter.post('/set-new-password', async (req, res) => {
+  console.log('yooooo')
   const { userId, token, password } = req.body.input.input
+  console.log('🚀 ~ emailRouter.post ~ req.body.input', req.body.input)
 
   const passwordError = UsersService.validatePassword(password)
   if (passwordError) return res.status(400).json({ error: passwordError })
@@ -63,11 +66,13 @@ emailRouter.post('/set-new-password', async (req, res) => {
   let user
   try {
     const checkIdRequest = await orm.request(findUserById, { id: userId })
+    console.log('🚀 ~ emailRouter.post ~ checkIdRequest', checkIdRequest)
     user = checkIdRequest.data.users[0]
     if (!user) {
       return res.status(400).json({ error: 'No user with that email' })
     }
   } catch (err) {
+    console.log('🚀 ~ emailRouter.post ~ err', err)
     return res.status(404).json({ error: 'Error finding user' })
   }
 
@@ -86,7 +91,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
     try {
       hashedPassword = await hashPassword(password)
     } catch (error) {
-      return res.send('error hashing password')
+      return res.status(400).json({ error: 'error hashing password' })
     }
 
     // find user and update
@@ -96,7 +101,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
 
       updatedUser = updatePasswordResult.data.update_users.returning[0]
     } catch (error) {
-      return res.send('error inserting new password')
+      return res.status(400).json({ error: 'error inserting new password' })
     }
 
     return res.json({
@@ -108,4 +113,4 @@ emailRouter.post('/set-new-password', async (req, res) => {
   return res.status(404).json({ error: 'Something went wrong with the link you used.' })
 })
 
-module.exports = emailRouter
+export default emailRouter

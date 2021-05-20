@@ -1,23 +1,23 @@
 import * as Sentry from '@sentry/node'
 
 import { bulkInsertPartners } from '../gql/mutations'
-import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
 import orm from '../services/orm'
-import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
-import getOnlineUsers from './getOnlineUsers'
-import getPredeterminedPartners from './getPredeterminedPartners'
+import getAllRoundsDataForOnlineUsers from '../services/rooms/getAllRoundsDataForOnlineUsers'
+import getPredeterminedPartners from '../services/rooms/getPredeterminedPartners'
+import getOnlineEventUsers from './getOnlineEventUsers'
 import makePairings from './makePairings'
 import makePairingsFromSamyakAlgo from './makePairingsFromSamyakAlgo'
+import transformPairingsToGqlVars from './transformPairingsToGqlVars'
 
 const omniCreatePairings = async ({
   eventId,
   currentRound,
   fromLobbyScan = undefined,
-  useSamyakAlgo,
+  useSamyakAlgo = true,
 }) => {
   try {
     // get all online users for this eventId
-    const [userIds, onlineUsers] = await getOnlineUsers(eventId)
+    const [userIds, onlineUsers] = await getOnlineEventUsers(eventId)
 
     if (userIds.length < 2 && fromLobbyScan) {
       console.log('not enough to pair from lobby scan')

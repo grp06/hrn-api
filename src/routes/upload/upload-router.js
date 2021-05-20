@@ -1,21 +1,19 @@
 import * as Sentry from '@sentry/node'
-import orm from '../../services/orm'
 
 import { updateProfilePic } from '../../gql/mutations'
+import orm from '../../services/orm'
 
 const fs = require('fs')
-const multiparty = require('multiparty')
 
-const sharp = require('sharp')
-const fileType = require('file-type')
-
+const AWS = require('aws-sdk')
 const express = require('express')
+const fileType = require('file-type')
+const multiparty = require('multiparty')
+const sharp = require('sharp')
 
 const uploadRouter = express.Router()
-const AWS = require('aws-sdk')
 
 const envString = process.env.DEPLOYED_ENV === 'production' ? 'production' : 'staging'
-console.log('envString', envString)
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -25,7 +23,7 @@ AWS.config.update({
 })
 
 uploadRouter.post('/get-signed-url', async (req, res) => {
-  console.log('get signed url hit!');
+  console.log('get signed url hit!')
   try {
     const form = new multiparty.Form()
 
@@ -89,4 +87,4 @@ uploadRouter.post('/save-profile-pic-url', async (req, res) => {
   }
 })
 
-module.exports = uploadRouter
+export default uploadRouter

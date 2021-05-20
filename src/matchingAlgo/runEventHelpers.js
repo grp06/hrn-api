@@ -1,16 +1,18 @@
 import * as Sentry from '@sentry/node'
-import setRoomsCompleted from './set-rooms-completed'
-import orm from '../../services/orm'
+
 import {
   updateEventObject,
   resetEventStatus,
   deletePartnersByEventId,
   deleteCronTimestamp,
-} from '../../gql/mutations'
-import { getEventInfoByEventId, getAvailableLobbyUsers } from '../../gql/queries'
-import createGroupRoom from './createGroupRoom'
-
-import jobs from '../../services/jobs'
+} from '../gql/mutations'
+import deleteRoomModeCronjob from '../gql/mutations/deleteRoomModeCronjob'
+import updateRoomMode from '../gql/mutations/updateRoomMode'
+import { getEventInfoByEventId, getAvailableLobbyUsers } from '../gql/queries'
+import jobs from '../services/jobs'
+import orm from '../services/orm'
+import createTwilioVideoRoom from '../services/twilio/createTwilioVideoRoom'
+import setRoomsAsCompleted from '../services/twilio/setRoomsAsCompleted'
 
 const killAllJobsByEventId = (eventId) => {
   // console.log('jobs = ', jobs)
@@ -34,53 +36,52 @@ const killAllJobsByEventId = (eventId) => {
 }
 
 // ensures that rooms are closed before next round
-export const omniFinishRounds = async (currentRound, eventId) => {
-  console.log('🚀 ~ omniFinishRounds ~ currentRound', currentRound)
-  if (jobs.lobbyAssignments[eventId]) {
-    jobs.lobbyAssignments[eventId].stop()
-    jobs.lobbyAssignments[eventId] = null
+export const omniFinishRounds = async (roundNumber, roomId, roomModeId) => {
+  console.log('🚀 ~ omniFinishRounds ~ roundNumber', roundNumber)
+
+  if (jobs.lobbyAssignments[roomId]) {
+    jobs.lobbyAssignments[roomId].stop()
+    jobs.lobbyAssignments[roomId] = null
   }
-  if (jobs.nextRound[eventId]) {
-    jobs.nextRound[eventId].stop()
-    jobs.nextRound[eventId] = null
+
+  if (jobs.nextRound[roomId]) {
+    jobs.nextRound[roomId].stop()
+    jobs.nextRound[roomId] = null
     console.log('clearing next round job')
   }
+
   try {
-    // on round 1 dont set to in between rounds
-    const updateEventObjectRes = await orm.request(updateEventObject, {
-      id: eventId,
-      newStatus: 'in-between-rounds',
-      newCurrentRound: currentRound,
+    const updatedRoomModeRes = await orm.request(updateRoomMode, {
+      roomModeId,
+      break: true,
+      roundNumber,
     })
 
-    if (updateEventObjectRes.errors) {
-      throw new Error(updateEventObjectRes.errors[0].message)
+    if (updatedRoomModeRes.errors) {
+      throw new Error(updatedRoomModeRes.errors[0].message)
     }
 
-    const deleteCronTimestampRes = await orm.request(deleteCronTimestamp, {
-      eventId,
+    const deleteRoomModeCronjobRes = await orm.request(deleteRoomModeCronjob, {
+      roomId,
     })
-    console.log('omniFinishRounds -> deleteCronTimestampRes', deleteCronTimestampRes)
 
-    if (deleteCronTimestampRes.errors) {
-      Sentry.captureException(deleteCronTimestampRes.errors[0].message)
-      throw new Error(deleteCronTimestampRes.errors[0].message)
+    console.log('omniFinishRounds -> deleteRoomModeCronjobRes', deleteRoomModeCronjobRes)
+
+    if (deleteRoomModeCronjobRes.errors) {
+      Sentry.captureException(deleteRoomModeCronjobRes.errors[0].message)
+      throw new Error(deleteRoomModeCronjobRes.errors[0].message)
     }
-
-    console.log('set room to in-between-rounds for eventId ', eventId)
   } catch (error) {
     console.log('omniFinishRounds -> error', error)
     Sentry.captureException(error)
   }
-
-  // set ended_at in db for the round we just completed
 }
 
 export const endEvent = async (eventId, isCompletingEvent) => {
   killAllJobsByEventId(eventId)
   // console.log('jobs = ', jobs)
   try {
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    const completedRoomsPromises = await setRoomsAsCompleted(eventId)
     await Promise.all(completedRoomsPromises)
 
     const eventInfoRes = await orm.request(getEventInfoByEventId, { eventId })
@@ -106,7 +107,7 @@ export const endEvent = async (eventId, isCompletingEvent) => {
 
     let updateEventObjectRes
     if (hostIsOnline && group_video_chat && !isCompletingEvent) {
-      const createGroupRoomRes = await createGroupRoom(eventId)
+      const createGroupRoomRes = await createTwilioVideoRoom(eventId)
       if (createGroupRoomRes.errors) {
         throw new Error(createGroupRoomRes.errors[0].message)
       }
@@ -148,7 +149,7 @@ export const resetEvent = async (eventId) => {
   killAllJobsByEventId(eventId)
 
   try {
-    const completedRoomsPromises = await setRoomsCompleted(eventId)
+    const completedRoomsPromises = await setRoomsAsCompleted(eventId)
 
     await Promise.all(completedRoomsPromises)
 

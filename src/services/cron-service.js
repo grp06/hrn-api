@@ -79,114 +79,114 @@ const sendEmailsToUpcomingEventParticipants = async () => {
   }
 }
 
-const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
-  const partnersToEmailPromises = []
+// const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
+//   const partnersToEmailPromises = []
 
-  eventsRecentlyFinished.forEach(async (event) => {
-    // query the event users and send emails from response
-    partnersToEmailPromises.push(
-      orm.request(getContactSharesForSendingEmail, {
-        event_id: event.id,
-      })
-    )
-  })
+//   eventsRecentlyFinished.forEach(async (event) => {
+//     // query the event users and send emails from response
+//     partnersToEmailPromises.push(
+//       orm.request(getContactSharesForSendingEmail, {
+//         event_id: event.id,
+//       })
+//     )
+//   })
 
-  const partnersToEmail = await Promise.all(partnersToEmailPromises)
+//   const partnersToEmail = await Promise.all(partnersToEmailPromises)
 
-  const partnersArray = partnersToEmail.reduce((all, item, index) => {
-    if (item && item.data && item.data.partners) {
-      item.data.partners.forEach((partner) => {
-        all.push(partner)
-      })
-    }
-    return all
-  }, [])
+//   const partnersArray = partnersToEmail.reduce((all, item, index) => {
+//     if (item && item.data && item.data.partners) {
+//       item.data.partners.forEach((partner) => {
+//         all.push(partner)
+//       })
+//     }
+//     return all
+//   }, [])
 
-  const listOfMatchesByUserEmail = partnersArray.reduce((all, item) => {
-    if (!all.length) {
-      all.push({
-        name: item.user.name,
-        email: item.user.email,
-        partners: [item.partner],
-        event_name: item.event.event_name,
-      })
-      return all
-    }
+//   const listOfMatchesByUserEmail = partnersArray.reduce((all, item) => {
+//     if (!all.length) {
+//       all.push({
+//         name: item.user.name,
+//         email: item.user.email,
+//         partners: [item.partner],
+//         event_name: item.event.event_name,
+//       })
+//       return all
+//     }
 
-    const indexOfUserToOperateOn = all.findIndex((user) => user.email === item.user.email)
-    if (indexOfUserToOperateOn === -1) {
-      all.push({
-        name: item.user.name,
-        email: item.user.email,
-        partners: [item.partner],
-        event_name: item.event.event_name,
-      })
-      return all
-    }
-    all[indexOfUserToOperateOn].partners.push(item.partner)
-    return all
-  }, [])
+//     const indexOfUserToOperateOn = all.findIndex((user) => user.email === item.user.email)
+//     if (indexOfUserToOperateOn === -1) {
+//       all.push({
+//         name: item.user.name,
+//         email: item.user.email,
+//         partners: [item.partner],
+//         event_name: item.event.event_name,
+//       })
+//       return all
+//     }
+//     all[indexOfUserToOperateOn].partners.push(item.partner)
+//     return all
+//   }, [])
 
-  const sendPostEventMatchesEmailPromises = []
+//   const sendPostEventMatchesEmailPromises = []
 
-  listOfMatchesByUserEmail.forEach((userObj) => {
-    const { event_name, email, first_name, partners, profile_pic_url } = userObj
-    const fields = {
-      event_name: event_name,
-      user: { name: first_name, email, profile_pic_url },
-      partnerData: partners,
-    }
+//   listOfMatchesByUserEmail.forEach((userObj) => {
+//     const { event_name, email, first_name, partners, profile_pic_url } = userObj
+//     const fields = {
+//       event_name: event_name,
+//       user: { name: first_name, email, profile_pic_url },
+//       partnerData: partners,
+//     }
 
-    sendPostEventMatchesEmailPromises.push(sendEmail(fields))
-  })
+//     sendPostEventMatchesEmailPromises.push(sendEmail(fields))
+//   })
 
-  await Promise.all(sendPostEventMatchesEmailPromises)
-}
+//   await Promise.all(sendPostEventMatchesEmailPromises)
+// }
 
-// check for finished events every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
-  try {
-    await sendEmailsToUpcomingEventParticipants()
+// // check for finished events every 5 minutes
+// cron.schedule('*/5 * * * *', async () => {
+//   try {
+//     await sendEmailsToUpcomingEventParticipants()
 
-    const fiveMinutesAgo = moment().subtract(5, 'minutes')
-    const now = moment().subtract(0, 'minutes')
-    const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
-      less_than: now,
-      greater_than: fiveMinutesAgo,
-    })
+//     const fiveMinutesAgo = moment().subtract(5, 'minutes')
+//     const now = moment().subtract(0, 'minutes')
+//     const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
+//       less_than: now,
+//       greater_than: fiveMinutesAgo,
+//     })
 
-    const eventsRecentlyFinished = eventsEndedWithinLastFiveMins.data.events
-    await sendPostEventConnetionEmails(eventsRecentlyFinished)
+//     const eventsRecentlyFinished = eventsEndedWithinLastFiveMins.data.events
+//     await sendPostEventConnetionEmails(eventsRecentlyFinished)
 
-    if (eventsRecentlyFinished.length) {
-      const eventIdsToQuery = eventsRecentlyFinished.map((event) => event.id)
-      const attendees = await orm.request(getEventAttendeesFromListOfEventIds, {
-        eventIds: eventIdsToQuery,
-      })
-      const attendeesOfRecentlyFinishedEvents = attendees.data.partners.map(
-        (partner) => partner.user.email
-      )
+//     if (eventsRecentlyFinished.length) {
+//       const eventIdsToQuery = eventsRecentlyFinished.map((event) => event.id)
+//       const attendees = await orm.request(getEventAttendeesFromListOfEventIds, {
+//         eventIds: eventIdsToQuery,
+//       })
+//       const attendeesOfRecentlyFinishedEvents = attendees.data.partners.map(
+//         (partner) => partner.user.email
+//       )
 
-      await sendEmailsToNoShows(eventsRecentlyFinished, attendeesOfRecentlyFinishedEvents)
-    }
+//       await sendEmailsToNoShows(eventsRecentlyFinished, attendeesOfRecentlyFinishedEvents)
+//     }
 
-    const oneDayPlusFiveMinsFromNow = new Date(Date.now() - oneDayInMs + fiveMinsInMs).toISOString()
+//     const oneDayPlusFiveMinsFromNow = new Date(Date.now() - oneDayInMs + fiveMinsInMs).toISOString()
 
-    const oneDayAgo = new Date(Date.now() - oneDayInMs).toISOString()
+//     const oneDayAgo = new Date(Date.now() - oneDayInMs).toISOString()
 
-    const getEventsResponse = await orm.request(getEventsByEndTime, {
-      less_than: oneDayPlusFiveMinsFromNow,
-      greater_than: oneDayAgo,
-    })
+//     const getEventsResponse = await orm.request(getEventsByEndTime, {
+//       less_than: oneDayPlusFiveMinsFromNow,
+//       greater_than: oneDayAgo,
+//     })
 
-    const eventsEndedJustUnderOneDayAgo = getEventsResponse.data.events
+//     const eventsEndedJustUnderOneDayAgo = getEventsResponse.data.events
 
-    const allEventsResponse = await orm.request(getAllEvents)
-    const hostIdsFromAllEvents = allEventsResponse.data.events
+//     const allEventsResponse = await orm.request(getAllEvents)
+//     const hostIdsFromAllEvents = allEventsResponse.data.events
 
-    await sendFollowupsToHosts(eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents)
-  } catch (error) {
-    console.log('error = ', error)
-    return __Sentry.captureException(error)
-  }
-})
+//     await sendFollowupsToHosts(eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents)
+//   } catch (error) {
+//     console.log('error = ', error)
+//     return __Sentry.captureException(error)
+//   }
+// })

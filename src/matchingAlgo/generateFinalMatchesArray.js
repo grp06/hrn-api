@@ -1,13 +1,3 @@
-// const pointsArr3 = [
-//   {
-//     userId: 1,
-//     scores: [
-//       { 2: 0 },
-//       { 3: 0 },
-//     }],
-//   ,
-// ]
-
 const getHighestScoringPartner = (userObj, pairedUserIds) => {
   let userIdAndScoreOfBestMatch // -> looks like [1, 50]
 

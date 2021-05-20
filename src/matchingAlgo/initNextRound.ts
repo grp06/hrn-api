@@ -1,12 +1,12 @@
 import * as Sentry from '@sentry/node'
 import { CronJob } from 'cron'
 
-import { setCronTimestamp } from '../../gql/mutations'
-import jobs from '../../services/jobs'
-import orm from '../../services/orm'
-import { endEvent, omniFinishRounds } from './runEventHelpers'
+import { setCronTimestamp } from '../gql/mutations'
+import jobs from '../services/jobs'
+import orm from '../services/orm'
 // TODO: (IMPORTANT) fix this circular dependency
 import nextRound from './nextRound'
+import { endEvent, omniFinishRounds } from './runEventHelpers'
 
 type InitNextRoundParams = {
   numRounds: number
@@ -14,7 +14,7 @@ type InitNextRoundParams = {
   roundLength: number
   currentRound: number
   nextRoundStart?: string // TODO: change to something that indicates date
-  useSamyakAlgo: boolean
+  useSamyakAlgo?: boolean
 }
 
 type InitNextRound = (params: InitNextRoundParams) => Promise<void>

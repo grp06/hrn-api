@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 
 import { createToken } from '../../extensions/jwtHelper'
-import { signUp } from '../../gql/mutations'
+import { signUp, completeUserProfile } from '../../gql/mutations'
 import { findUserByEmail } from '../../gql/queries'
 import { hashPassword } from '../../services/auth-service'
 import { signUpConfirmation } from '../../services/email-service'
@@ -11,13 +11,14 @@ import UsersService from './users-service'
 const express = require('express')
 
 const usersRouter = express.Router()
-const jsonBodyParser = express.json()
 
-// createUser action
-usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body.input.input
+// Request Handler
+usersRouter.post('/complete-user-profile', async (req, res) => {
+  // get request input
+  const { first_name: firstName, last_name: lastName, email, password, id } = req.body.input.input
+  console.log('🚀 ~ usersRouter.post ~ req.body.input', req.body.input)
 
-  for (const field of ['first_name', 'last_name', 'email', 'password', 'role'])
+  for (const field of ['first_name', 'last_name', 'email', 'password'])
     if (!req.body.input.input[field]) {
       return res.status(400).json({
         message: `Missing '${field}' in request body`,
@@ -28,7 +29,7 @@ usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
 
   // add logging for these errors?
 
-  const nameError = UsersService.validateName(first_name)
+  const nameError = UsersService.validateName(firstName)
   if (nameError) return res.status(400).json({ message: nameError })
 
   const emailError = UsersService.validateEmail(email)
@@ -64,36 +65,36 @@ usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
     hashedPassword = await hashPassword(password)
   } catch (error) {
     Sentry.captureException(error)
+    console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
       error,
     })
   }
 
-  const userObject = { first_name, last_name, email, password: hashedPassword, role }
-
-  const variables = { objects: [userObject] }
-  let newUser
+  const variables = { firstName, lastName, email, password: hashedPassword, id }
+  let updatedUser
 
   // insert user into db
   try {
-    const insertUserResult = await orm.request(signUp, variables)
+    const updatedUserResult = await orm.request(completeUserProfile, variables)
+    console.log('🚀 ~ usersRouter.post ~ updatedUserResult', updatedUserResult)
 
-    newUser = insertUserResult.data.insert_users.returning[0]
-    console.log('newUser', newUser)
-    signUpConfirmation(newUser)
+    updatedUser = updatedUserResult.data.update_users.returning[0]
+    console.log('updatedUser', updatedUser)
   } catch (error) {
     Sentry.captureException(error)
+    console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
       error,
     })
   }
 
   // send token and user details
-  __logger.info(`User with email ${email} created`)
+  __logger.info(`User with email ${email} updated`)
   try {
     return res.json({
-      token: await createToken(newUser, process.env.SECRET),
-      ...UsersService.serializeUser(newUser),
+      token: await createToken(updatedUser, process.env.SECRET),
+      ...UsersService.serializeUser(updatedUser),
     })
   } catch (error) {
     Sentry.captureException(error)
@@ -103,17 +104,4 @@ usersRouter.post('/create-user', jsonBodyParser, async (req, res) => {
   }
 })
 
-usersRouter.get('/get-anonymous-token', async (req, res) => {
-  try {
-    return res.json({
-      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
-    })
-  } catch (error) {
-    Sentry.captureException(error)
-    return res.status(400).json({
-      error,
-    })
-  }
-})
-
-module.exports = usersRouter
+export default usersRouter

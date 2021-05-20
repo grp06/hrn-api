@@ -1,6 +1,6 @@
 const express = require('express')
 
-const tokenRouter = express.Router()
+const twilioRouter = express.Router()
 const { AccessToken } = require('twilio').jwt
 
 const { VideoGrant } = AccessToken
@@ -8,7 +8,7 @@ const twilioAccountSid = 'AC712594f590c0d874685c04858f7398f9' // Your Account SI
 // const TokenService = require('../services/tokenService');
 
 // POST /token
-tokenRouter.post('/get-token', (req, res) => {
+twilioRouter.post('/get-token', (req, res) => {
   // Create an access token which we will sign and return to the client,
   // containing the grant we just created
   const { userId, uniqueName } = req.body.input.input
@@ -30,7 +30,8 @@ tokenRouter.post('/get-token', (req, res) => {
   token.addGrant(videoGrant)
 
   // Serialize the token to a JWT string
-  res.json(JSON.stringify({ token: token.toJwt() }))
+  const tokenAsJwt = token.toJwt()
+  res.json({ token: tokenAsJwt })
 })
 
-module.exports = tokenRouter
+export default twilioRouter

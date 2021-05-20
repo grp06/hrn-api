@@ -1,15 +1,14 @@
 import * as Sentry from '@sentry/node'
-import orm from '../../services/orm'
-import { findUserByEmail } from '../../gql/queries'
+
 import { createToken } from '../../extensions/jwtHelper'
+import { findUserByEmail } from '../../gql/queries'
 import { comparePasswords } from '../../services/auth-service'
+import orm from '../../services/orm'
 
 const express = require('express')
 
 const authRouter = express.Router()
-const jsonBodyParser = express.json()
 
-// Request Handler
 authRouter.post('/get-login-details', async (req, res) => {
   const { email, password } = req.body.input.input
 
@@ -59,4 +58,17 @@ authRouter.post('/get-login-details', async (req, res) => {
   })
 })
 
-module.exports = authRouter
+authRouter.post('/get-anonymous-token', async (req, res) => {
+  try {
+    return res.json({
+      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(400).json({
+      error,
+    })
+  }
+})
+
+export default authRouter

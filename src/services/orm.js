@@ -1,9 +1,8 @@
-// import 'dotenv/config';
-
 import axios from 'axios'
 import { print } from 'graphql'
-import { constants } from '../extensions/jwtHelper'
+
 import { HASURA_ENDPOINT } from '../config'
+import { constants } from '../extensions/jwtHelper'
 
 const request = async (gqlQuery, variables = {}, token) => {
   const headers = {}

@@ -1,6 +1,7 @@
 import gql from 'graphql-tag'
-import user from './user'
+
 import event from './event'
+import user from './user'
 
 const linkSchema = gql`
   scalar Date

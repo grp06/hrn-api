@@ -5,11 +5,6 @@ const insertUser = gql`
     insert_users(objects: $objects) {
       returning {
         id
-        first_name
-        last_name
-        email
-        created_at
-        role
       }
     }
   }
