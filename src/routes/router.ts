@@ -5,10 +5,10 @@ import Unsplash, { toJson } from 'unsplash-js'
 import authRouter from './auth/auth-router'
 import emailRouter from './email/email-router'
 import roomsRouter from './rooms/rooms.router'
+import signupRouter from './signup/signup-router'
 import stripeRouter from './stripe/stripe-router'
 import twilioRouter from './twilio/twilio-router'
 import uploadRouter from './upload/upload-router'
-import usersRouter from './users/users-router'
 import webhooks from './webhooks'
 
 const router = Router()
@@ -19,7 +19,7 @@ const apiRouter = Router()
  */
 apiRouter.use('/rooms', roomsRouter)
 apiRouter.use('/twilio', twilioRouter)
-apiRouter.use('/signup', usersRouter)
+apiRouter.use('/signup', signupRouter)
 apiRouter.use('/auth', authRouter)
 apiRouter.use('/upload', uploadRouter)
 apiRouter.use('/email', emailRouter)
