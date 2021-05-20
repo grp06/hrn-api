@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 
 import { createToken } from '../../extensions/jwtHelper'
-import { findUserByEmail } from '../../gql/queries'
+import { findUserByEmail, findUserById } from '../../gql/queries'
 import { comparePasswords } from '../../services/auth-service'
 import orm from '../../services/orm'
 
@@ -9,17 +9,10 @@ const express = require('express')
 
 const authRouter = express.Router()
 
-authRouter.post('/get-login-details', async (req, res) => {
+authRouter.post('/login', async (req, res) => {
   const { email, password } = req.body.input.input
 
   const loginUser = { email, password }
-
-  // make sure all keys are in request body
-  for (const [key, value] of Object.entries(loginUser))
-    if (value == null)
-      return res.status(400).json({
-        error: `Missing '${key}' in request body`,
-      })
 
   let dbUser
 
@@ -48,13 +41,12 @@ authRouter.post('/get-login-details', async (req, res) => {
       message: 'There was an error logging in',
     })
   }
-
+  delete dbUser.password
   console.log(dbUser)
 
   return res.json({
     token: await createToken(dbUser, process.env.SECRET),
-    role: dbUser.role,
-    id: dbUser.id,
+    ...dbUser,
   })
 })
 
@@ -66,7 +58,40 @@ authRouter.post('/get-anonymous-token', async (req, res) => {
   } catch (error) {
     Sentry.captureException(error)
     return res.status(400).json({
-      error,
+      message: error,
+    })
+  }
+})
+
+authRouter.post('/fetch-user-by-token', async (req, res) => {
+  // get request input
+  console.log('req.body.input = ', req.body.input)
+  console.log('req.body.session_variables = ')
+
+  try {
+    const findUserByIdReq = await orm.request(findUserById, {
+      id: req.body.session_variables['x-hasura-user-id'],
+    })
+    const user = findUserByIdReq.data.users[0]
+    console.log('🚀 ~ authRouter.post ~ findUserByIdReq', findUserByIdReq)
+    if (findUserByIdReq.errors) {
+      Sentry.captureException(findUserByIdReq.errors[0].message)
+      // TODO: find another way to throw the error, because we're inside of a try/catch
+      throw new Error(findUserByIdReq.errors[0].message)
+    }
+    console.log('result ', findUserByIdReq.data.users[0])
+
+    // doesn't seem like we should return the password in the response every time we reload the page
+    // if I don't delete it, graphQL complains. Looks weird but I'm open to ideas
+    delete findUserByIdReq.data.users[0].password
+    return res.json({
+      token: await createToken(user, process.env.SECRET),
+      ...user,
+    })
+  } catch (error) {
+    console.log('🚀 ~ authRouter.post ~ error', error)
+    return res.status(400).json({
+      message: "couldn't find user",
     })
   }
 })

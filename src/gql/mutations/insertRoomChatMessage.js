@@ -6,7 +6,11 @@ const insertRoomChatMessage = gql`
       objects: { content: $content, room_id: $roomId, sender_id: $senderId }
     ) {
       returning {
+        content
+        created_at
         id
+        room_id
+        sender_id
       }
     }
   }

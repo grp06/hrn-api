@@ -55,12 +55,10 @@ emailRouter.post('/reset-password', async (req, res) => {
 })
 
 emailRouter.post('/set-new-password', async (req, res) => {
-  console.log('yooooo')
   const { userId, token, password } = req.body.input.input
-  console.log('🚀 ~ emailRouter.post ~ req.body.input', req.body.input)
 
   const passwordError = UsersService.validatePassword(password)
-  if (passwordError) return res.status(400).json({ error: passwordError })
+  if (passwordError) return res.status(400).json({ message: 'Password not valid' })
 
   // find user by ID
   let user
@@ -81,7 +79,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
     const secret = `${user.password}-${user.created_at}`
     payload = jwt.verify(token, secret)
   } catch (error) {
-    return res.status(401).json({ error: 'Unauthorized request' })
+    return res.status(401).json({ message: 'Unauthorized request' })
   }
 
   if (payload.userId === user.id) {
@@ -91,7 +89,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
     try {
       hashedPassword = await hashPassword(password)
     } catch (error) {
-      return res.status(400).json({ error: 'error hashing password' })
+      return res.status(400).json({ message: 'error hashing password' })
     }
 
     // find user and update
@@ -101,7 +99,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
 
       updatedUser = updatePasswordResult.data.update_users.returning[0]
     } catch (error) {
-      return res.status(400).json({ error: 'error inserting new password' })
+      return res.status(400).json({ message: 'error inserting new password' })
     }
 
     return res.json({

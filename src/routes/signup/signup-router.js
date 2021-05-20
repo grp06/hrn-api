@@ -20,7 +20,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   for (const field of ['first_name', 'last_name', 'email', 'password']) {
     if (!req.body.input.input[field]) {
       return res.status(400).json({
-        error: `Missing '${field}' in request body`,
+        message: `Missing '${field}' in request body`,
       })
     }
   }
@@ -30,13 +30,13 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   // add logging for these errors?
 
   const nameError = UsersService.validateName(first_name)
-  if (nameError) return res.status(400).json({ error: nameError })
+  if (nameError) return res.status(400).json({ message: nameError })
 
   const emailError = UsersService.validateEmail(email)
-  if (emailError) return res.status(400).json({ error: emailError })
+  if (emailError) return res.status(400).json({ message: emailError })
 
   const passwordError = UsersService.validatePassword(password)
-  if (passwordError) return res.status(400).json({ error: passwordError })
+  if (passwordError) return res.status(400).json({ message: passwordError })
 
   // check if user with email exists
   let existingUser
@@ -48,14 +48,16 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     if (existingUser) {
       const error = 'Email already in use'
       Sentry.captureMessage(console.error())
-      return res.status(400).json({ error })
+      return res.status(400).json({
+        message: error.toString(),
+      })
     }
   } catch (error) {
     Sentry.captureException(error)
     console.log('message: ', error)
 
     return res.status(500).json({
-      error,
+      message: error.toString(),
     })
   }
 
@@ -67,7 +69,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
-      error,
+      message: error.toString(),
     })
   }
 
@@ -85,7 +87,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(500).json({
-      error,
+      message: error.toString(),
     })
   }
 
@@ -104,69 +106,4 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   }
 })
 
-usersRouter.post('/create-guest-user', async (req, res) => {
-  // get request input
-  const { firstName, roomId } = req.body.input
-  try {
-    const insertUserReq = await orm.request(insertUser, {
-      objects: {
-        first_name: firstName,
-      },
-    })
-
-    const createdUser = insertUserReq.data.insert_users.returning[0]
-    if (insertUserReq.errors) {
-      throw new Error(insertUserReq.errors[0].message)
-    }
-    const userId = insertUserReq.data.insert_users.returning[0].id
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
-      objects: {
-        room_id: roomId,
-        user_id: userId,
-      },
-    })
-
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
-    }
-
-    // success
-    return res.json({
-      error: null,
-      token: await createToken(createdUser, process.env.SECRET),
-      ...createdUser,
-    })
-  } catch (error) {
-    return res.status(400).json({
-      error,
-    })
-  }
-})
-
-usersRouter.post('/fetch-user-by-token', async (req, res) => {
-  // get request input
-  console.log('req.body.input = ', req.body.input)
-  console.log('req.body.session_variables = ', req.body.session_variables)
-
-  // run some business logic
-
-  /*
-  // In case of errors:
-  return res.status(400).json({
-    message: "error happened"
-  })
-  */
-
-  // success
-  return res.json({
-    created_at: '<value>',
-    email: '<value>',
-    error: '<value>',
-    first_name: '<value>',
-    id: '<value>',
-    last_name: '<value>',
-    role: '<value>',
-    token: '<value>',
-  })
-})
 export default usersRouter

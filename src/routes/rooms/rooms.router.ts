@@ -6,74 +6,45 @@ import { CronJob } from 'cron'
 import express from 'express'
 import moment from 'moment'
 
+import { createToken } from '../../extensions/jwtHelper'
 import {
   insertRoom,
   insertRoomMode,
   insertRoomUser,
   insertUser,
-  updateEventObject,
   updateRoom,
+  insertRoomChatMessage,
 } from '../../gql/mutations'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
 import updateRoomModeBreak from '../../gql/mutations/updateRoomModeBreak'
-import { getAvailableLobbyUsers } from '../../gql/queries'
-import nextRound from '../../matchingAlgo/nextRound'
-import { endEvent } from '../../matchingAlgo/runEventHelpers'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
-import createPreEventRooms from '../../services/twilio/createPreEventRooms'
 
 const roomsRouter = express.Router()
-const jsonBodyParser = express.json()
 
-roomsRouter.post('/end-event/:id', jsonBodyParser, async (req, res) => {
+roomsRouter.post('/send-group-chat', async (req, res) => {
+  const { senderId, roomId, content } = req.body.input.input
+  let messageId
   try {
-    await endEvent(req.params.id, true)
-  } catch (error) {
-    console.log('error', error)
-    Sentry.captureException(error)
-  }
-})
-
-roomsRouter.post('/start-pre-event/:id', jsonBodyParser, async (req, res) => {
-  const eventId = req.params.id
-
-  let onlineUsersResponse
-  try {
-    onlineUsersResponse = await orm.request(getAvailableLobbyUsers, {
-      eventId,
+    const insertRoomChatMessageRes = await orm.request(insertRoomChatMessage, {
+      senderId,
+      roomId,
+      content,
     })
-    console.log('onlineUsersResponse', onlineUsersResponse)
 
-    const maxNumUsersPerRoom = 40
-    const numOnlineUsers = onlineUsersResponse.data.online_event_users.length
-    console.log('numOnlineUsers', numOnlineUsers)
-    const numRooms = Math.ceil(numOnlineUsers / maxNumUsersPerRoom)
-    console.log('numRooms', numRooms)
-    await createPreEventRooms(numRooms, eventId)
-
-    await orm.request(updateEventObject, {
-      id: eventId,
-      newStatus: 'pre-event',
+    if (insertRoomChatMessageRes.errors) {
+      throw new Error(insertRoomChatMessageRes.errors[0].message)
+    }
+    return res.json({
+      ...insertRoomChatMessageRes.data.insert_room_chat_messages.returning[0],
     })
   } catch (error) {
-    Sentry.captureException(error)
     console.log('error = ', error)
-    return res.status(500).json({ message: 'start pre-event failed' })
+    return res.status(400).json({
+      message: 'couldnt send message',
+    })
   }
-
-  return res.status(200).json({ message: 'pre-event started' })
-})
-
-// api/rooms/start-event/:eventId
-roomsRouter.post('/start-event/:eventId', jsonBodyParser, async (req, res) => {
-  // TODO: remove the use of the global variable
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  __logger.info(`Event with id ${req.params.eventId} started.`)
-
-  return nextRound({ req, res })
 })
 
 /**
@@ -160,6 +131,8 @@ roomsRouter.post('/create-room', async (req, res) => {
  */
 roomsRouter.post('/create-guest-user', async (req, res) => {
   // get request input
+  console.log('----CREATE GUEST USER -----')
+
   const { firstName, roomId } = req.body.input
   try {
     const insertUserRes = await orm.request(insertUser, {
@@ -167,6 +140,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
         first_name: firstName,
       },
     })
+    const newUser = insertUserRes.data.insert_users.returning[0]
     console.log('🚀 ~ roomsRouter.post ~ insertUserRes', insertUserRes)
     if (insertUserRes.errors) {
       throw new Error(insertUserRes.errors[0].message)
@@ -175,23 +149,25 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
     const insertRoomUserRes = await orm.request(insertRoomUser, {
       objects: {
         room_id: roomId,
-        user_id: insertUserRes.data.insert_users.returning[0].id,
+        user_id: newUser.id,
       },
     })
 
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
+
+    // success
+    return res.json({
+      ...insertUserRes.data.insert_users.returning[0],
+      token: await createToken(newUser, process.env.SECRET),
+    })
   } catch (error) {
+    console.log('🚀 error', typeof error.toString())
     return res.status(400).json({
-      success: false,
+      message: error.toString(),
     })
   }
-
-  // success
-  return res.json({
-    success: true,
-  })
 })
 
 /**
@@ -270,7 +246,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
   } catch (error) {
     console.log(error)
     return res.status(400).json({
-      success: false,
+      message: error.toString(),
     })
   }
 
