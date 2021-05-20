@@ -73,7 +73,7 @@ export const initNextRound: InitNextRound = async (params) => {
     // Establish the delay between rounds
     const delayBetweenRounds = moment().add(
       eventIsOver ? delayAtTheEndOfTheMode : defaultDelayBetweenRounds,
-      'seconds',
+      'seconds'
     )
 
     // Wait for the delay between rounds & initiate the next one
@@ -261,7 +261,7 @@ export const initSpeedRounds: InitSpeedRounds = async (params) => {
     // Update the room mode status
     const roomModeUpdate = await orm.request(updateRoomMode, {
       roomModeId,
-      break: false,
+      breakTime: false,
       roundNumber,
     })
 

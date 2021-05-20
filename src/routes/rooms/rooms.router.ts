@@ -51,78 +51,111 @@ roomsRouter.post('/send-group-chat', async (req, res) => {
  * Create a room
  */
 roomsRouter.post('/create-room', async (req, res) => {
-  // TODO: add transactions
-  try {
-    const { firstName, roomName } = req.body || {}
+  const { firstName, roomName } = req.body.input
+  console.log('🚀 ~ roomsRouter.post ~ roomName', roomName)
+  console.log('🚀 ~ roomsRouter.post ~ firstName', firstName)
 
-    // Create a room mode
-    const roomModeRes = await orm.request(insertRoomMode, {
+  try {
+    const insertRoomModeReq = await orm.request(insertRoomMode, {
       objects: {
         round_number: null,
         round_length: null,
         total_rounds: null,
       },
     })
+    console.log('🚀 ~ app.post ~ insertRoomModeReq', insertRoomModeReq)
+    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
+    console.log('🚀 ~ app.post ~ roomModesResponse', roomModesResponse)
 
-    console.log('🚀 ~ roomsRouter.post ~ roomModeRes', roomModeRes)
-
-    if (roomModeRes.errors) {
-      throw new Error(roomModeRes.errors[0].message)
+    if (insertRoomModeReq.errors) {
+      throw new Error(insertRoomModeReq.errors[0].message)
     }
 
-    // Create a guest user
-    const insertUserRes = await orm.request(insertUser, {
+    const insertUserReq = await orm.request(insertUser, {
       objects: {
         first_name: firstName,
       },
     })
-
-    console.log('🚀 ~ roomsRouter.post ~ insertUserRes', insertUserRes)
-
-    if (insertUserRes.errors) {
-      throw new Error(insertUserRes.errors[0].message)
+    const insertUserResponse = insertUserReq.data.insert_users.returning[0]
+    console.log('🚀 ~ app.post ~ insertUserResponse', insertUserResponse)
+    const { created_at, email, first_name, last_name, id: ownerId, role } = insertUserResponse
+    if (insertUserReq.errors) {
+      throw new Error(insertUserReq.errors[0].message)
     }
-
-    // Create room
-    const insertRoomRes = await orm.request(insertRoom, {
+    const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
-        room_modes_id: roomModeRes.data.insert_room_modes.returning[0].id,
-        owner_id: insertUserRes.data.insert_users.returning[0].id,
+        room_modes_id: roomModesResponse.id,
+        owner_id: ownerId,
       },
     })
 
-    console.log('🚀 ~ roomsRouter.post ~ insertRoomRes', insertRoomRes)
+    console.log('🚀 ~ app.post ~ insertRoomReq', insertRoomReq)
+    const insertRoomResponse = insertRoomReq.data.insert_rooms.returning[0]
+    console.log('🚀 ~ app.post ~ insertRoomResponse', insertRoomResponse)
 
-    if (insertRoomRes.errors) {
-      if (insertRoomRes.errors[0].message.indexOf('rooms_name_key') > -1) {
+    if (insertRoomReq.errors) {
+      console.log('🚀 ~ app.post ~ insertRoomReq.errors', insertRoomReq.errors)
+      if (insertRoomReq.errors[0].message.indexOf('rooms_name_key') > -1) {
         return res.json({ success: false, error: 'room name unavailable' })
       }
-      if (insertUserRes.errors) {
-        throw new Error(insertUserRes.errors[0].message)
+      if (insertUserReq.errors) {
+        throw new Error(insertUserReq.errors[0].message)
       }
     }
+    const roomId = insertRoomReq.data.insert_rooms.returning[0].id
 
-    // Add the owner as a room user
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
+    const insertRoomUserReq = await orm.request(insertRoomUser, {
       objects: {
-        room_id: insertRoomRes.data.insert_rooms.returning[0].id,
-        user_id: insertUserRes.data.insert_users.returning[0].id,
+        room_id: insertRoomResponse.id,
+        user_id: insertUserResponse.id,
       },
     })
+    console.log('🚀 ~ app.post ~ insertRoomUserReq', insertRoomUserReq)
+    const insertRoomUserResponse = insertRoomUserReq.data.insert_room_users.returning[0]
+    console.log('🚀 ~ app.post ~ insertRoomUserResponse', insertRoomUserResponse)
 
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
+    const { last_seen, updated_at } = insertRoomUserResponse
+
+    if (insertRoomUserReq.errors) {
+      throw new Error(insertRoomUserReq.errors[0].message)
     }
+    console.log('roomModesResponse ', roomModesResponse)
+    const {
+      id: room_modes_id,
+      break_time,
+      mode_name,
+      round_length,
+      round_number,
+      total_rounds,
+    } = roomModesResponse
+    console.log('🚀 ~ app.post ~ roomModesResponse', roomModesResponse)
+
+    return res.json({
+      break_time,
+      created_at,
+      email,
+      error: null,
+      first_name,
+      last_name,
+      last_seen,
+      mode_name,
+      owner_id: ownerId,
+      role,
+      roomId,
+      roomName,
+      room_modes_id,
+      round_length,
+      round_number,
+      token: await createToken(insertUserResponse, process.env.SECRET),
+      total_rounds,
+      updated_at,
+    })
   } catch (error) {
-    console.error('Error: ', error)
+    console.log('error = ', error)
 
     return res.json({ success: false })
   }
-
-  return res.json({
-    success: true,
-  })
 })
 
 /**
@@ -176,7 +209,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
 roomsRouter.post('/change-room-mode', async (req, res) => {
   try {
     // get request input
-    const { roomId, modeName, totalRounds = null, roundLength = null } = req.body
+    const { roomId, modeName, totalRounds = null, roundLength = null } = req.body.input
     const roundNumber = 1
 
     // TODO: check params, should we add defaults for totalRounds & roundLength
@@ -219,7 +252,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     // Start the break
     const updatedRoomModeRes = await orm.request(updateRoomMode, {
       roomModeId: roomModesId,
-      break: true,
+      breakTime: true,
       roundNumber,
     })
 

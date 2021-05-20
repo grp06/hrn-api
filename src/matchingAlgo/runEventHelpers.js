@@ -53,7 +53,7 @@ export const omniFinishRounds = async (roundNumber, roomId, roomModeId) => {
   try {
     const updatedRoomModeRes = await orm.request(updateRoomMode, {
       roomModeId,
-      break: true,
+      breakTime: true,
       roundNumber,
     })
 
