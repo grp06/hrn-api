@@ -13,7 +13,6 @@ import {
   insertRoomUser,
   insertUser,
   updateRoom,
-  insertRoomChatMessage,
 } from '../../gql/mutations'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
 import updateRoomModeBreak from '../../gql/mutations/updateRoomModeBreak'
@@ -22,30 +21,6 @@ import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
 
 const roomsRouter = express.Router()
-
-roomsRouter.post('/send-group-chat', async (req, res) => {
-  const { senderId, roomId, content } = req.body.input.input
-  let messageId
-  try {
-    const insertRoomChatMessageRes = await orm.request(insertRoomChatMessage, {
-      senderId,
-      roomId,
-      content,
-    })
-
-    if (insertRoomChatMessageRes.errors) {
-      throw new Error(insertRoomChatMessageRes.errors[0].message)
-    }
-    return res.json({
-      ...insertRoomChatMessageRes.data.insert_room_chat_messages.returning[0],
-    })
-  } catch (error) {
-    console.log('error = ', error)
-    return res.status(400).json({
-      message: 'couldnt send message',
-    })
-  }
-})
 
 /**
  * Create a room
