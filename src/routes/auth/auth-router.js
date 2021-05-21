@@ -64,10 +64,6 @@ authRouter.post('/get-anonymous-token', async (req, res) => {
 })
 
 authRouter.post('/fetch-user-by-token', async (req, res) => {
-  // get request input
-  console.log('req.body.input = ', req.body.input)
-  console.log('req.body.session_variables = ')
-
   try {
     const findUserByIdReq = await orm.request(findUserById, {
       id: req.body.session_variables['x-hasura-user-id'],

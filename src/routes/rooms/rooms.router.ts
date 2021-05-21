@@ -63,7 +63,6 @@ roomsRouter.post('/create-room', async (req, res) => {
         total_rounds: null,
       },
     })
-    console.log('🚀 ~ app.post ~ insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
     console.log('🚀 ~ app.post ~ roomModesResponse', roomModesResponse)
 
@@ -91,18 +90,16 @@ roomsRouter.post('/create-room', async (req, res) => {
     })
 
     console.log('🚀 ~ app.post ~ insertRoomReq', insertRoomReq)
+
+    if (insertRoomReq.errors) {
+      if (insertRoomReq.errors[0].message.indexOf('rooms_name_key') > -1) {
+        return res.status(400).json({ message: 'room name unavailable' })
+      }
+    }
+
     const insertRoomResponse = insertRoomReq.data.insert_rooms.returning[0]
     console.log('🚀 ~ app.post ~ insertRoomResponse', insertRoomResponse)
 
-    if (insertRoomReq.errors) {
-      console.log('🚀 ~ app.post ~ insertRoomReq.errors', insertRoomReq.errors)
-      if (insertRoomReq.errors[0].message.indexOf('rooms_name_key') > -1) {
-        return res.json({ success: false, error: 'room name unavailable' })
-      }
-      if (insertUserReq.errors) {
-        throw new Error(insertUserReq.errors[0].message)
-      }
-    }
     const roomId = insertRoomReq.data.insert_rooms.returning[0].id
 
     const insertRoomUserReq = await orm.request(insertRoomUser, {
@@ -135,7 +132,6 @@ roomsRouter.post('/create-room', async (req, res) => {
       break_time,
       created_at,
       email,
-      error: null,
       first_name,
       last_name,
       last_seen,
@@ -154,7 +150,7 @@ roomsRouter.post('/create-room', async (req, res) => {
   } catch (error) {
     console.log('error = ', error)
 
-    return res.json({ success: false })
+    return res.status(400).json({ message: 'couldnt create room' })
   }
 })
 
@@ -209,7 +205,9 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
 roomsRouter.post('/change-room-mode', async (req, res) => {
   try {
     // get request input
-    const { roomId, modeName, totalRounds = null, roundLength = null } = req.body.input
+    const { roomId, modeName, totalRounds = null, roundLength = null } = req.body.input.input
+
+    console.log('🚀 ~ roomsRouter.post ~ req.body.input', req.body.input)
     const roundNumber = 1
 
     // TODO: check params, should we add defaults for totalRounds & roundLength
@@ -233,6 +231,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     // grab the id from the row we just inserted
     const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
     console.log('🚀 ~ roomsRouter.post ~ roomModesId', roomModesId)
+    console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
 
     // make sure to use that id to update the room_modes_id on the room table
     const updateRoomRes = await orm.request(updateRoom, {
