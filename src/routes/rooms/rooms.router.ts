@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node'
 import { CronJob } from 'cron'
 import express from 'express'
 import moment from 'moment'
+import slug from 'slug'
 
 import { createToken } from '../../extensions/jwtHelper'
 import {
@@ -29,6 +30,9 @@ roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName } = req.body.input
   console.log('🚀 ~ roomsRouter.post ~ roomName', roomName)
   console.log('🚀 ~ roomsRouter.post ~ firstName', firstName)
+
+  const roomSlug = slug(roomName)
+  console.log('🚀 ~ roomsRouter.post ~ roomSlug', roomSlug)
 
   try {
     const insertRoomModeReq = await orm.request(insertRoomMode, {
@@ -59,6 +63,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
+        slug: roomSlug,
         room_modes_id: roomModesResponse.id,
         owner_id: ownerId,
       },
@@ -115,6 +120,7 @@ roomsRouter.post('/create-room', async (req, res) => {
       role,
       roomId,
       roomName,
+      slug: roomSlug,
       room_modes_id,
       round_length,
       round_number,
