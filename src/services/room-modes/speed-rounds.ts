@@ -261,7 +261,7 @@ export const initSpeedRounds: InitSpeedRounds = async (params) => {
     // Update the room mode status
     const roomModeUpdate = await orm.request(updateRoomMode, {
       roomModeId,
-      breakTime: false,
+      pause: false,
       roundNumber,
     })
 

@@ -17,6 +17,7 @@ import {
 } from '../../gql/mutations'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
 import updateRoomModeBreak from '../../gql/mutations/updateRoomModeBreak'
+import { findUserById } from '../../gql/queries'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
@@ -100,7 +101,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     console.log('roomModesResponse ', roomModesResponse)
     const {
       id: room_modes_id,
-      break_time,
+      pause,
       mode_name,
       round_length,
       round_number,
@@ -109,7 +110,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     console.log('🚀 ~ app.post ~ roomModesResponse', roomModesResponse)
 
     return res.json({
-      break_time,
+      pause,
       created_at,
       email,
       first_name,
@@ -142,7 +143,6 @@ roomsRouter.post('/create-room', async (req, res) => {
 roomsRouter.post('/create-guest-user', async (req, res) => {
   // get request input
   console.log('----CREATE GUEST USER -----')
-
   const { firstName, roomId } = req.body.input
   try {
     const insertUserRes = await orm.request(insertUser, {
@@ -232,7 +232,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     // Start the break
     const updatedRoomModeRes = await orm.request(updateRoomMode, {
       roomModeId: roomModesId,
-      breakTime: true,
+      pause: true,
       roundNumber,
     })
 

@@ -6,7 +6,7 @@ const insertRoomMode = gql`
       returning {
         id
         mode_name
-        break_time
+        pause
         total_rounds
         round_number
         round_length
