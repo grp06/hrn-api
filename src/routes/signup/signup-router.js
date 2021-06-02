@@ -49,15 +49,15 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
       const error = 'Email already in use'
       Sentry.captureMessage(console.error())
       return res.status(400).json({
-        message: error.toString(),
+        message: error,
       })
     }
   } catch (error) {
     Sentry.captureException(error)
     console.log('message: ', error)
 
-    return res.status(500).json({
-      message: error.toString(),
+    return res.status(400).json({
+      message: error,
     })
   }
 
@@ -68,8 +68,8 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   } catch (error) {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
-    return res.status(500).json({
-      message: error.toString(),
+    return res.status(400).json({
+      message: error,
     })
   }
 
@@ -86,8 +86,8 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   } catch (error) {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
-    return res.status(500).json({
-      message: error.toString(),
+    return res.status(400).json({
+      message: error,
     })
   }
 
@@ -96,12 +96,12 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
   try {
     return res.json({
       token: await createToken(updatedUser, process.env.SECRET),
-      ...UsersService.serializeUser(updatedUser),
+      userId: updatedUser.id,
     })
   } catch (error) {
     Sentry.captureException(error)
-    return res.status(500).json({
-      error,
+    return res.status(400).json({
+      message: error,
     })
   }
 })
