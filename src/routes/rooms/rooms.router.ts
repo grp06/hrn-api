@@ -15,6 +15,7 @@ import {
   insertUser,
   updateRoom,
 } from '../../gql/mutations'
+import deleteRoomModeCron from '../../gql/mutations/deleteRoomModeCron'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
 import updateRoomModeBreak from '../../gql/mutations/updateRoomModeBreak'
 import { findUserById } from '../../gql/queries'
@@ -255,22 +256,26 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
   try {
     const updateRoomModeRes = await orm.request(updateRoomMode, {
       roomModeId,
-      pause: null,
+      pause: false,
       roundNumber: 0,
     })
-    console.log('🚀 updateRoomModeRes', updateRoomModeRes.data.update_room_modes.returning[0])
-    const roomId = updateRoomModeRes.data.update_room_modes.returning[0].room.id
-    console.log('jobs = ', jobs)
+    console.log('🚀 ~ roomsRouter.post ~ updateRoomModeRes', updateRoomModeRes)
+
+    const deletedCron = await orm.request(deleteRoomModeCron, {
+      roomModeId,
+    })
+    console.log('🚀 ~ roomsRouter.post ~ deletedCron', deletedCron)
+
+    const roomId = updateRoomModeRes.data.update_room_modes.returning[0].rooms[0].id
+    console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
 
     if (jobs.nextRound[roomId]) {
       jobs.nextRound[roomId].stop()
-      jobs.nextRound[roomId] = null
       console.log('clearing next round job')
     }
 
     if (jobs.betweenRounds[roomId]) {
       jobs.betweenRounds[roomId].stop()
-      jobs.betweenRounds[roomId] = null
       console.log('clearing between round job')
     }
 
