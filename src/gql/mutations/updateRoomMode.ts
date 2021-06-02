@@ -11,6 +11,9 @@ const updateRoomMode = gql`
         id
         pause
         round_number
+        rooms {
+          id
+        }
       }
     }
   }

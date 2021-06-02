@@ -140,6 +140,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
         user_id: newUser.id,
       },
     })
+    const newRoomUser = insertUserRes.data.insert_room_users.returning[0]
 
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
@@ -148,12 +149,12 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
     // success
     return res.json({
       userId: newUser.id,
+      roomUserId: newRoomUser.id,
       token: await createToken(newUser, process.env.SECRET),
     })
   } catch (error) {
-    console.log('🚀 error', typeof error.toString())
     return res.status(400).json({
-      message: error.toString(),
+      message: error,
     })
   }
 })
@@ -216,7 +217,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
 
     console.log('(updatedRoomModeRes) We started the break:', updatedRoomModeRes)
 
-    const countdownSeconds = 5
+    const countdownSeconds = 20
     const countdown = moment().add(countdownSeconds, 'seconds')
 
     jobs.countdown[roomId] = new CronJob(countdown, async () => {
@@ -234,17 +235,54 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     })
 
     jobs.countdown[roomId].start()
+    // success
+    return res.json({
+      roomId,
+      roomModeId: roomModesId,
+    })
   } catch (error) {
     console.log(error)
     return res.status(400).json({
-      message: error.toString(),
+      message: error,
     })
   }
+})
 
-  // success
-  return res.json({
-    success: true,
-  })
+roomsRouter.post('/reset-speed-chat', async (req, res) => {
+  // get request input
+  const { roomModeId } = req.body.input
+
+  try {
+    const updateRoomModeRes = await orm.request(updateRoomMode, {
+      roomModeId,
+      pause: null,
+      roundNumber: 0,
+    })
+    console.log('🚀 updateRoomModeRes', updateRoomModeRes.data.update_room_modes.returning[0])
+    const roomId = updateRoomModeRes.data.update_room_modes.returning[0].room.id
+    console.log('jobs = ', jobs)
+
+    if (jobs.nextRound[roomId]) {
+      jobs.nextRound[roomId].stop()
+      jobs.nextRound[roomId] = null
+      console.log('clearing next round job')
+    }
+
+    if (jobs.betweenRounds[roomId]) {
+      jobs.betweenRounds[roomId].stop()
+      jobs.betweenRounds[roomId] = null
+      console.log('clearing between round job')
+    }
+
+    return res.json({
+      roomModeId,
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({
+      message: error,
+    })
+  }
 })
 
 export default roomsRouter
