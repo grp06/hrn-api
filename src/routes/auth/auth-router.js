@@ -47,7 +47,7 @@ authRouter.post('/login', async (req, res) => {
 
   return res.json({
     token: await createToken(dbUser, process.env.SECRET),
-    ...dbUser,
+    userId: dbUser.id,
   })
 })
 
