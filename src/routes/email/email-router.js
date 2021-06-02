@@ -67,11 +67,11 @@ emailRouter.post('/set-new-password', async (req, res) => {
     console.log('🚀 ~ emailRouter.post ~ checkIdRequest', checkIdRequest)
     user = checkIdRequest.data.users[0]
     if (!user) {
-      return res.status(400).json({ error: 'No user with that email' })
+      return res.status(400).json({ message: 'No user with that email' })
     }
   } catch (err) {
     console.log('🚀 ~ emailRouter.post ~ err', err)
-    return res.status(404).json({ error: 'Error finding user' })
+    return res.status(404).json({ message: 'Error finding user' })
   }
 
   let payload
@@ -104,8 +104,7 @@ emailRouter.post('/set-new-password', async (req, res) => {
 
     return res.json({
       token: await createToken(updatedUser, process.env.SECRET),
-      role: updatedUser.role,
-      id: updatedUser.id,
+      userId: updatedUser.id,
     })
   }
   return res.status(404).json({ error: 'Something went wrong with the link you used.' })

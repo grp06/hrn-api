@@ -21,6 +21,7 @@ authRouter.post('/login', async (req, res) => {
     // check if user with email exists
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
     dbUser = checkEmailRequest.data.users[0]
+    console.log('🚀 ~ authRouter.post ~ dbUser', dbUser)
 
     if (!dbUser) {
       return res.status(400).json({ message: 'Incorrect email or password' })
@@ -64,9 +65,10 @@ authRouter.post('/get-anonymous-token', async (req, res) => {
 })
 
 authRouter.post('/fetch-user-by-token', async (req, res) => {
+  const userId = req.body.session_variables['x-hasura-user-id']
   try {
     const findUserByIdReq = await orm.request(findUserById, {
-      id: req.body.session_variables['x-hasura-user-id'],
+      id: userId,
     })
     const user = findUserByIdReq.data.users[0]
     console.log('🚀 ~ authRouter.post ~ findUserByIdReq', findUserByIdReq)
@@ -77,12 +79,9 @@ authRouter.post('/fetch-user-by-token', async (req, res) => {
     }
     console.log('result ', findUserByIdReq.data.users[0])
 
-    // doesn't seem like we should return the password in the response every time we reload the page
-    // if I don't delete it, graphQL complains. Looks weird but I'm open to ideas
-    delete findUserByIdReq.data.users[0].password
     return res.json({
       token: await createToken(user, process.env.SECRET),
-      ...user,
+      userId,
     })
   } catch (error) {
     console.log('🚀 ~ authRouter.post ~ error', error)

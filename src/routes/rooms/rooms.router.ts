@@ -57,7 +57,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     })
     const insertUserResponse = insertUserReq.data.insert_users.returning[0]
     console.log('🚀 ~ app.post ~ insertUserResponse', insertUserResponse)
-    const { created_at, email, first_name, last_name, id: ownerId, role } = insertUserResponse
+    const { id: ownerId } = insertUserResponse
     if (insertUserReq.errors) {
       throw new Error(insertUserReq.errors[0].message)
     }
@@ -89,45 +89,23 @@ roomsRouter.post('/create-room', async (req, res) => {
         user_id: insertUserResponse.id,
       },
     })
-    console.log('🚀 ~ app.post ~ insertRoomUserReq', insertRoomUserReq)
     const insertRoomUserResponse = insertRoomUserReq.data.insert_room_users.returning[0]
     console.log('🚀 ~ app.post ~ insertRoomUserResponse', insertRoomUserResponse)
 
-    const { last_seen, updated_at } = insertRoomUserResponse
+    const { id: roomUserId } = insertRoomUserResponse
 
     if (insertRoomUserReq.errors) {
       throw new Error(insertRoomUserReq.errors[0].message)
     }
     console.log('roomModesResponse ', roomModesResponse)
-    const {
-      id: room_modes_id,
-      pause,
-      mode_name,
-      round_length,
-      round_number,
-      total_rounds,
-    } = roomModesResponse
+    const { id: roomModeId } = roomModesResponse
     console.log('🚀 ~ app.post ~ roomModesResponse', roomModesResponse)
 
     return res.json({
-      pause,
-      created_at,
-      email,
-      first_name,
-      last_name,
-      last_seen,
-      mode_name,
-      owner_id: ownerId,
-      role,
       roomId,
-      roomName,
-      slug: roomSlug,
-      room_modes_id,
-      round_length,
-      round_number,
+      roomModeId,
+      roomUserId,
       token: await createToken(insertUserResponse, process.env.SECRET),
-      total_rounds,
-      updated_at,
     })
   } catch (error) {
     console.log('error = ', error)
@@ -169,7 +147,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
 
     // success
     return res.json({
-      ...insertUserRes.data.insert_users.returning[0],
+      userId: newUser.id,
       token: await createToken(newUser, process.env.SECRET),
     })
   } catch (error) {
