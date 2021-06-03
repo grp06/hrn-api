@@ -49,7 +49,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
       const error = 'Email already in use'
       Sentry.captureMessage(console.error())
       return res.status(400).json({
-        message: error,
+        message: 'error setting up user profile',
       })
     }
   } catch (error) {
@@ -57,7 +57,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     console.log('message: ', error)
 
     return res.status(400).json({
-      message: error,
+      message: 'error setting up user profile',
     })
   }
 
@@ -69,7 +69,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(400).json({
-      message: error,
+      message: 'error setting up user profile',
     })
   }
 
@@ -87,7 +87,7 @@ usersRouter.post('/complete-user-profile', async (req, res) => {
     Sentry.captureException(error)
     console.log('🚀 ~ usersRouter.post ~ error', error)
     return res.status(400).json({
-      message: error,
+      message: 'error setting up user profile',
     })
   }
 

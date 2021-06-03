@@ -141,7 +141,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
         user_id: newUser.id,
       },
     })
-    const newRoomUser = insertUserRes.data.insert_room_users.returning[0]
+    console.log('🚀 ~ roomsRouter.post ~ insertRoomUserRes', insertRoomUserRes)
 
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
@@ -150,12 +150,12 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
     // success
     return res.json({
       userId: newUser.id,
-      roomUserId: newRoomUser.id,
       token: await createToken(newUser, process.env.SECRET),
     })
   } catch (error) {
+    console.log('🚀 ~ roomsRouter.post ~ error', error)
     return res.status(400).json({
-      message: error,
+      message: 'couldnt create user',
     })
   }
 })
