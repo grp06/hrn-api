@@ -58,7 +58,7 @@ app.use(router)
  */
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
-
+console.log('app loading...')
 app.use(((error, req, res, next) => {
   let response
   if (NODE_ENV === 'production') {
