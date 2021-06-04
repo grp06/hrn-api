@@ -1,22 +1,30 @@
 import * as Sentry from '@sentry/node'
-import makePairingsFromSamyakAlgo from './makePairingsFromSamyakAlgo'
 
-import makePairings from './makePairings'
-import orm from '../services/orm'
-import transformPairingsToGqlVars from '../routes/rooms/transformPairingsToGqlVars'
 import { bulkInsertPartners } from '../gql/mutations'
-import getOnlineUsers from './getOnlineUsers'
-import getAllRoundsDataForOnlineUsers from './getAllRoundsDataForOnlineUsers'
-import getPredeterminedPartners from './getPredeterminedPartners'
+import orm from '../services/orm'
+import getAllRoundsDataForOnlineUsers from '../services/rooms/getAllRoundsDataForOnlineUsers'
+import getPredeterminedPartners from '../services/rooms/getPredeterminedPartners'
+import getOnlineEventUsers from './getOnlineEventUsers'
+import makePairings from './makePairings'
+import makePairingsFromSamyakAlgo from './makePairingsFromSamyakAlgo'
+import transformPairingsToGqlVars from './transformPairingsToGqlVars'
 
-const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSamyakAlgo }) => {
+const omniCreatePairings = async ({
+  eventId,
+  currentRound,
+  fromLobbyScan = undefined,
+  useSamyakAlgo = true,
+}) => {
   try {
     // get all online users for this eventId
-    const [userIds, onlineUsers] = await getOnlineUsers(eventId)
+    const [userIds, onlineUsers] = await getOnlineEventUsers(eventId)
 
     if (userIds.length < 2 && fromLobbyScan) {
       console.log('not enough to pair from lobby scan')
-      return null
+      return {
+        isSamyakAlgo: false,
+        eventEndedEarly: false,
+      }
     }
     const isTwoSidedEvent = onlineUsers.find((eventUser) => eventUser.side)
 
@@ -27,7 +35,7 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     })
 
     let pairings
-    let isSamyakAlgo
+    let isSamyakAlgo = false
 
     // revert 1 to 15
     if ((onlineUsers.length < 15 || useSamyakAlgo) && !isTwoSidedEvent) {
@@ -63,7 +71,10 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
 
     if (tooManyBadPairings && !fromLobbyScan) {
       console.log('ended event early')
-      return 'ended event early'
+      return {
+        isSamyakAlgo: false,
+        eventEndedEarly: true,
+      }
     }
 
     // transform pairings to be ready for insertion to partners table
@@ -77,7 +88,11 @@ const omniCreatePairings = async ({ eventId, currentRound, fromLobbyScan, useSam
     if (bulkInsertPartnersRes.errors) {
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }
-    return isSamyakAlgo
+
+    return {
+      isSamyakAlgo,
+      eventEndedEarly: false,
+    }
   } catch (error) {
     console.log('omniCreatePairings -> error', error)
     Sentry.captureException(error)

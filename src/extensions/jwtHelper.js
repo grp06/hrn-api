@@ -17,6 +17,8 @@ const roles = {
 export const createToken = async (user, secret, expiresIn) => {
   const tokenContents = {
     sub: `${user.id}`,
+    // not sure why this is "name"... seems like it should be called email
+    // not sure if it'll break anything if I just change it here
     name: user.email,
     iat: Date.now() / 1000,
   }

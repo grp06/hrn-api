@@ -1,24 +1,18 @@
 import * as Sentry from '@sentry/node'
-import orm from '../../services/orm'
-import { findUserByEmail } from '../../gql/queries'
+
 import { createToken } from '../../extensions/jwtHelper'
+import { findUserByEmail, findUserById } from '../../gql/queries'
 import { comparePasswords } from '../../services/auth-service'
+import orm from '../../services/orm'
 
 const express = require('express')
 
 const authRouter = express.Router()
-const jsonBodyParser = express.json()
 
-authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
-  const { email, password } = req.body
+authRouter.post('/login', async (req, res) => {
+  const { email, password } = req.body.input.input
+
   const loginUser = { email, password }
-
-  // make sure all keys are in request body
-  for (const [key, value] of Object.entries(loginUser))
-    if (value == null)
-      return res.status(400).json({
-        error: `Missing '${key}' in request body`,
-      })
 
   let dbUser
 
@@ -27,9 +21,10 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
     // check if user with email exists
     const checkEmailRequest = await orm.request(findUserByEmail, { email: email })
     dbUser = checkEmailRequest.data.users[0]
+    console.log('🚀 ~ authRouter.post ~ dbUser', dbUser)
 
     if (!dbUser) {
-      return res.status(400).json({ error: 'Incorrect email or password' })
+      return res.status(400).json({ message: 'Incorrect email or password' })
     }
 
     // compare passwords with hashing
@@ -37,23 +32,63 @@ authRouter.post('/login', jsonBodyParser, async (req, res, next) => {
 
     if (!passwordCheck) {
       return res.status(400).json({
-        error: 'Incorrect user_name or password',
+        message: 'Incorrect user_name or password',
       })
     }
   } catch (error) {
     console.log('Error logging in', error)
     Sentry.captureException(error)
     return res.status(500).json({
-      error: 'There was an error logging in',
+      message: 'There was an error logging in',
     })
   }
-
+  delete dbUser.password
   console.log(dbUser)
-  return res.send({
+
+  return res.json({
     token: await createToken(dbUser, process.env.SECRET),
-    role: dbUser.role,
-    id: dbUser.id,
+    userId: dbUser.id,
   })
 })
 
-module.exports = authRouter
+authRouter.post('/get-anonymous-token', async (req, res) => {
+  try {
+    return res.json({
+      token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(400).json({
+      message: error,
+    })
+  }
+})
+
+authRouter.post('/fetch-user-by-token', async (req, res) => {
+  const userId = req.body.session_variables['x-hasura-user-id']
+  try {
+    const findUserByIdReq = await orm.request(findUserById, {
+      id: userId,
+    })
+    const user = findUserByIdReq.data.users[0]
+    console.log('🚀 ~ authRouter.post ~ findUserByIdReq', findUserByIdReq)
+    if (findUserByIdReq.errors) {
+      Sentry.captureException(findUserByIdReq.errors[0].message)
+      // TODO: find another way to throw the error, because we're inside of a try/catch
+      throw new Error(findUserByIdReq.errors[0].message)
+    }
+    console.log('result ', findUserByIdReq.data.users[0])
+
+    return res.json({
+      token: await createToken(user, process.env.SECRET),
+      userId,
+    })
+  } catch (error) {
+    console.log('🚀 ~ authRouter.post ~ error', error)
+    return res.status(400).json({
+      message: "couldn't find user",
+    })
+  }
+})
+
+export default authRouter

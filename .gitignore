@@ -7,5 +7,9 @@ node_modules
 .webpack
 .serverless
 info.log
-.vscode/settings.json
 dist
+yarn-error.log
+
+# IDEs
+.vscode/settings.json
+.idea

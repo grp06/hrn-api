@@ -1,9 +1,10 @@
 import * as Sentry from '@sentry/node'
 import Stripe from 'stripe'
-import orm from '../../services/orm'
-import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
+
 import { createToken } from '../../extensions/jwtHelper'
+import { updateStripeCustomerId, updateUserRole, updateUserSubPeriod } from '../../gql/mutations'
 import { stripeSubscriptionConfirmation } from '../../services/email-service'
+import orm from '../../services/orm'
 
 const express = require('express')
 
@@ -51,7 +52,7 @@ stripeRouter.post('/create-subscription', async (req, res) => {
   // this needs to be a part of this even though we dont use the result for anything
   // in the code. The default payment needs to be configured on the stripe API
   // for payments to process.
-  let updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
+  const updateCustomerDefaultPaymentMethod = await stripe.customers.update(customerId, {
     invoice_settings: {
       default_payment_method: paymentMethodId,
     },
@@ -169,4 +170,4 @@ stripeRouter.post('/retry-invoice', async (req, res) => {
   }
 })
 
-module.exports = stripeRouter
+export default stripeRouter

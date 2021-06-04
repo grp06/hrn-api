@@ -7,8 +7,8 @@ const findUserByEmail = gql`
       email
       role
       password
-      name
-      last_seen
+      first_name
+      last_name
       created_at
     }
   }
