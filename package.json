@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "tsc && node dist/app.js",
+    "start": "tsc && node --max_old_space_size=2560 dist/app.js",
     "dev": "tsc -w & nodemon -q -w dist dist/app.js",
     "build": "tsc -p .",
     "lint": "estlint"
