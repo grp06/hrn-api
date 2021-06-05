@@ -75,30 +75,28 @@ startApolloServer(app, PORT).then()
 
 // TODO: move definition
 const checkForInterruptedEvents = async () => {
-  console.log('(checkForInterruptedEvents) Checking for interrupted events')
   // query the cronJobs table. If there's anything in there at all, it means there's an event in progress
   // when an event ends we remove it from this table
-  let cronJobs
   try {
-    cronJobs = await orm.request(getRoomModeCronjobs)
+    const cronJobs: GetRoomModeCronjobs = await orm.request(getRoomModeCronjobs)
+
+    if (cronJobs.data.room_mode_cronjobs.length) {
+      cronJobs.data.room_mode_cronjobs.forEach((cronJob) => {
+        initNextRound({
+          totalRounds: cronJob.room_mode.total_rounds,
+          roomId: cronJob.room_id,
+          roomModeId: cronJob.room_modes_id,
+          roundLength: cronJob.room_mode.round_length,
+          roundNumber: cronJob.round_number,
+          nextRoundStart: cronJob.timestamp,
+        })
+      })
+    }
     console.log('🚀 ~ checkForInterruptedEvents ~ cronJobs', cronJobs)
     console.log('🚀 ~ checkForInterruptedEvents ~ cronJobs', cronJobs.data)
     console.log('(checkForInterruptedEvents) Cronjobs data:', cronJobs.data.room_mode_cronjobs)
   } catch (error) {
     console.log('🚀 ~ checkForInterruptedEvents ~ error', error)
-  }
-
-  if (cronJobs.data.room_mode_cronjobs.length) {
-    cronJobs.data.room_mode_cronjobs.forEach((cronJob) => {
-      initNextRound({
-        totalRounds: cronJob.room_mode.total_rounds,
-        roomId: cronJob.room_id,
-        roomModeId: cronJob.room_modes_id,
-        roundLength: cronJob.room_mode.round_length,
-        roundNumber: cronJob.round_number,
-        nextRoundStart: cronJob.timestamp,
-      })
-    })
   }
 }
 
