@@ -75,6 +75,7 @@ export const initNextRound: InitNextRound = async (params) => {
       eventIsOver ? delayAtTheEndOfTheMode : defaultDelayBetweenRounds,
       'seconds'
     )
+    console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
 
     // Wait for the delay between rounds & initiate the next one
     jobs.betweenRounds[roomId] = new CronJob(delayBetweenRounds, async () => {
@@ -143,6 +144,8 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
   try {
     // Get all online users for this roomId
     const { userIds, onlineUsers } = await getOnlineRoomUsers(roomId)
+    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ onlineUsers', onlineUsers)
+    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ userIds', userIds)
 
     // Check if we have enough users for pairing
     if (userIds.length < 2) {
@@ -184,6 +187,7 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
 
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, roomModeId })
+    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ variablesArray', variablesArray)
 
     // Write to partners table
     const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
@@ -264,6 +268,7 @@ export const initSpeedRounds: InitSpeedRounds = async (params) => {
       pause: false,
       roundNumber,
     })
+    console.log(`updated room mode to round = ${roundNumber}, pause = false `)
 
     // Check if there were any errors updating the room mode
     if (roomModeUpdate.errors) {

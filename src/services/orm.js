@@ -6,8 +6,6 @@ import { constants } from '../extensions/jwtHelper'
 
 const request = async (gqlQuery, variables = {}, token) => {
   const headers = {}
-  console.log('🚀 ~ HASURA_ENDPOINT', HASURA_ENDPOINT)
-  console.log('🚀 ~ request ~ token', token)
 
   if (token) {
     headers.Authorization = `Bearer ${token}`

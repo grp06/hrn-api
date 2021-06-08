@@ -92,8 +92,7 @@ const checkForInterruptedEvents = async () => {
         })
       })
     }
-    console.log('🚀 ~ checkForInterruptedEvents ~ cronJobs', cronJobs)
-    console.log('🚀 ~ checkForInterruptedEvents ~ cronJobs', cronJobs.data)
+
     console.log('(checkForInterruptedEvents) Cronjobs data:', cronJobs.data.room_mode_cronjobs)
   } catch (error) {
     console.log('🚀 ~ checkForInterruptedEvents ~ error', error)
