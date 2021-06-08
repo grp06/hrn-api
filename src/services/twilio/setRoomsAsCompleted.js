@@ -1,10 +1,10 @@
 import client from '../../extensions/twilioClient'
 
-const setRoomsAsCompleted = async (eventId) => {
+const setRoomsAsCompleted = async (roomId) => {
   const allRooms = await client.video.rooms.list({ status: 'in-progress' })
 
   const listOfRoomsToComplete = allRooms.filter(
-    (room) => room.uniqueName.indexOf(`${eventId}-`) > -1
+    (room) => room.uniqueName.indexOf(`${roomId}-`) > -1
   )
 
   console.log('num rooms to complete = ', listOfRoomsToComplete.length)

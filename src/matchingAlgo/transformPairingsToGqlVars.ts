@@ -15,11 +15,14 @@ const transformPairingsToGqlVars: TransformPairingsToGqlVars = ({ pairings, room
   const variablesArr: PurePartner[] = []
 
   pairings.forEach((pairing) => {
-    variablesArr.push({
-      user_id: pairing[0],
-      partner_id: pairing[1],
-      room_modes_id: roomModeId,
-    })
+    console.log('🚀 ~ pairings.forEach ~ pairing', pairing)
+    if (pairing[1] !== null) {
+      variablesArr.push({
+        user_id: pairing[0],
+        partner_id: pairing[1],
+        room_modes_id: roomModeId,
+      })
+    }
 
     if (pairing[1] !== null) {
       variablesArr.push({

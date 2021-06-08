@@ -3,10 +3,10 @@ import { CronJob } from 'cron'
 import { Response } from 'express'
 import moment from 'moment'
 
-import { bulkInsertPartners, insertRoomMode, updateRoom } from '../../gql/mutations'
+import { bulkInsertPartners } from '../../gql/mutations'
 import insertRoomModeCronjob from '../../gql/mutations/insertRoomModeCronjob'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
-import { omniFinishRounds } from '../../matchingAlgo/runEventHelpers'
+import { omniFinishRounds, endEvent } from '../../matchingAlgo/runEventHelpers'
 import transformPairingsToGqlVars from '../../matchingAlgo/transformPairingsToGqlVars'
 import jobs from '../jobs'
 import orm from '../orm'
@@ -40,10 +40,10 @@ export const initNextRound: InitNextRound = async (params) => {
     totalRounds,
     nextRoundStart: recoveredStartTime,
   } = params
-  const defaultDelayBetweenRounds = 5 // TODO: make this a constant
+  const defaultDelayBetweenRounds = 10 // TODO: make this a constant
 
   // console.info('\n\n(initNextRound) 🔤 Params:', params)
-  console.info(`(initNextRound) 🔢 Job for the round ${roundNumber}/${totalRounds}`)
+  // console.info(`(initNextRound) 🔢 Job for the round ${roundNumber}/${totalRounds}`)
 
   // Check if a next round start time was recovered from a server restart
   // TODO: check if we should store/retrieve this from the database
@@ -54,12 +54,12 @@ export const initNextRound: InitNextRound = async (params) => {
   // Determine when should we start the next round
   const nextRoundStartTime = recoveredStartTime
     ? moment(recoveredStartTime)
-    : moment().add(roundLength, 'minutes')
+    : moment().add(15, 'seconds')
 
   // Set cronjob for when to start the next round
   jobs.nextRound[roomId] = new CronJob(nextRoundStartTime, async () => {
-    // Ensures that rooms are closed before next round
     try {
+      // Ensures that rooms are closed before next round
       await omniFinishRounds(roundNumber, roomId, roomModeId)
     } catch (error) {
       Sentry.captureException(error)
@@ -67,44 +67,19 @@ export const initNextRound: InitNextRound = async (params) => {
 
     // Check if we should end the event because we've finished all the rounds
     const eventIsOver = roundNumber === totalRounds
-    console.log('(initNextRound->nextRoundJob) 🏁 Is the event over?', eventIsOver)
+    // console.log('(initNextRound->nextRoundJob) 🏁 Is the event over?', eventIsOver)
 
     // Establish the delay between rounds
     const delayBetweenRounds = moment().add(defaultDelayBetweenRounds, 'seconds')
-    console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
+    // console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
     // If the event is over, end it
     if (eventIsOver) {
-      // return endEvent(roomId)
-      console.info('Event ended')
-      const roomModeRes = await orm.request(insertRoomMode, {
-        objects: {
-          mode_name: 'campfire',
-          round_number: null,
-          round_length: null,
-          total_rounds: null,
-        },
-      })
-
-      console.log('🚀 ~ added campfire room mode', roomModeRes)
-
-      if (roomModeRes.errors) {
-        throw new Error(roomModeRes.errors[0].message)
-      }
-
-      // grab the id from the row we just inserted
-      const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
-
-      // make sure to use that id to update the room_modes_id on the room table
-      await orm.request(updateRoom, {
-        roomId,
-        roomModesId,
-      })
-      console.log('updated room with campfire roomModeId')
-      return
+      return endEvent(roomId)
     }
     // Wait for the delay between rounds & initiate the next one
     jobs.betweenRounds[roomId] = new CronJob(delayBetweenRounds, async () => {
       // TODO: describe this action
+      console.log('end of pause INIT SPEED ROUNDS AGAIN')
       await initSpeedRounds({
         roomId,
         roomModeId,
@@ -119,16 +94,17 @@ export const initNextRound: InitNextRound = async (params) => {
 
   // If this isn't a recovered cron job, save it to the database
   if (!recoveredStartTime) {
-    console.log('(initNextRound) 🕚 Time to end the round:', nextRoundStartTime)
+    // console.log('(initNextRound) 🕚 Time to end the round:', nextRoundStartTime)
+    console.log('we save a cron every round')
 
-    const insertRoomModeCronjobRes = await orm.request(insertRoomModeCronjob, {
+    await orm.request(insertRoomModeCronjob, {
       roomId,
       roomModeId,
       roundNumber,
       timestamp: nextRoundStartTime.utc().toISOString(), // TODO: remove this when we get rid of all the values in witch the UTC is stored
     })
 
-    console.log('(initNextRound) ↩️ `setCronTimestampRes`:', insertRoomModeCronjobRes)
+    // console.log('(initNextRound) ↩️ `setCronTimestampRes`:', insertRoomModeCronjobRes)
   }
 
   // TODO(s)
@@ -168,7 +144,7 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
       console.error('(createPairings) Not enough users to pair in the room')
       return {
         success: false,
-        eventEndedEarly: false,
+        eventEndedEarly: true,
       }
     }
 
@@ -209,7 +185,6 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
     const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
       objects: variablesArray,
     })
-
     if (bulkInsertPartnersRes.errors) {
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }
@@ -245,16 +220,11 @@ type InitSpeedRounds = (params: InitSpeedRoundParams) => Promise<Response | stri
  */
 export const initSpeedRounds: InitSpeedRounds = async (params) => {
   const { roomId, roomModeId, roundNumber, roundLength, totalRounds } = params
+  console.log('🚀🚀🚀  ~ roomId', roomId)
   const defaultTotalRounds = 10 // TODO: move to constants
   const defaultRoundLength = 1 // 5 min // TODO: move to constants
 
   console.info('\n\n(initSpeedRounds) 🔤 Params:', params)
-
-  // The consumer wants to reset the event
-  // TODO: move to a function
-  // if (req.body.reset) {
-  //   return resetEvent(roomId)
-  // }
 
   try {
     // Complete all the in-progress Twilio video rooms for this room

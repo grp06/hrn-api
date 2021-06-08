@@ -22,7 +22,7 @@ import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
 
 const roomsRouter = express.Router()
-
+const countdownSeconds = 5
 /**
  * Create a room
  */
@@ -204,7 +204,6 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
 
       console.log('(updatedRoomModeRes) We started the countdown:', updatedRoomModeRes)
 
-      const countdownSeconds = 20
       const countdown = moment().add(countdownSeconds, 'seconds')
 
       jobs.countdown[roomId] = new CronJob(countdown, async () => {
