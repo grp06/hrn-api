@@ -77,7 +77,6 @@ authRouter.post('/fetch-user-by-token', async (req, res) => {
       // TODO: find another way to throw the error, because we're inside of a try/catch
       throw new Error(findUserByIdReq.errors[0].message)
     }
-    console.log('result ', findUserByIdReq.data.users[0])
 
     return res.json({
       token: await createToken(user, process.env.SECRET),

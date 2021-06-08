@@ -40,10 +40,7 @@ export const initNextRound: InitNextRound = async (params) => {
     totalRounds,
     nextRoundStart: recoveredStartTime,
   } = params
-  const defaultDelayBetweenRounds = 10 // TODO: make this a constant
-
-  // console.info('\n\n(initNextRound) 🔤 Params:', params)
-  // console.info(`(initNextRound) 🔢 Job for the round ${roundNumber}/${totalRounds}`)
+  const defaultDelayBetweenRounds = 20 // TODO: make this a constant
 
   // Check if a next round start time was recovered from a server restart
   // TODO: check if we should store/retrieve this from the database
@@ -54,7 +51,7 @@ export const initNextRound: InitNextRound = async (params) => {
   // Determine when should we start the next round
   const nextRoundStartTime = recoveredStartTime
     ? moment(recoveredStartTime)
-    : moment().add(15, 'seconds')
+    : moment().add(roundLength, 'minutes')
 
   // Set cronjob for when to start the next round
   jobs.nextRound[roomId] = new CronJob(nextRoundStartTime, async () => {
@@ -67,11 +64,9 @@ export const initNextRound: InitNextRound = async (params) => {
 
     // Check if we should end the event because we've finished all the rounds
     const eventIsOver = roundNumber === totalRounds
-    // console.log('(initNextRound->nextRoundJob) 🏁 Is the event over?', eventIsOver)
 
     // Establish the delay between rounds
     const delayBetweenRounds = moment().add(defaultDelayBetweenRounds, 'seconds')
-    // console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
     // If the event is over, end it
     if (eventIsOver) {
       return endEvent(roomId)
@@ -94,7 +89,6 @@ export const initNextRound: InitNextRound = async (params) => {
 
   // If this isn't a recovered cron job, save it to the database
   if (!recoveredStartTime) {
-    // console.log('(initNextRound) 🕚 Time to end the round:', nextRoundStartTime)
     console.log('we save a cron every round')
 
     await orm.request(insertRoomModeCronjob, {
@@ -103,8 +97,6 @@ export const initNextRound: InitNextRound = async (params) => {
       roundNumber,
       timestamp: nextRoundStartTime.utc().toISOString(), // TODO: remove this when we get rid of all the values in witch the UTC is stored
     })
-
-    // console.log('(initNextRound) ↩️ `setCronTimestampRes`:', insertRoomModeCronjobRes)
   }
 
   // TODO(s)
@@ -157,7 +149,6 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
       userIds,
       roomId,
     })
-    console.log('🚀 ~ pairings', pairings)
 
     // Check if we have too many bad pairings
     const numNullPairings = pairings.reduce((all, item) => {
