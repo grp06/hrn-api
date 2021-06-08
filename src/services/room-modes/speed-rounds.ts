@@ -3,7 +3,7 @@ import { CronJob } from 'cron'
 import { Response } from 'express'
 import moment from 'moment'
 
-import { bulkInsertPartners } from '../../gql/mutations'
+import { bulkInsertPartners, insertRoomMode, updateRoom } from '../../gql/mutations'
 import insertRoomModeCronjob from '../../gql/mutations/insertRoomModeCronjob'
 import updateRoomMode from '../../gql/mutations/updateRoomMode'
 import { omniFinishRounds } from '../../matchingAlgo/runEventHelpers'
@@ -40,8 +40,8 @@ export const initNextRound: InitNextRound = async (params) => {
     totalRounds,
     nextRoundStart: recoveredStartTime,
   } = params
-  const defaultDelayBetweenRounds = 30 // TODO: make this a constant
-  const delayAtTheEndOfTheMode = 10 // TODO: make this a constant
+  const defaultDelayBetweenRounds = 20 // TODO: make this a constant
+  const delayAtTheEndOfTheMode = 0 // TODO: make this a constant
 
   console.info('\n\n(initNextRound) 🔤 Params:', params)
   console.info(`(initNextRound) 🔢 Job for the round ${roundNumber}/${totalRounds}`)
@@ -76,16 +76,38 @@ export const initNextRound: InitNextRound = async (params) => {
       'seconds'
     )
     console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
+    // If the event is over, end it
+    if (eventIsOver) {
+      // return endEvent(roomId)
+      console.info('Event ended')
+      const roomModeRes = await orm.request(insertRoomMode, {
+        objects: {
+          mode_name: 'campfire',
+          round_number: null,
+          round_length: null,
+          total_rounds: null,
+        },
+      })
 
-    // Wait for the delay between rounds & initiate the next one
-    jobs.betweenRounds[roomId] = new CronJob(delayBetweenRounds, async () => {
-      // If the event is over, end it
-      if (eventIsOver) {
-        // return endEvent(roomId)
-        console.info('Event ended')
-        return
+      console.log('🚀 ~ added campfire room mode', roomModeRes)
+
+      if (roomModeRes.errors) {
+        throw new Error(roomModeRes.errors[0].message)
       }
 
+      // grab the id from the row we just inserted
+      const roomModesId = roomModeRes.data.insert_room_modes.returning[0].id
+
+      // make sure to use that id to update the room_modes_id on the room table
+      await orm.request(updateRoom, {
+        roomId,
+        roomModesId,
+      })
+      console.log('updated room with campfire roomModeId')
+      return
+    }
+    // Wait for the delay between rounds & initiate the next one
+    jobs.betweenRounds[roomId] = new CronJob(delayBetweenRounds, async () => {
       // TODO: describe this action
       await initSpeedRounds({
         roomId,
@@ -158,6 +180,10 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
 
     // Get partners for the userIds
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds, roomModeId)
+    console.log(
+      '🚀 ~ constcreatePairings:CreatePairings= ~ allRoundsDataForOnlineUsers',
+      allRoundsDataForOnlineUsers
+    )
 
     // Making assignments with samyak algo
     const pairings = makePairingsFromSamyakAlgo({
