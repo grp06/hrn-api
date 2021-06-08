@@ -218,10 +218,10 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
           totalRounds,
         })
 
-        jobs.countdown[roomId].stop()
+        jobs.countdown[roomId]?.stop()
       })
 
-      jobs.countdown[roomId].start()
+      jobs.countdown[roomId]?.start()
       // success
     }
 
@@ -248,6 +248,7 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
       pause: false,
       roundNumber: null,
     })
+    console.log('🚀 ~ roomsRouter.post ~ updateRoomModeRes', updateRoomModeRes)
 
     await orm.request(deleteRoomModeCron, {
       roomModeId,
@@ -270,15 +271,25 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
       roomModesId,
     })
     if (jobs.nextRound[roomId]) {
-      jobs.nextRound[roomId].stop()
-      console.log('clearing next round job')
+      jobs.nextRound[roomId]?.stop()
+      jobs.nextRound[roomId] = null
+      console.log('CLEARING NEXT ROUND JOB')
     }
 
     if (jobs.betweenRounds[roomId]) {
-      jobs.betweenRounds[roomId].stop()
-      console.log('clearing between round job')
+      jobs.betweenRounds[roomId]?.stop()
+      jobs.betweenRounds[roomId] = null
+      console.log('CLEARING BETWEEN ROUND JOB')
+    }
+
+    if (jobs.countdown[roomId]) {
+      jobs.countdown[roomId]?.stop()
+      jobs.countdown[roomId] = null
+      console.log('CLEARING COUNTDOWN JOB')
     }
     // TODO update roomModesId to roomModeId to be consistent
+
+    console.log('jobs = ', jobs)
     return res.json({
       roomModeId: roomModesId,
     })

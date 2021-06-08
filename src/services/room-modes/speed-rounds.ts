@@ -40,10 +40,9 @@ export const initNextRound: InitNextRound = async (params) => {
     totalRounds,
     nextRoundStart: recoveredStartTime,
   } = params
-  const defaultDelayBetweenRounds = 20 // TODO: make this a constant
-  const delayAtTheEndOfTheMode = 0 // TODO: make this a constant
+  const defaultDelayBetweenRounds = 5 // TODO: make this a constant
 
-  console.info('\n\n(initNextRound) 🔤 Params:', params)
+  // console.info('\n\n(initNextRound) 🔤 Params:', params)
   console.info(`(initNextRound) 🔢 Job for the round ${roundNumber}/${totalRounds}`)
 
   // Check if a next round start time was recovered from a server restart
@@ -71,10 +70,7 @@ export const initNextRound: InitNextRound = async (params) => {
     console.log('(initNextRound->nextRoundJob) 🏁 Is the event over?', eventIsOver)
 
     // Establish the delay between rounds
-    const delayBetweenRounds = moment().add(
-      eventIsOver ? delayAtTheEndOfTheMode : defaultDelayBetweenRounds,
-      'seconds'
-    )
+    const delayBetweenRounds = moment().add(defaultDelayBetweenRounds, 'seconds')
     console.log('🚀 ~ delayBetweenRounds', delayBetweenRounds)
     // If the event is over, end it
     if (eventIsOver) {
@@ -118,7 +114,7 @@ export const initNextRound: InitNextRound = async (params) => {
       })
     })
 
-    return jobs.betweenRounds[roomId].start()
+    return jobs.betweenRounds[roomId]?.start()
   })
 
   // If this isn't a recovered cron job, save it to the database
@@ -141,7 +137,7 @@ export const initNextRound: InitNextRound = async (params) => {
   //  ~ if theres an in progress event, set up new cron;
 
   // TODO: (?)
-  return jobs.nextRound[roomId].start()
+  return jobs.nextRound[roomId]?.start()
 }
 
 type CreatePairingsParams = {
@@ -166,8 +162,6 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
   try {
     // Get all online users for this roomId
     const { userIds, onlineUsers } = await getOnlineRoomUsers(roomId)
-    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ onlineUsers', onlineUsers)
-    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ userIds', userIds)
 
     // Check if we have enough users for pairing
     if (userIds.length < 2) {
@@ -180,10 +174,6 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
 
     // Get partners for the userIds
     const allRoundsDataForOnlineUsers = await getAllRoundsDataForOnlineUsers(userIds, roomModeId)
-    console.log(
-      '🚀 ~ constcreatePairings:CreatePairings= ~ allRoundsDataForOnlineUsers',
-      allRoundsDataForOnlineUsers
-    )
 
     // Making assignments with samyak algo
     const pairings = makePairingsFromSamyakAlgo({
@@ -191,6 +181,7 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
       userIds,
       roomId,
     })
+    console.log('🚀 ~ pairings', pairings)
 
     // Check if we have too many bad pairings
     const numNullPairings = pairings.reduce((all, item) => {
@@ -213,7 +204,6 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
 
     // transform pairings to be ready for insertion to partners table
     const variablesArray = transformPairingsToGqlVars({ pairings, roomModeId })
-    console.log('🚀 ~ constcreatePairings:CreatePairings= ~ variablesArray', variablesArray)
 
     // Write to partners table
     const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {

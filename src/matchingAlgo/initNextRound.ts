@@ -89,7 +89,7 @@ const initNextRound: InitNextRound = async (params) => {
     })
 
     // TODO: why do we do this inside?
-    return jobs.betweenRounds[eventId].start()
+    return jobs.betweenRounds[eventId]?.start()
   })
 
   // If this isn't a recovered cron job, save it to the database
@@ -108,7 +108,7 @@ const initNextRound: InitNextRound = async (params) => {
   //  ~ if theres an in progress event, set up new cron;
 
   // TODO: (?)
-  return jobs.nextRound[eventId].start()
+  return jobs.nextRound[eventId]?.start()
 }
 
 export default initNextRound

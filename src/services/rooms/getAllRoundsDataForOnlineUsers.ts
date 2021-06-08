@@ -16,7 +16,7 @@ const getAllRoundsDataForOnlineUsers: GetAllRoundsDataForOnlineUsers = async (
 
   const partnersListResponse: PartnersFromListOfUserIdsResponse = await orm.request(
     getPartnersFromListOfUserIds,
-    { userIds, roomModeId },
+    { userIds, roomModeId }
   )
 
   if (partnersListResponse.errors) {

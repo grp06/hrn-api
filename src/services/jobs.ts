@@ -1,15 +1,13 @@
 import { CronJob } from 'cron'
 
 type Jobs = {
-  nextRound: { [key: number]: CronJob }
-  lobbyAssignments: { [key: number]: CronJob }
-  betweenRounds: { [key: number]: CronJob }
-  countdown: { [key: number]: CronJob }
+  nextRound: { [key: number]: CronJob | null }
+  betweenRounds: { [key: number]: CronJob | null }
+  countdown: { [key: number]: CronJob | null }
 }
 
 const jobs: Jobs = {
   nextRound: {},
-  lobbyAssignments: {},
   betweenRounds: {},
   countdown: {},
 }
