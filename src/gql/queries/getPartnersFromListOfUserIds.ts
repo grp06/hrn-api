@@ -14,6 +14,7 @@ export type Partner = {
       }
     ]
   }
+  round: number
 }
 
 export type PartnersFromListOfUserIdsResponse = GraphQlResponse<{
@@ -32,6 +33,7 @@ const getPartnersFromListOfUserIds = gql`
           id
         }
       }
+      round
     }
   }
 `

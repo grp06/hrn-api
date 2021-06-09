@@ -8,6 +8,7 @@ const bulkInsertPartners = gql`
         user_id
         partner_id
         room_modes_id
+        round
       }
     }
   }

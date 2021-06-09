@@ -1,14 +1,7 @@
 import * as Sentry from '@sentry/node'
 
-import {
-  getEventsByStartTime,
-  getEventsByEndTime,
-  getContactSharesForSendingEmail,
-  getEventAttendeesFromListOfEventIds,
-  getAllEvents,
-} from '../gql/queries'
-import { sendEmailsToNoShows, sendReminders, sendFollowupsToHosts } from '../modules/email'
-import { sendEmail } from './email-service'
+import { getEventsByStartTime } from '../gql/queries'
+
 import orm from './orm'
 
 const moment = require('moment')
@@ -54,29 +47,6 @@ const getEventsStartingIn24Hours = async () => {
   }
 
   return eventsOneDayFromNow
-}
-
-const sendEmailsToUpcomingEventParticipants = async () => {
-  const events55to60MinsFromNow = await getEvents55to60MinsFromNow()
-  const eventsStartingIn24Hours = await getEventsStartingIn24Hours()
-
-  if (events55to60MinsFromNow.length) {
-    console.log('send out one hour reminder email')
-    sendReminders({
-      events: events55to60MinsFromNow,
-      filePath: '../../src/modules/views/one-hour-event-reminder.ejs',
-      timeframeString: 'one hour',
-    })
-  }
-
-  if (eventsStartingIn24Hours.length) {
-    console.log('send out 24 hour reminder email')
-    sendReminders({
-      events: eventsStartingIn24Hours,
-      filePath: '../../src/modules/views/24-hour-event-reminder.ejs',
-      timeframeString: '24 hours',
-    })
-  }
 }
 
 // const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {

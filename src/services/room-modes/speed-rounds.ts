@@ -111,7 +111,7 @@ export const initNextRound: InitNextRound = async (params) => {
 type CreatePairingsParams = {
   roomId: number
   roomModeId: number
-  currentRound?: number // TODO: deprecated
+  currentRound: number // TODO: deprecated
   fromLobbyScan?: unknown // TODO: deprecated
 }
 
@@ -126,7 +126,7 @@ type CreatePairings = (params: CreatePairingsParams) => Promise<CreatePairingsRe
  * Create the speed rounds pairings
  * @param eventId
  */
-const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
+const createPairings: CreatePairings = async ({ roomId, roomModeId, currentRound }) => {
   try {
     // Get all online users for this roomId
     const { userIds, onlineUsers } = await getOnlineRoomUsers(roomId)
@@ -170,12 +170,16 @@ const createPairings: CreatePairings = async ({ roomId, roomModeId }) => {
     }
 
     // transform pairings to be ready for insertion to partners table
-    const variablesArray = transformPairingsToGqlVars({ pairings, roomModeId })
+    const variablesArray = transformPairingsToGqlVars({ pairings, roomModeId, currentRound })
 
     // Write to partners table
     const bulkInsertPartnersRes = await orm.request(bulkInsertPartners, {
       objects: variablesArray,
     })
+    console.log(
+      '🚀 ~ constcreatePairings:CreatePairings= ~ bulkInsertPartnersRes',
+      bulkInsertPartnersRes
+    )
     if (bulkInsertPartnersRes.errors) {
       throw new Error(bulkInsertPartnersRes.errors[0].message)
     }

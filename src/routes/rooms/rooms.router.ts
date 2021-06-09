@@ -22,7 +22,7 @@ import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
 
 const roomsRouter = express.Router()
-const countdownSeconds = 10
+const countdownSeconds = 20
 /**
  * Create a room
  */
