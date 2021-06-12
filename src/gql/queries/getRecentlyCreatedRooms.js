@@ -7,6 +7,9 @@ const getRecentlyCreatedRooms = gql`
       updated_at
       id
       name
+      room_mode {
+        updated_at
+      }
     }
   }
 `

@@ -18,18 +18,15 @@ const deleteStagnantRooms = async () => {
 
     const getStagnantUnclaimedRooms = (allRooms) => {
       const twoHoursOld = 1000 * 60 * 60 * 2
-
       const now = new Date().getTime()
-      const stagnantRoomIds = allRooms.map((room) => {
-        const lastActive = new Date(room.updated_at).getTime()
-        if (now - lastActive > twoHoursOld) {
-          return room.id
-        }
+      const stagnantRooms = allRooms.filter((room) => {
+        const lastActive = new Date(room.room_mode.updated_at).getTime()
+        return now - lastActive > twoHoursOld
       })
-      return stagnantRoomIds
+      return stagnantRooms
     }
 
-    const stagnantUnclaimedRoomIds = getStagnantUnclaimedRooms(rooms)
+    const stagnantUnclaimedRoomIds = getStagnantUnclaimedRooms(rooms).map((room) => room.id)
     console.log('🚀 ~ roomIds to deletee', stagnantUnclaimedRoomIds)
 
     await orm.request(deleteRooms, {
