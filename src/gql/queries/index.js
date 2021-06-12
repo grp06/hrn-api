@@ -15,3 +15,4 @@ export { default as getContactSharesForSendingEmail } from './getContactSharesFo
 export { default as getPredeterminedPartnersFromListOfUserIds } from './getPredeterminedPartnersFromListOfUserIds'
 export { default as getEventAttendeesFromListOfEventIds } from './getEventAttendeesFromListOfEventIds'
 export { default as getAllEvents } from './getAllEvents'
+export { default as getRecentlyCreatedRooms } from './getRecentlyCreatedRooms'

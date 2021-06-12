@@ -1,162 +1,45 @@
 import * as Sentry from '@sentry/node'
 
-import { getEventsByStartTime } from '../gql/queries'
-
+import { deleteRooms } from '../gql/mutations'
+import { getRecentlyCreatedRooms } from '../gql/queries'
 import orm from './orm'
 
-const moment = require('moment')
 const cron = require('node-cron')
 
-const oneDayInMs = 86400000
-const fiveMinsInMs = 300000
+const deleteStagnantRooms = async () => {
+  const threeHoursInMs = 10800000
+  const threeHoursAgoAsTimestamp = new Date(Date.now() - threeHoursInMs).toISOString()
 
-const getEvents55to60MinsFromNow = async () => {
-  console.log('check for events in next hour')
-  let events55to60MinsFromNow
   try {
-    const oneHourFromNow = moment().add(1, 'hour')
-    const fiftyFiveMinutesFromNow = moment().add(55, 'minutes')
-
-    const getEventsResponse = await orm.request(getEventsByStartTime, {
-      less_than: oneHourFromNow,
-      greater_than: fiftyFiveMinutesFromNow,
+    const getRecentRoomsRes = await orm.request(getRecentlyCreatedRooms, {
+      timestamp: threeHoursAgoAsTimestamp,
     })
-    events55to60MinsFromNow = getEventsResponse.data.events
-  } catch (error) {
-    console.log('error checking for upcoming events', error)
-    return __Sentry.captureException(error)
-  }
+    const { rooms } = getRecentRoomsRes.data
 
-  return events55to60MinsFromNow
+    const getStagnantUnclaimedRooms = (allRooms) => {
+      const twoHoursOld = 1000 * 60 * 60 * 2
+
+      const now = new Date().getTime()
+      const stagnantRoomIds = allRooms.map((room) => {
+        const lastActive = new Date(room.updated_at).getTime()
+        if (now - lastActive > twoHoursOld) {
+          return room.id
+        }
+      })
+      return stagnantRoomIds
+    }
+
+    const stagnantUnclaimedRoomIds = getStagnantUnclaimedRooms(rooms)
+    console.log('🚀 ~ roomIds to deletee', stagnantUnclaimedRoomIds)
+
+    await orm.request(deleteRooms, {
+      roomIds: stagnantUnclaimedRoomIds,
+    })
+  } catch (error) {
+    console.log('error = ', error)
+  }
 }
 
-const getEventsStartingIn24Hours = async () => {
-  console.log('check for events in next day')
-  let eventsOneDayFromNow
-  try {
-    const oneDayFromNow = moment().add(1, 'day')
-    const oneDayMinusFiveMinsFromNow = moment().add(1435, 'minutes')
-    const getEventsResponse = await orm.request(getEventsByStartTime, {
-      less_than: oneDayFromNow,
-      greater_than: oneDayMinusFiveMinsFromNow,
-    })
-    eventsOneDayFromNow = getEventsResponse.data.events
-  } catch (error) {
-    console.log('error checking for upcoming events', error)
-    return __Sentry.captureException(error)
-  }
-
-  return eventsOneDayFromNow
-}
-
-// const sendPostEventConnetionEmails = async (eventsRecentlyFinished) => {
-//   const partnersToEmailPromises = []
-
-//   eventsRecentlyFinished.forEach(async (event) => {
-//     // query the event users and send emails from response
-//     partnersToEmailPromises.push(
-//       orm.request(getContactSharesForSendingEmail, {
-//         event_id: event.id,
-//       })
-//     )
-//   })
-
-//   const partnersToEmail = await Promise.all(partnersToEmailPromises)
-
-//   const partnersArray = partnersToEmail.reduce((all, item, index) => {
-//     if (item && item.data && item.data.partners) {
-//       item.data.partners.forEach((partner) => {
-//         all.push(partner)
-//       })
-//     }
-//     return all
-//   }, [])
-
-//   const listOfMatchesByUserEmail = partnersArray.reduce((all, item) => {
-//     if (!all.length) {
-//       all.push({
-//         name: item.user.name,
-//         email: item.user.email,
-//         partners: [item.partner],
-//         event_name: item.event.event_name,
-//       })
-//       return all
-//     }
-
-//     const indexOfUserToOperateOn = all.findIndex((user) => user.email === item.user.email)
-//     if (indexOfUserToOperateOn === -1) {
-//       all.push({
-//         name: item.user.name,
-//         email: item.user.email,
-//         partners: [item.partner],
-//         event_name: item.event.event_name,
-//       })
-//       return all
-//     }
-//     all[indexOfUserToOperateOn].partners.push(item.partner)
-//     return all
-//   }, [])
-
-//   const sendPostEventMatchesEmailPromises = []
-
-//   listOfMatchesByUserEmail.forEach((userObj) => {
-//     const { event_name, email, first_name, partners, profile_pic_url } = userObj
-//     const fields = {
-//       event_name: event_name,
-//       user: { name: first_name, email, profile_pic_url },
-//       partnerData: partners,
-//     }
-
-//     sendPostEventMatchesEmailPromises.push(sendEmail(fields))
-//   })
-
-//   await Promise.all(sendPostEventMatchesEmailPromises)
-// }
-
-// // check for finished events every 5 minutes
-// cron.schedule('*/5 * * * *', async () => {
-//   try {
-//     await sendEmailsToUpcomingEventParticipants()
-
-//     const fiveMinutesAgo = moment().subtract(5, 'minutes')
-//     const now = moment().subtract(0, 'minutes')
-//     const eventsEndedWithinLastFiveMins = await orm.request(getEventsByEndTime, {
-//       less_than: now,
-//       greater_than: fiveMinutesAgo,
-//     })
-
-//     const eventsRecentlyFinished = eventsEndedWithinLastFiveMins.data.events
-//     await sendPostEventConnetionEmails(eventsRecentlyFinished)
-
-//     if (eventsRecentlyFinished.length) {
-//       const eventIdsToQuery = eventsRecentlyFinished.map((event) => event.id)
-//       const attendees = await orm.request(getEventAttendeesFromListOfEventIds, {
-//         eventIds: eventIdsToQuery,
-//       })
-//       const attendeesOfRecentlyFinishedEvents = attendees.data.partners.map(
-//         (partner) => partner.user.email
-//       )
-
-//       await sendEmailsToNoShows(eventsRecentlyFinished, attendeesOfRecentlyFinishedEvents)
-//     }
-
-//     const oneDayPlusFiveMinsFromNow = new Date(Date.now() - oneDayInMs + fiveMinsInMs).toISOString()
-
-//     const oneDayAgo = new Date(Date.now() - oneDayInMs).toISOString()
-
-//     const getEventsResponse = await orm.request(getEventsByEndTime, {
-//       less_than: oneDayPlusFiveMinsFromNow,
-//       greater_than: oneDayAgo,
-//     })
-
-//     const eventsEndedJustUnderOneDayAgo = getEventsResponse.data.events
-
-//     const allEventsResponse = await orm.request(getAllEvents)
-//     const hostIdsFromAllEvents = allEventsResponse.data.events
-
-//     await sendFollowupsToHosts(eventsEndedJustUnderOneDayAgo, hostIdsFromAllEvents)
-//   } catch (error) {
-//     console.log('error = ', error)
-//     return __Sentry.captureException(error)
-//   }
-// })
+cron.schedule('0 0 */3 * * *', async () => {
+  deleteStagnantRooms()
+})
