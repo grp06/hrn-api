@@ -60,7 +60,7 @@
     "twilio": "^3.43.1",
     "unsplash-js": "^6.3.0",
     "validator": "^13.1.1",
-    "webpack": "^4.43.0",
+    "webpack": "^5.39.1",
     "webpack-node-externals": "^3.0.0",
     "winston": "^3.2.1",
     "xss": "^1.0.7"
