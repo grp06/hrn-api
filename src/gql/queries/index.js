@@ -16,3 +16,4 @@ export { default as getPredeterminedPartnersFromListOfUserIds } from './getPrede
 export { default as getEventAttendeesFromListOfEventIds } from './getEventAttendeesFromListOfEventIds'
 export { default as getAllEvents } from './getAllEvents'
 export { default as getRecentlyCreatedRooms } from './getRecentlyCreatedRooms'
+export { default as getRoomById } from './getRoomById'

@@ -10,7 +10,8 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
-import { takeUserOffStage } from './gql/mutations'
+import { takeUserOffStage, deleteRoomChats, deleteRoomById } from './gql/mutations'
+import { getRoomById } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
 import router from './routes/router'
@@ -113,6 +114,29 @@ app.post('/status-callbacks', async (req, res) => {
         userId: ParticipantIdentity,
         roomId: RoomName,
       })
+    } catch (error) {
+      console.log('🚀 ~ error taking user off stage', error)
+    }
+  }
+
+  if (StatusCallbackEvent === 'room-ended') {
+    // update room_user with the
+    try {
+      await orm.request(deleteRoomChats, {
+        roomId: RoomName,
+      })
+
+      const getRoomByIdRes = await orm.request(getRoomById, {
+        roomId: RoomName,
+      })
+
+      const roomIsClaimed = getRoomByIdRes.data.rooms[0].owner.password
+      if (!roomIsClaimed) {
+        const deleteRoomByIdRes = await orm.request(deleteRoomById, {
+          roomId: RoomName,
+        })
+        console.log('🚀 ~ app.post ~ deleteRoomByIdRes', deleteRoomByIdRes)
+      }
     } catch (error) {
       console.log('🚀 ~ error taking user off stage', error)
     }
