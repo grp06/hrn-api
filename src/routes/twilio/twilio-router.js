@@ -12,9 +12,7 @@ twilioRouter.post('/get-token', (req, res) => {
   // Create an access token which we will sign and return to the client,
   // containing the grant we just created
   const { uniqueName } = req.body.input
-  console.log('req.body.session_variables = ', req.body.session_variables)
   const userId = req.body.session_variables['x-hasura-user-id']
-  console.log('🚀 ~ twilioRouter.post ~ userId', userId)
   const token = new AccessToken(
     twilioAccountSid,
     process.env.TWILIO_API_KEY,

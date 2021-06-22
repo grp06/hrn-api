@@ -10,6 +10,7 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
+import { takeUserOffStage } from './gql/mutations'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
 import router from './routes/router'
@@ -98,6 +99,25 @@ const checkForInterruptedEvents = async () => {
     console.log('🚀 ~ checkForInterruptedEvents ~ error', error)
   }
 }
+
+app.post('/status-callbacks', async (req, res) => {
+  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus } = req.body
+  console.log(
+    `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
+  )
+  // when STatusCallbackEvent is "room-ended" delete all chats for that roomId
+  if (StatusCallbackEvent === 'participant-disconnected') {
+    // update room_user with the
+    try {
+      await orm.request(takeUserOffStage, {
+        userId: ParticipantIdentity,
+        roomId: RoomName,
+      })
+    } catch (error) {
+      console.log('🚀 ~ error taking user off stage', error)
+    }
+  }
+})
 
 checkForInterruptedEvents().then()
 
