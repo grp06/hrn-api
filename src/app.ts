@@ -10,7 +10,7 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
-import { takeUserOffStage, deleteRoomChats, deleteRoomById } from './gql/mutations'
+import { takeUserOffStage, deleteRoomChats, deleteRoomById, insertRoomUser } from './gql/mutations'
 import { getRoomById } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
@@ -107,39 +107,64 @@ app.post('/status-callbacks', async (req, res) => {
     `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
   )
   // when STatusCallbackEvent is "room-ended" delete all chats for that roomId
-  if (StatusCallbackEvent === 'participant-disconnected') {
-    // update room_user with the
-    try {
-      await orm.request(takeUserOffStage, {
-        userId: ParticipantIdentity,
-        roomId: RoomName,
-      })
-    } catch (error) {
-      console.log('🚀 ~ error taking user off stage', error)
-    }
-  }
 
-  if (StatusCallbackEvent === 'room-ended') {
-    // update room_user with the
-    try {
-      await orm.request(deleteRoomChats, {
-        roomId: RoomName,
-      })
-
-      const getRoomByIdRes = await orm.request(getRoomById, {
-        roomId: RoomName,
-      })
-
-      const roomIsClaimed = getRoomByIdRes.data.rooms[0].owner.password
-      if (!roomIsClaimed) {
-        const deleteRoomByIdRes = await orm.request(deleteRoomById, {
+  switch (StatusCallbackEvent) {
+    case 'participant-disconnected':
+      // take the user off the stage and set their last_seen to null
+      try {
+        await orm.request(takeUserOffStage, {
+          userId: ParticipantIdentity,
           roomId: RoomName,
         })
-        console.log('🚀 ~ app.post ~ deleteRoomByIdRes', deleteRoomByIdRes)
+      } catch (error) {
+        console.log('🚀 ~ error taking user off stage', error)
       }
-    } catch (error) {
-      console.log('🚀 ~ error taking user off stage', error)
-    }
+      break
+    case 'room-ended':
+      try {
+        orm.request(deleteRoomChats, {
+          roomId: RoomName,
+        })
+
+        const getRoomByIdRes = await orm.request(getRoomById, {
+          roomId: RoomName,
+        })
+        // if this user hasn't yet set up a password, then when their room ends, it gets deleted
+        const roomIsClaimed = getRoomByIdRes.data.rooms[0]?.owner.password
+        if (!roomIsClaimed) {
+          console.log('DELETING ROOM')
+
+          orm.request(deleteRoomById, {
+            roomId: RoomName,
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ error deleting room by Id', error)
+      }
+      break
+    case 'participant-connected':
+      // on participant-connected, add user to room_users
+      console.log('🚀 ~ app.post ~ ParticipantIdentity', ParticipantIdentity)
+      console.log('🚀 ~ app.post ~ RoomName', RoomName)
+
+      try {
+        const insertRoomUserRes = await orm.request(insertRoomUser, {
+          objects: {
+            room_id: RoomName,
+            user_id: ParticipantIdentity,
+          },
+        })
+
+        if (insertRoomUserRes.errors) {
+          throw new Error(insertRoomUserRes.errors[0].message)
+        }
+        console.log('🚀 ~ app.post ~ insertRoomUserRes', insertRoomUserRes)
+      } catch (error) {
+        console.log('error = ', error)
+      }
+      break
+    default:
+      console.log(`default`)
   }
 })
 
