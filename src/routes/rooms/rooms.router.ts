@@ -73,6 +73,17 @@ roomsRouter.post('/create-room', async (req, res) => {
 
     const roomId = insertRoomReq.data.insert_rooms.returning[0].id
 
+    const insertRoomUserRes = await orm.request(insertRoomUser, {
+      objects: {
+        room_id: roomId,
+        user_id: ownerId,
+      },
+    })
+
+    if (insertRoomUserRes.errors) {
+      throw new Error(insertRoomUserRes.errors[0].message)
+    }
+
     client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
