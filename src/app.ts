@@ -10,7 +10,13 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
-import { takeUserOffStage, deleteRoomChats, deleteRoomById, insertRoomUser } from './gql/mutations'
+import {
+  takeUserOffStage,
+  deleteRoomChats,
+  deleteRoomById,
+  insertRoomUser,
+  updateRoomUser,
+} from './gql/mutations'
 import { getRoomById, getRoomUsersByRoomId } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
@@ -142,26 +148,34 @@ app.post('/status-callbacks', async (req, res) => {
         })
 
         const roomUsers = getRoomUsersRes.data.room_users
+        const myRoomUser = roomUsers.find((user) => Number(ParticipantIdentity) === user.user_id)
+        const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
         const stageUsers = roomUsers.filter((stageUser) => stageUser.on_stage)
         const isAlreadyInRoomUsers = roomUsers.some(
           (user) => Number(ParticipantIdentity) === user.user_id
         )
 
         const numSpectators = roomUsers.length - stageUsers.length
-        let insertRoomUserRes
+        let roomUserRes
 
         if (!isAlreadyInRoomUsers && stageUsers.length < 8 && numSpectators === 0) {
           console.log('setting as stage user')
-          insertRoomUserRes = await orm.request(insertRoomUser, {
+          roomUserRes = await orm.request(insertRoomUser, {
             objects: {
               room_id: RoomName,
               user_id: ParticipantIdentity,
               on_stage: true,
             },
           })
+        } else if (stageUsers.length < 8 && myRoomUserIsSpectator && numSpectators === 1) {
+          console.log('moving from spectators to stage')
+          roomUserRes = await orm.request(updateRoomUser, {
+            roomId: RoomName,
+            userId: ParticipantIdentity,
+          })
         } else if (!isAlreadyInRoomUsers) {
           console.log('setting as spectator')
-          insertRoomUserRes = await orm.request(insertRoomUser, {
+          roomUserRes = await orm.request(insertRoomUser, {
             objects: {
               room_id: RoomName,
               user_id: ParticipantIdentity,
@@ -170,8 +184,8 @@ app.post('/status-callbacks', async (req, res) => {
           })
         }
 
-        if (insertRoomUserRes && insertRoomUserRes.errors) {
-          throw new Error(insertRoomUserRes.errors[0].message)
+        if (roomUserRes && roomUserRes.errors) {
+          throw new Error(roomUserRes.errors[0].message)
         }
 
         break
