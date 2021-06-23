@@ -77,6 +77,7 @@ roomsRouter.post('/create-room', async (req, res) => {
       objects: {
         room_id: roomId,
         user_id: ownerId,
+        on_stage: true,
       },
     })
 
@@ -84,13 +85,20 @@ roomsRouter.post('/create-room', async (req, res) => {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
 
-    client.video.rooms.create({
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
+
+    const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
       videoCodecs: ['VP8'],
-      statusCallback: 'https://localhost:8000/status-callbacks',
+      statusCallback,
       statusCallbackMethod: 'POST',
     })
+
+    console.log('createdRoom = ', createdRoom)
 
     const { id: roomModeId } = roomModesResponse
 
@@ -126,17 +134,6 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
     const newUser = insertUserRes.data.insert_users.returning[0]
     if (insertUserRes.errors) {
       throw new Error(insertUserRes.errors[0].message)
-    }
-
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
-      objects: {
-        room_id: roomId,
-        user_id: newUser.id,
-      },
-    })
-
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
     }
 
     // success

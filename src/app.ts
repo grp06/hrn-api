@@ -11,7 +11,7 @@ import morgan from 'morgan'
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
 import { takeUserOffStage, deleteRoomChats, deleteRoomById, insertRoomUser } from './gql/mutations'
-import { getRoomById } from './gql/queries'
+import { getRoomById, getRoomUsersByRoomId } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
 import router from './routes/router'
@@ -125,8 +125,6 @@ app.post('/status-callbacks', async (req, res) => {
         // if this user hasn't yet set up a password, then when their room ends, it gets deleted
         const roomIsClaimed = getRoomByIdRes.data.rooms[0]?.owner.password
         if (!roomIsClaimed) {
-          console.log('DELETING ROOM')
-
           orm.request(deleteRoomById, {
             roomId: RoomName,
           })
@@ -138,19 +136,43 @@ app.post('/status-callbacks', async (req, res) => {
         break
       }
       case 'participant-connected': {
-        // on participant-connected, add user to room_users
-
-        const insertRoomUserRes = await orm.request(insertRoomUser, {
-          objects: {
-            room_id: RoomName,
-            user_id: ParticipantIdentity,
-          },
+        // query room_users for the roomId
+        const getRoomUsersRes = await orm.request(getRoomUsersByRoomId, {
+          roomId: RoomName,
         })
 
-        if (insertRoomUserRes.errors) {
+        const roomUsers = getRoomUsersRes.data.room_users
+        const stageUsers = roomUsers.filter((stageUser) => stageUser.on_stage)
+        const isAlreadyInRoomUsers = roomUsers.some(
+          (user) => Number(ParticipantIdentity) === user.user_id
+        )
+
+        const numSpectators = roomUsers.length - stageUsers.length
+        let insertRoomUserRes
+
+        if (!isAlreadyInRoomUsers && stageUsers.length < 8 && numSpectators === 0) {
+          console.log('setting as stage user')
+          insertRoomUserRes = await orm.request(insertRoomUser, {
+            objects: {
+              room_id: RoomName,
+              user_id: ParticipantIdentity,
+              on_stage: true,
+            },
+          })
+        } else if (!isAlreadyInRoomUsers) {
+          console.log('setting as spectator')
+          insertRoomUserRes = await orm.request(insertRoomUser, {
+            objects: {
+              room_id: RoomName,
+              user_id: ParticipantIdentity,
+              on_stage: false,
+            },
+          })
+        }
+
+        if (insertRoomUserRes && insertRoomUserRes.errors) {
           throw new Error(insertRoomUserRes.errors[0].message)
         }
-        console.log('🚀 ~ app.post ~ insertRoomUserRes', insertRoomUserRes)
 
         break
       }
@@ -159,7 +181,11 @@ app.post('/status-callbacks', async (req, res) => {
     }
   } catch (error) {
     console.log('🚀 ~ app.post ~ error', error)
+    return res.status(400).json({ message: 'error doing something in the webhook body' })
   }
+  return res.json({
+    success: true,
+  })
 })
 
 checkForInterruptedEvents().then()

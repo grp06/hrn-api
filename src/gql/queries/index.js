@@ -17,3 +17,4 @@ export { default as getEventAttendeesFromListOfEventIds } from './getEventAttend
 export { default as getAllEvents } from './getAllEvents'
 export { default as getRecentlyCreatedRooms } from './getRecentlyCreatedRooms'
 export { default as getRoomById } from './getRoomById'
+export { default as getRoomUsersByRoomId } from './getRoomUsersByRoomId'

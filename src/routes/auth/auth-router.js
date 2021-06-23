@@ -71,7 +71,6 @@ authRouter.post('/fetch-user-by-token', async (req, res) => {
       id: userId,
     })
     const user = findUserByIdReq.data.users[0]
-    console.log('🚀 ~ authRouter.post ~ findUserByIdReq', findUserByIdReq)
     if (findUserByIdReq.errors) {
       Sentry.captureException(findUserByIdReq.errors[0].message)
       // TODO: find another way to throw the error, because we're inside of a try/catch
