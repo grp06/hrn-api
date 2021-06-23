@@ -26,85 +26,74 @@ const countdownSeconds = 20
 /**
  * Join a room
  */
-roomsRouter.post('/join-room', async (req, res) => {
+roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName } = req.body.input
-  let { roomId } = req.body.input
-  console.log('🚀 ~ roomsRouter.post ~ firstName', firstName)
-  console.log('🚀 ~ roomsRouter.post ~ roomName', roomName)
-  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
 
   const roomSlug = slug(roomName)
 
   try {
-    // only if roomId is null
-    let roomModesResponse
-    let roomModeId
-    if (!roomId) {
-      console.log('inserting room mode')
+    const insertRoomModeReq = await orm.request(insertRoomMode, {
+      objects: {
+        round_number: null,
+        round_length: null,
+        total_rounds: null,
+      },
+    })
+    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
-      const insertRoomModeReq = await orm.request(insertRoomMode, {
-        objects: {
-          round_number: null,
-          round_length: null,
-          total_rounds: null,
-        },
-      })
-      roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
-      roomModeId = insertRoomModeReq.data.insert_room_modes.returning[0].id
-      if (insertRoomModeReq.errors) {
-        throw new Error(insertRoomModeReq.errors[0].message)
+    if (insertRoomModeReq.errors) {
+      throw new Error(insertRoomModeReq.errors[0].message)
+    }
+
+    const insertUserReq = await orm.request(insertUser, {
+      objects: {
+        first_name: firstName,
+      },
+    })
+    const insertUserResponse = insertUserReq.data.insert_users.returning[0]
+    const { id: ownerId } = insertUserResponse
+    if (insertUserReq.errors) {
+      throw new Error(insertUserReq.errors[0].message)
+    }
+    const insertRoomReq = await orm.request(insertRoom, {
+      objects: {
+        name: roomName,
+        slug: roomSlug,
+        room_modes_id: roomModesResponse.id,
+        owner_id: ownerId,
+      },
+    })
+
+    if (insertRoomReq.errors) {
+      if (insertRoomReq.errors[0].message.indexOf('rooms_name_key') > -1) {
+        return res.status(400).json({ message: 'room name unavailable' })
       }
     }
-    console.log('🚀 ~ roomsRouter.post ~ roomModeId', roomModeId)
 
-    let userId = req.body.session_variables['x-hasura-user-id']
-    console.log('🚀 ~ session user id', userId)
-    console.log('🚀 ~ type of session user id', typeof userId)
+    const insertRoomResponse = insertRoomReq.data.insert_rooms.returning[0]
 
-    // for some reason userId is sometimes === to 'null'... come back to this
-    if (!userId || userId === 'null') {
-      console.log('inserting user')
-      // only if userId is empty
-      const insertUserReq = await orm.request(insertUser, {
-        objects: {
-          first_name: firstName,
-        },
-      })
-      userId = insertUserReq.data.insert_users.returning[0].id
-      if (insertUserReq.errors) {
-        throw new Error(insertUserReq.errors[0].message)
-      }
+    const roomId = insertRoomReq.data.insert_rooms.returning[0].id
+
+    const insertRoomUserReq = await orm.request(insertRoomUser, {
+      objects: {
+        room_id: insertRoomResponse.id,
+        user_id: insertUserResponse.id,
+      },
+    })
+    const insertRoomUserResponse = insertRoomUserReq.data.insert_room_users.returning[0]
+
+    const { id: roomUserId } = insertRoomUserResponse
+
+    if (insertRoomUserReq.errors) {
+      throw new Error(insertRoomUserReq.errors[0].message)
     }
-    console.log('🚀 ~ roomsRouter.post ~ userId', userId)
+    const { id: roomModeId } = roomModesResponse
 
-    let insertRoomReq
-    // only if roomId is null
-    if (!roomId) {
-      console.log('inserting room')
-
-      insertRoomReq = await orm.request(insertRoom, {
-        objects: {
-          name: roomName,
-          slug: roomSlug,
-          room_modes_id: roomModeId,
-          owner_id: userId,
-        },
-      })
-      console.log('🚀 ~ roomsRouter.post ~ insertRoomReq', insertRoomReq)
-
-      roomId = insertRoomReq.data.insert_rooms.returning[0].id
-
-      if (insertRoomReq.errors) {
-        if (insertRoomReq.errors[0].message.indexOf('rooms_name_key') > -1) {
-          return res.status(400).json({ message: 'room name unavailable' })
-        }
-      }
-    }
     return res.json({
-      roomId: roomId,
+      roomId,
       roomModeId,
-      userId,
-      token: await createToken({ id: userId, role: 'free' }, process.env.SECRET, userId),
+      roomUserId,
+      token: await createToken(insertUserResponse, process.env.SECRET),
     })
   } catch (error) {
     console.log('error = ', error)
@@ -116,7 +105,6 @@ roomsRouter.post('/join-room', async (req, res) => {
     return res.status(400).json({ message: 'Error creating room room' })
   }
 })
-
 /**
  * Create a guest user in a room
  * TODO: move part of this to the user router/service
