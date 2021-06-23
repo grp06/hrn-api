@@ -147,7 +147,8 @@ app.post('/status-callbacks', async (req, res) => {
           roomId: RoomName,
         })
 
-        const roomUsers = getRoomUsersRes.data.room_users
+        const roomUsers = getRoomUsersRes.data.online_room_users
+
         const myRoomUser = roomUsers.find((user) => Number(ParticipantIdentity) === user.user_id)
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
         const stageUsers = roomUsers.filter((stageUser) => stageUser.on_stage)
