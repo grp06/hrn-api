@@ -108,24 +108,17 @@ app.post('/status-callbacks', async (req, res) => {
   )
   // when STatusCallbackEvent is "room-ended" delete all chats for that roomId
 
-  switch (StatusCallbackEvent) {
-    case 'participant-disconnected':
-      // take the user off the stage and set their last_seen to null
-      try {
+  try {
+    switch (StatusCallbackEvent) {
+      case 'participant-disconnected':
+        // take the user off the stage and set their last_seen to null
         await orm.request(takeUserOffStage, {
           userId: ParticipantIdentity,
           roomId: RoomName,
         })
-      } catch (error) {
-        console.log('🚀 ~ error taking user off stage', error)
-      }
-      break
-    case 'room-ended':
-      try {
-        orm.request(deleteRoomChats, {
-          roomId: RoomName,
-        })
 
+        break
+      case 'room-ended': {
         const getRoomByIdRes = await orm.request(getRoomById, {
           roomId: RoomName,
         })
@@ -137,17 +130,16 @@ app.post('/status-callbacks', async (req, res) => {
           orm.request(deleteRoomById, {
             roomId: RoomName,
           })
+        } else {
+          orm.request(deleteRoomChats, {
+            roomId: RoomName,
+          })
         }
-      } catch (error) {
-        console.log('🚀 ~ error deleting room by Id', error)
+        break
       }
-      break
-    case 'participant-connected':
-      // on participant-connected, add user to room_users
-      console.log('🚀 ~ app.post ~ ParticipantIdentity', ParticipantIdentity)
-      console.log('🚀 ~ app.post ~ RoomName', RoomName)
+      case 'participant-connected': {
+        // on participant-connected, add user to room_users
 
-      try {
         const insertRoomUserRes = await orm.request(insertRoomUser, {
           objects: {
             room_id: RoomName,
@@ -159,12 +151,14 @@ app.post('/status-callbacks', async (req, res) => {
           throw new Error(insertRoomUserRes.errors[0].message)
         }
         console.log('🚀 ~ app.post ~ insertRoomUserRes', insertRoomUserRes)
-      } catch (error) {
-        console.log('error = ', error)
+
+        break
       }
-      break
-    default:
-      console.log(`default`)
+      default:
+        console.log('default')
+    }
+  } catch (error) {
+    console.log('🚀 ~ app.post ~ error', error)
   }
 })
 

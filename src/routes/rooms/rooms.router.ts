@@ -8,6 +8,7 @@ import moment from 'moment'
 import slug from 'slug'
 
 import { createToken } from '../../extensions/jwtHelper'
+import client from '../../extensions/twilioClient'
 import {
   insertRoom,
   insertRoomMode,
@@ -70,29 +71,21 @@ roomsRouter.post('/create-room', async (req, res) => {
       }
     }
 
-    const insertRoomResponse = insertRoomReq.data.insert_rooms.returning[0]
-
     const roomId = insertRoomReq.data.insert_rooms.returning[0].id
 
-    const insertRoomUserReq = await orm.request(insertRoomUser, {
-      objects: {
-        room_id: insertRoomResponse.id,
-        user_id: insertUserResponse.id,
-      },
+    client.video.rooms.create({
+      uniqueName: roomId,
+      type: 'group',
+      videoCodecs: ['VP8'],
+      statusCallback: 'https://localhost:8000/status-callbacks',
+      statusCallbackMethod: 'POST',
     })
-    const insertRoomUserResponse = insertRoomUserReq.data.insert_room_users.returning[0]
 
-    const { id: roomUserId } = insertRoomUserResponse
-
-    if (insertRoomUserReq.errors) {
-      throw new Error(insertRoomUserReq.errors[0].message)
-    }
     const { id: roomModeId } = roomModesResponse
 
     return res.json({
       roomId,
       roomModeId,
-      roomUserId,
       token: await createToken(insertUserResponse, process.env.SECRET),
     })
   } catch (error) {
