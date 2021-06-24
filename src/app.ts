@@ -118,6 +118,8 @@ app.post('/status-callbacks', async (req, res) => {
     switch (StatusCallbackEvent) {
       case 'participant-disconnected':
         // take the user off the stage and set their last_seen to null
+        console.log('DISCONNECTED - TAKING OFF STAGE')
+
         await orm.request(takeUserOffStage, {
           userId: ParticipantIdentity,
           roomId: RoomName,
@@ -149,7 +151,9 @@ app.post('/status-callbacks', async (req, res) => {
 
         const roomUsers = getRoomUsersRes.data.online_room_users
 
-        const myRoomUser = roomUsers.find((user: any) => Number(ParticipantIdentity) === user.user_id)
+        const myRoomUser = roomUsers.find(
+          (user: any) => Number(ParticipantIdentity) === user.user_id
+        )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const isAlreadyInRoomUsers = roomUsers.some(
@@ -160,7 +164,7 @@ app.post('/status-callbacks', async (req, res) => {
         let roomUserRes
 
         if (!isAlreadyInRoomUsers && stageUsers.length < 8 && numSpectators === 0) {
-          console.log('setting as stage user')
+          console.log('INSERTING TO STAGE')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
               room_id: RoomName,
@@ -169,13 +173,13 @@ app.post('/status-callbacks', async (req, res) => {
             },
           })
         } else if (stageUsers.length < 8 && myRoomUserIsSpectator && numSpectators === 1) {
-          console.log('moving from spectators to stage')
+          console.log('UPDATING TO STAGE')
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
             userId: ParticipantIdentity,
           })
         } else if (!isAlreadyInRoomUsers) {
-          console.log('setting as spectator')
+          console.log('INSERTING AS SPECTATOR')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
               room_id: RoomName,
