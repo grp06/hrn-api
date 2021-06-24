@@ -300,14 +300,12 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
 })
 
 roomsRouter.post('/join-room', async (req, res) => {
-  const { roomId } = req.body
-  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
-  const existingRoom = await client.video
-    .rooms(roomId)
-    .fetch()
-    .then((room: any) => console.log(room.uniqueName))
+  const { roomId } = req.body.input
 
-  console.log('🚀 ~ roomsRouter.post ~ existingRoom', existingRoom)
+  const userId = req.body.session_variables['x-hasura-user-id']
+  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
+
+  const existingRoom = await client.video.rooms(roomId).fetch()
 
   if (!existingRoom) {
     console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
