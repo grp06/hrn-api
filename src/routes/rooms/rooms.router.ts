@@ -87,7 +87,7 @@ roomsRouter.post('/create-room', async (req, res) => {
 
     const statusCallback =
       process.env.NODE_ENV === 'production'
-        ? 'https://hirightnow.co/status-callbacks'
+        ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
     const createdRoom = await client.video.rooms.create({
