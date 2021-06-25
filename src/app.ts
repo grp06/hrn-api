@@ -3,7 +3,6 @@ import './services/cron-service'
 import 'isomorphic-fetch'
 import bodyParser from 'body-parser'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import es6Promise from 'es6-promise'
 import express, { ErrorRequestHandler } from 'express'
 import morgan from 'morgan'
@@ -28,9 +27,8 @@ import { initNextRound } from './services/room-modes/speed-rounds'
 /**
  * Initialise & configure libraries
  */
-dotenv.config()
 es6Promise.polyfill()
-
+console.log('NGROK_STATUS_CALLBACK_URL = ', process.env.NGROK_STATUS_CALLBACK_URL)
 const app = express().set('view engine', 'ejs')
 discord.newHost()
 

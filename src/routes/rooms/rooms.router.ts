@@ -30,6 +30,7 @@ const statusCallback =
     ? 'https://api.hirightnow.co/status-callbacks'
     : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
+console.log('🚀 ~ statusCallback', statusCallback)
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName } = req.body.input
 
@@ -313,10 +314,10 @@ roomsRouter.post('/join-room', async (req, res) => {
       (room: any) => Number(room.uniqueName) === roomId
     )
     console.log('🚀 ~ roomsRouter.post ~ currentRoomExists', currentRoomExists)
-    console.log('🚀 ~ roomsRouter.post ~ inProgressRooms', inProgressRooms)
 
-    if (!inProgressRooms) {
+    if (!currentRoomExists) {
       console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
+      console.log('statusCallback = ', statusCallback)
 
       const createdRoom = await client.video.rooms.create({
         uniqueName: roomId,
