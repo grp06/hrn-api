@@ -27,3 +27,7 @@ export { default as takeUserOffStage } from './takeUserOffStage'
 export { default as deleteRoomChats } from './deleteRoomChats'
 export { default as deleteRoomById } from './deleteRoomById'
 export { default as updateRoomUser } from './updateRoomUser'
+export { default as updateRoomMode } from './updateRoomMode'
+export { default as updateRoomPassword } from './updateRoomPassword'
+
+
