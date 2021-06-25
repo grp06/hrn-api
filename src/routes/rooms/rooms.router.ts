@@ -324,4 +324,24 @@ roomsRouter.post('/join-room', async (req, res) => {
   })
 })
 
+roomsRouter.post('/toggle-recording', async (req, res) => {
+  const { recordTracks, roomId } = req.body.input
+
+  if (recordTracks) {
+    const recordingRules = await client.video
+      .rooms(roomId)
+      .recordingRules.update({ rules: [{ type: 'include', kind: 'audio' }] })
+    console.log('🚀 ~ roomsRouter.post ~ recordingRules', recordingRules)
+  } else {
+    const recordingRules = await client.video
+      .rooms(roomId)
+      .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+    console.log('🚀 ~ roomsRouter.post ~ recordingRules', recordingRules)
+  }
+
+  return res.json({
+    roomId,
+  })
+})
+
 export default roomsRouter
