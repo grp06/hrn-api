@@ -88,15 +88,15 @@ roomsRouter.post('/create-room', async (req, res) => {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
 
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: roomId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
+    // const createdRoom = await client.video.rooms.create({
+    //   uniqueName: roomId,
+    //   type: 'group',
+    //   videoCodecs: ['VP8'],
+    //   statusCallback,
+    //   statusCallbackMethod: 'POST',
+    // })
 
-    console.log('createdRoom = ', createdRoom)
+    // console.log('createdRoom = ', createdRoom)
 
     const { id: roomModeId } = roomModesResponse
 
@@ -300,24 +300,37 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
 })
 
 roomsRouter.post('/join-room', async (req, res) => {
+  console.log('JOIN ROOM')
+
   const { roomId } = req.body.input
+  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
 
   const userId = req.body.session_variables['x-hasura-user-id']
-  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
 
-  const existingRoom = await client.video.rooms(roomId).fetch()
+  try {
+    const inProgressRooms = await client.video.rooms.list({ status: 'in-progress' })
+    const currentRoomExists = inProgressRooms.some(
+      (room: any) => Number(room.uniqueName) === roomId
+    )
+    console.log('🚀 ~ roomsRouter.post ~ currentRoomExists', currentRoomExists)
+    console.log('🚀 ~ roomsRouter.post ~ inProgressRooms', inProgressRooms)
 
-  if (!existingRoom) {
-    console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
+    if (!inProgressRooms) {
+      console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
 
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: roomId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
-    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+      const createdRoom = await client.video.rooms.create({
+        uniqueName: roomId,
+        type: 'group',
+        videoCodecs: ['VP8'],
+        statusCallback,
+        statusCallbackMethod: 'POST',
+      })
+      console.log('CREATED TWILIO ROOM --- INSERT CAMPFIRE HERE????')
+
+      console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+    }
+  } catch (error) {
+    console.log('🚀 ~ roomsRouter.post ~ error', error)
   }
   return res.json({
     roomId,
