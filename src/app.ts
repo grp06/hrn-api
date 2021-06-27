@@ -155,15 +155,18 @@ app.post('/status-callbacks', async (req, res) => {
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
+        console.log('🚀 ~ app.post ~ myRoomUserIsSpectator', myRoomUserIsSpectator)
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
+        const stageFull = stageUsers.length > 7
         const isAlreadyInRoomUsers = roomUsers.some(
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
+        console.log('🚀 ~ app.post ~ isAlreadyInRoomUsers', isAlreadyInRoomUsers)
 
         const numSpectators = roomUsers.length - stageUsers.length
+        console.log('🚀 ~ app.post ~ numSpectators', numSpectators)
         let roomUserRes
-
-        if (!isAlreadyInRoomUsers && stageUsers.length < 8 && numSpectators === 0) {
+        if (!isAlreadyInRoomUsers && !stageFull && numSpectators === 0) {
           console.log('INSERTING TO STAGE')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
@@ -172,7 +175,7 @@ app.post('/status-callbacks', async (req, res) => {
               on_stage: true,
             },
           })
-        } else if (stageUsers.length < 8 && myRoomUserIsSpectator && numSpectators === 1) {
+        } else if (!stageFull && myRoomUserIsSpectator) {
           console.log('UPDATING TO STAGE')
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
