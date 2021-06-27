@@ -15,12 +15,15 @@ import {
   insertRoomUser,
   insertUser,
   updateRoom,
+  deleteRoomModeCron,
+  updateRoomMode,
+  updateRoomPassword
 } from '../../gql/mutations'
-import deleteRoomModeCron from '../../gql/mutations/deleteRoomModeCron'
-import updateRoomMode from '../../gql/mutations/updateRoomMode'
+import getRoomLogin from '../../gql/queries/getRoomLogin'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
+import { hashPassword, comparePasswords } from '../../services/auth-service'
 
 const roomsRouter = express.Router()
 const countdownSeconds = 20
@@ -321,6 +324,62 @@ roomsRouter.post('/join-room', async (req, res) => {
   }
   return res.json({
     roomId,
+  })
+})
+
+roomsRouter.post('/lock-room', async (req, res) => {
+  const { roomId, password } = req.body.input
+
+  try {
+    // hash the password
+    const hashedPassword = await hashPassword(password)
+    await orm.request(updateRoomPassword, {
+      roomId,
+      password: hashedPassword
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(400).json({
+      message: 'error on setting up room password',
+    })
+  }
+  return res.json({
+    roomId,
+    locked: true
+  })
+})
+
+roomsRouter.post('/login-room', async (req, res) => {
+  const { roomId, password } = req.body.input
+
+  try {
+    // check if user with email exists
+    const getRoomLoginResponse = await orm.request(getRoomLogin, { roomId })
+    console.log("🚀 ~ file: rooms.router.ts ~ line 360 ~ roomsRouter.post ~ getRoomLoginResponse", getRoomLoginResponse)
+
+    if (!getRoomLoginResponse?.data?.rooms_by_pk) {
+      return res.status(400).json({ message: "Password Doesn't exist" })
+    }
+
+    // compare passwords with hashing
+    const passwordCheck = await comparePasswords(password, getRoomLoginResponse?.data?.rooms_by_pk.password)
+
+    if (!passwordCheck) {
+      return res.status(400).json({
+        message: 'Incorrect user_name or password',
+      })
+    }
+  } catch (error) {
+    console.log('Error logging in', error)
+    Sentry.captureException(error)
+    return res.status(500).json({
+      message: 'There was an error logging in',
+    })
+  }
+
+  return res.json({
+    roomId,
+    unlocked: true
   })
 })
 
