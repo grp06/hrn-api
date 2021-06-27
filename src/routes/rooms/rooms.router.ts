@@ -25,12 +25,6 @@ import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
 const roomsRouter = express.Router()
 const countdownSeconds = 20
 
-const statusCallback =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.hirightnow.co/status-callbacks'
-    : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
-
-console.log('🚀 ~ statusCallback', statusCallback)
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName } = req.body.input
 
@@ -89,13 +83,18 @@ roomsRouter.post('/create-room', async (req, res) => {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
 
-    // const createdRoom = await client.video.rooms.create({
-    //   uniqueName: roomId,
-    //   type: 'group',
-    //   videoCodecs: ['VP8'],
-    //   statusCallback,
-    //   statusCallbackMethod: 'POST',
-    // })
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
+
+    const createdRoom = await client.video.rooms.create({
+      uniqueName: roomId,
+      type: 'group',
+      videoCodecs: ['VP8'],
+      statusCallback,
+      statusCallbackMethod: 'POST',
+    })
 
     // console.log('createdRoom = ', createdRoom)
 
@@ -314,6 +313,11 @@ roomsRouter.post('/join-room', async (req, res) => {
       (room: any) => Number(room.uniqueName) === roomId
     )
     console.log('🚀 ~ roomsRouter.post ~ currentRoomExists', currentRoomExists)
+
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
     if (!currentRoomExists) {
       console.log('NO EXISTING ROOM ---- CREATE FROM REST API')

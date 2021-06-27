@@ -1,7 +1,3 @@
-import dotenv from 'dotenv'
-
-dotenv.config()
-
 console.log('(samyakAlgoPro) Initialize `numberOfRematchTries` to 0')
 let numberOfRematchTries = 0
 
