@@ -17,7 +17,7 @@ import {
   updateRoom,
   deleteRoomModeCron,
   updateRoomMode,
-  updateRoomPassword
+  updateRoomPassword,
 } from '../../gql/mutations'
 import getRoomLogin from '../../gql/queries/getRoomLogin'
 import jobs from '../../services/jobs'
@@ -27,11 +27,6 @@ import { hashPassword, comparePasswords } from '../../services/auth-service'
 
 const roomsRouter = express.Router()
 const countdownSeconds = 20
-
-const statusCallback =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.hirightnow.co/status-callbacks'
-    : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName } = req.body.input
@@ -90,7 +85,10 @@ roomsRouter.post('/create-room', async (req, res) => {
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
-
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
     const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
@@ -312,7 +310,10 @@ roomsRouter.post('/join-room', async (req, res) => {
 
   if (!existingRoom) {
     console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
-
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
     const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
@@ -335,7 +336,7 @@ roomsRouter.post('/lock-room', async (req, res) => {
     const hashedPassword = await hashPassword(password)
     await orm.request(updateRoomPassword, {
       roomId,
-      password: hashedPassword
+      password: hashedPassword,
     })
   } catch (error) {
     Sentry.captureException(error)
@@ -345,7 +346,7 @@ roomsRouter.post('/lock-room', async (req, res) => {
   }
   return res.json({
     roomId,
-    locked: true
+    locked: true,
   })
 })
 
@@ -355,14 +356,20 @@ roomsRouter.post('/login-room', async (req, res) => {
   try {
     // check if user with email exists
     const getRoomLoginResponse = await orm.request(getRoomLogin, { roomId })
-    console.log("🚀 ~ file: rooms.router.ts ~ line 360 ~ roomsRouter.post ~ getRoomLoginResponse", getRoomLoginResponse)
+    console.log(
+      '🚀 ~ file: rooms.router.ts ~ line 360 ~ roomsRouter.post ~ getRoomLoginResponse',
+      getRoomLoginResponse
+    )
 
     if (!getRoomLoginResponse?.data?.rooms_by_pk) {
       return res.status(400).json({ message: "Password Doesn't exist" })
     }
 
     // compare passwords with hashing
-    const passwordCheck = await comparePasswords(password, getRoomLoginResponse?.data?.rooms_by_pk.password)
+    const passwordCheck = await comparePasswords(
+      password,
+      getRoomLoginResponse?.data?.rooms_by_pk.password
+    )
 
     if (!passwordCheck) {
       return res.status(400).json({
@@ -379,7 +386,7 @@ roomsRouter.post('/login-room', async (req, res) => {
 
   return res.json({
     roomId,
-    unlocked: true
+    unlocked: true,
   })
 })
 
