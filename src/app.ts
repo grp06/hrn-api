@@ -108,7 +108,7 @@ const checkForInterruptedEvents = async () => {
 }
 
 app.post('/status-callbacks', async (req, res) => {
-  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus } = req.body
+  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus, TrackKind } = req.body
   console.log(
     `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
   )
@@ -126,6 +126,15 @@ app.post('/status-callbacks', async (req, res) => {
         })
 
         break
+      case 'track-added':
+        if(TrackKind === 'video'){
+          const roomUserRes = await orm.request(updateRoomUser, {
+            roomId: RoomName,
+            userId: ParticipantIdentity,
+          })
+          console.log("🚀 ~ file: app.ts ~ line 135 ~ app.post ~ roomUserRes", roomUserRes)
+        }
+      break
       case 'room-ended': {
         const getRoomByIdRes = await orm.request(getRoomById, {
           roomId: RoomName,
