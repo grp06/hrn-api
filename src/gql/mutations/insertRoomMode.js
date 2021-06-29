@@ -10,6 +10,11 @@ const insertRoomMode = gql`
         total_rounds
         round_number
         round_length
+        question {
+          id
+          content
+          depth_level
+        }
       }
     }
   }
