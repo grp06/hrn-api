@@ -29,7 +29,9 @@ const roomsRouter = express.Router()
 const countdownSeconds = 20
 
 roomsRouter.post('/create-room', async (req, res) => {
-  const { firstName, roomName } = req.body.input
+  const { firstName, roomName, userId } = req.body.input
+  const { session_variables } = req.body
+  const sessionUserId = session_variables['x-hasura-user-id'];
 
   const roomSlug = slug(roomName)
 
@@ -47,16 +49,32 @@ roomsRouter.post('/create-room', async (req, res) => {
       throw new Error(insertRoomModeReq.errors[0].message)
     }
 
-    const insertUserReq = await orm.request(insertUser, {
-      objects: {
-        first_name: firstName,
-      },
-    })
-    const insertUserResponse = insertUserReq.data.insert_users.returning[0]
-    const { id: ownerId } = insertUserResponse
-    if (insertUserReq.errors) {
-      throw new Error(insertUserReq.errors[0].message)
+    let ownerId = null;
+    let token = '';
+    console.log("🚀 ~ file: rooms.router.ts ~ line 56 ~ roomsRouter.post ~ userId", userId)
+    console.log("🚀 ~ file: rooms.router.ts ~ line 56 ~ roomsRouter.post ~ sessionUserId", sessionUserId)
+
+    if(userId){
+      if(Number(sessionUserId) === Number(userId)){
+        ownerId = userId;
+      } else {
+        return res.status(400).json({ message: "session doesn't match" })
+      }
+    } else {
+      const insertUserReq = await orm.request(insertUser, {
+        objects: {
+          first_name: firstName,
+        },
+      })
+      const insertUserResponse = insertUserReq.data.insert_users.returning[0]
+      ownerId = insertUserResponse.id
+      if (insertUserReq.errors) {
+        throw new Error(insertUserReq.errors[0].message)
+      }
+      token = await createToken(insertUserResponse, process.env.SECRET)
     }
+
+    
     const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
@@ -104,7 +122,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     return res.json({
       roomId,
       roomModeId,
-      token: await createToken(insertUserResponse, process.env.SECRET),
+      token: token,
     })
   } catch (error) {
     console.log('error = ', error)
