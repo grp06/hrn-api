@@ -41,6 +41,7 @@ roomsRouter.post('/create-room', async (req, res) => {
         total_rounds: null,
       },
     })
+    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
     if (insertRoomModeReq.errors) {

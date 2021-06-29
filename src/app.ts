@@ -118,13 +118,22 @@ app.post('/status-callbacks', async (req, res) => {
     switch (StatusCallbackEvent) {
       case 'participant-disconnected':
         // take the user off the stage and set their last_seen to null
-        console.log('DISCONNECTED - TAKING OFF STAGE')
+        console.log('DISCONNECTED - SETTING ON_STAGE: FALSE')
 
         await orm.request(takeUserOffStage, {
           userId: ParticipantIdentity,
           roomId: RoomName,
         })
 
+        break
+      case 'track-added':
+        if (TrackKind === 'video') {
+          console.log('TRACK ADDED - SETTING ON_STAGE: TRUE')
+          const roomUserRes = await orm.request(updateRoomUser, {
+            roomId: RoomName,
+            userId: ParticipantIdentity,
+          })
+        }
         break
       case 'room-ended': {
         const getRoomByIdRes = await orm.request(getRoomById, {
@@ -155,16 +164,15 @@ app.post('/status-callbacks', async (req, res) => {
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
-        console.log('🚀 ~ app.post ~ myRoomUserIsSpectator', myRoomUserIsSpectator)
+
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const stageFull = stageUsers.length > 7
         const isAlreadyInRoomUsers = roomUsers.some(
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
-        console.log('🚀 ~ app.post ~ isAlreadyInRoomUsers', isAlreadyInRoomUsers)
 
         const numSpectators = roomUsers.length - stageUsers.length
-        console.log('🚀 ~ app.post ~ numSpectators', numSpectators)
+
         let roomUserRes
         if (!isAlreadyInRoomUsers && !stageFull && numSpectators === 0) {
           console.log('INSERTING TO STAGE')
@@ -176,7 +184,8 @@ app.post('/status-callbacks', async (req, res) => {
             },
           })
         } else if (!stageFull && myRoomUserIsSpectator) {
-          console.log('UPDATING TO STAGE')
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE')
+
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
             userId: ParticipantIdentity,
