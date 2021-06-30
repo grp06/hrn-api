@@ -58,7 +58,7 @@
     "slug": "^5.0.1",
     "stripe": "^8.121.0",
     "twilio": "^3.43.1",
-    "unsplash-js": "^6.3.0",
+    "unsplash-js": "^7.0.13",
     "validator": "^13.1.1",
     "webpack": "^4.43.0",
     "webpack-node-externals": "^3.0.0",
