@@ -31,7 +31,7 @@ const countdownSeconds = 20
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName, userId } = req.body.input
   const { session_variables } = req.body
-  const sessionUserId = session_variables['x-hasura-user-id'];
+  const sessionUserId = session_variables['x-hasura-user-id']
 
   const roomSlug = slug(roomName)
 
@@ -50,24 +50,26 @@ roomsRouter.post('/create-room', async (req, res) => {
       throw new Error(insertRoomModeReq.errors[0].message)
     }
 
-    let ownerId = null;
-    let token = '';
-    console.log("🚀 ~ file: rooms.router.ts ~ line 56 ~ roomsRouter.post ~ userId", userId)
-    console.log("🚀 ~ file: rooms.router.ts ~ line 56 ~ roomsRouter.post ~ sessionUserId", sessionUserId)
+    let ownerId = null
+    let token = ''
 
-    if(userId){
-      if(Number(sessionUserId) === Number(userId)){
-        ownerId = userId;
+    // if there's a userId, a logged in user is creating a room
+    if (userId) {
+      // as long as the sessionId === userId ... set the ownerId to the userId
+      if (Number(sessionUserId) === Number(userId)) {
+        ownerId = userId
       } else {
         return res.status(400).json({ message: "session doesn't match" })
       }
     } else {
+      // if there's not a userId, we need to create a user before creating a room
       const insertUserReq = await orm.request(insertUser, {
         objects: {
           first_name: firstName,
         },
       })
       const insertUserResponse = insertUserReq.data.insert_users.returning[0]
+      // use the newly created user's ID to create a token and send it back to the client
       ownerId = insertUserResponse.id
       if (insertUserReq.errors) {
         throw new Error(insertUserReq.errors[0].message)
@@ -75,7 +77,6 @@ roomsRouter.post('/create-room', async (req, res) => {
       token = await createToken(insertUserResponse, process.env.SECRET)
     }
 
-    
     const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
@@ -108,6 +109,7 @@ roomsRouter.post('/create-room', async (req, res) => {
       process.env.NODE_ENV === 'production'
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
+
     const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
