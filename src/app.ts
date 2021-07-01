@@ -66,13 +66,11 @@ app.use(router)
  */
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
-console.log('app loading...')
 app.use(((error, req, res, next) => {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
   } else {
-    console.error(error)
     response = { message: error.message, error }
   }
   res.status(500).json(response)
@@ -166,6 +164,7 @@ app.post('/status-callbacks', async (req, res) => {
 
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const stageFull = stageUsers.length > 7
+        console.log('🚀 ~ app.post ~ stageFull', stageFull)
         const isAlreadyInRoomUsers = roomUsers.some(
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
@@ -189,7 +188,7 @@ app.post('/status-callbacks', async (req, res) => {
             roomId: RoomName,
             userId: ParticipantIdentity,
           })
-        } else if (!isAlreadyInRoomUsers) {
+        } else if (!isAlreadyInRoomUsers && !stageFull) {
           console.log('INSERTING AS SPECTATOR')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
@@ -197,6 +196,13 @@ app.post('/status-callbacks', async (req, res) => {
               user_id: ParticipantIdentity,
               on_stage: false,
             },
+          })
+        } else if (stageFull) {
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: FALSE')
+
+          await orm.request(takeUserOffStage, {
+            userId: ParticipantIdentity,
+            roomId: RoomName,
           })
         }
 

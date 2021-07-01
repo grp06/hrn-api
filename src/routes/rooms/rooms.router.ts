@@ -325,7 +325,6 @@ roomsRouter.post('/join-room', async (req, res) => {
   const { roomId } = req.body.input
 
   const userId = req.body.session_variables['x-hasura-user-id']
-  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
 
   const existingRoom = await client.video.rooms(roomId).fetch()
 
@@ -335,14 +334,14 @@ roomsRouter.post('/join-room', async (req, res) => {
       process.env.NODE_ENV === 'production'
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
-    const createdRoom = await client.video.rooms.create({
+
+    await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
       videoCodecs: ['VP8'],
       statusCallback,
       statusCallbackMethod: 'POST',
     })
-    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
   }
   return res.json({
     roomId,
