@@ -326,8 +326,16 @@ roomsRouter.post('/join-room', async (req, res) => {
   const { roomId } = req.body.input
 
   const userId = req.body.session_variables['x-hasura-user-id']
-
-  const existingRoom = await client.video.rooms(roomId).fetch()
+  let existingRoom
+  try {
+    existingRoom = await client.video.rooms(roomId).fetch()
+    console.log('🚀 ~ roomsRouter.post ~ existingRoom', existingRoom)
+  } catch (error) {
+    console.log('🚀 ~ roomsRouter.post ~ error', error)
+    return res.status(400).json({
+      message: 'error joining room',
+    })
+  }
 
   if (!existingRoom) {
     console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
