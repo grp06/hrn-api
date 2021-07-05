@@ -110,6 +110,7 @@ roomsRouter.post('/create-room', async (req, res) => {
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
+    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
     const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
@@ -335,13 +336,15 @@ roomsRouter.post('/join-room', async (req, res) => {
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
-    await client.video.rooms.create({
+    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
+    const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
       videoCodecs: ['VP8'],
       statusCallback,
       statusCallbackMethod: 'POST',
     })
+    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
   }
   return res.json({
     roomId,
