@@ -328,7 +328,13 @@ roomsRouter.post('/join-room', async (req, res) => {
   const userId = req.body.session_variables['x-hasura-user-id']
   let existingRoom
   try {
-    existingRoom = await client.video.rooms(roomId).fetch()
+    client.video.rooms.list({ status: 'in-progress' }).then((rooms: any) =>
+      rooms.forEach((room: any) => {
+        if (Number(room.uniqueName) === roomId) {
+          existingRoom = room
+        }
+      })
+    )
     console.log('🚀 ~ roomsRouter.post ~ existingRoom', existingRoom)
   } catch (error) {
     console.log('🚀 ~ roomsRouter.post ~ error', error)
