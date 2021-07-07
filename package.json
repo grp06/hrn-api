@@ -78,7 +78,7 @@
     "@types/lodash": "^4.14.168",
     "@types/morgan": "^1.9.2",
     "@types/node": "^15.0.2",
-    "@types/sharp": "^0.27.1",
+    "@types/sharp": "^0.28.4",
     "@types/slug": "^0.9.1",
     "@types/unsplash-js": "^6.3.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
