@@ -326,18 +326,20 @@ roomsRouter.post('/join-room', async (req, res) => {
   const { roomId } = req.body.input
 
   const userId = req.body.session_variables['x-hasura-user-id']
+  if(!userId){
+    return res.status(400).json({
+      message: "session doesn't match",
+    })
+  }
   let existingRoom
   try {
-    client.video.rooms.list({ status: 'in-progress' }).then((rooms: any) =>
-      rooms.forEach((room: any) => {
-        if (Number(room.uniqueName) === roomId) {
-          existingRoom = room
-        }
-      })
-    )
-    console.log('🚀 ~ roomsRouter.post ~ existingRoom', existingRoom)
+    const roomList = await client.video.rooms.list({ status: 'in-progress' })
+    roomList.forEach((room: any) => {
+      if (Number(room.uniqueName) === roomId) {
+        existingRoom = room
+      }
+    })
   } catch (error) {
-    console.log('🚀 ~ roomsRouter.post ~ error', error)
     return res.status(400).json({
       message: 'error joining room',
     })
@@ -350,15 +352,20 @@ roomsRouter.post('/join-room', async (req, res) => {
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
-    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: roomId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
-    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+    try {
+      const createdRoom = await client.video.rooms.create({
+        uniqueName: roomId,
+        type: 'group',
+        videoCodecs: ['VP8'],
+        statusCallback,
+        statusCallbackMethod: 'POST',
+      })
+      console.log("🚀 ~ file: rooms.router.ts ~ line 363 ~ roomsRouter.post ~ createdRoom", createdRoom)
+    } catch (error) {
+      return res.status(400).json({
+        message: 'error joining room',
+      })
+    }
   }
   return res.json({
     roomId,
