@@ -30,7 +30,6 @@ import { initNextRound } from './services/room-modes/speed-rounds'
  */
 dotenv.config()
 es6Promise.polyfill()
-console.log('NGROK_STATUS_CALLBACK_URL = ', process.env.NGROK_STATUS_CALLBACK_URL)
 const app = express().set('view engine', 'ejs')
 discord.newHost()
 

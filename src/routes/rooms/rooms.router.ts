@@ -363,10 +363,7 @@ roomsRouter.post('/join-room', async (req, res) => {
         statusCallback,
         statusCallbackMethod: 'POST',
       })
-      console.log(
-        '🚀 ~ file: rooms.router.ts ~ line 363 ~ roomsRouter.post ~ createdRoom',
-        createdRoom
-      )
+      console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
     } catch (error) {
       return res.status(400).json({
         message: 'error joining room',
