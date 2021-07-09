@@ -211,6 +211,7 @@ app.post('/status-callbacks', async (req, res) => {
         if (roomUserRes && roomUserRes.errors) {
           throw new Error(roomUserRes.errors[0].message)
         }
+        console.log('PARTICIPANT CONNECTED RETURNING @ ', Date.now())
 
         break
       }
@@ -221,6 +222,7 @@ app.post('/status-callbacks', async (req, res) => {
     console.log('🚀 ~ app.post ~ error', error)
     return res.status(400).json({ message: 'error doing something in the webhook body' })
   }
+
   return res.json({
     success: true,
   })

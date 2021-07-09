@@ -18,12 +18,13 @@ import {
   deleteRoomModeCron,
   updateRoomMode,
   updateRoomPassword,
+  updateRoomModeRoomSid,
 } from '../../gql/mutations'
 import getRoomLogin from '../../gql/queries/getRoomLogin'
+import { hashPassword, comparePasswords } from '../../services/auth-service'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
-import { hashPassword, comparePasswords } from '../../services/auth-service'
 
 const roomsRouter = express.Router()
 const countdownSeconds = 20
@@ -67,17 +68,7 @@ roomsRouter.post('/create-room', async (req, res) => {
       }
       token = await createToken(insertUserResponse, process.env.SECRET)
     }
-    console.log('🚀 ~ OWNER ID OWNER ID CREATING ROOM OWNER ID', ownerId)
 
-    // create a twilio room where the room name is the `owner_id`
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: ownerId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
-    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
     // insert room_mode ... use the Twilio Room's SID and attach it to the room mode
     // this will allow us to retrieve recordings later on
     const insertRoomModeReq = await orm.request(insertRoomMode, {
@@ -85,10 +76,8 @@ roomsRouter.post('/create-room', async (req, res) => {
         round_number: null,
         round_length: null,
         total_rounds: null,
-        twilio_room_sid: createdRoom.sid,
       },
     })
-    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
     if (insertRoomModeReq.errors) {
@@ -111,7 +100,20 @@ roomsRouter.post('/create-room', async (req, res) => {
     }
 
     const roomId = insertRoomReq.data.insert_rooms.returning[0].id
+    // create a twilio room where the room name is the `roomId`
+    const createdRoom = await client.video.rooms.create({
+      uniqueName: roomId,
+      type: 'group',
+      videoCodecs: ['VP8'],
+      statusCallback,
+      statusCallbackMethod: 'POST',
+    })
 
+    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+    await orm.request(updateRoomModeRoomSid, {
+      roomModeId: roomModesResponse.id,
+      twilioRoomSid: createdRoom.sid,
+    })
     const insertRoomUserRes = await orm.request(insertRoomUser, {
       objects: {
         room_id: roomId,
@@ -328,9 +330,7 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
 })
 
 roomsRouter.post('/join-room', async (req, res) => {
-  // we gotta also pass in the room's slug?
-  const { roomId, ownerId } = req.body.input
-  console.log('🚀 ~ OWNER ID OWNER ID', ownerId)
+  const { roomId } = req.body.input
 
   const userId = req.body.session_variables['x-hasura-user-id']
   if (!userId) {
@@ -340,10 +340,15 @@ roomsRouter.post('/join-room', async (req, res) => {
   }
   let existingRoom
   try {
+    const beforeRoomCall = Date.now()
+
     const roomList = await client.video.rooms.list({ status: 'in-progress' })
-    console.log('🚀 ~ roomsRouter.post ~ roomList', roomList)
+    const afterRoomCall = Date.now()
+    console.log('🚀 ~ roomsRouter.post ~ afterRoomCall', afterRoomCall)
+
+    console.log('call to twilio took ==== ', afterRoomCall - beforeRoomCall)
     roomList.forEach((room: any) => {
-      if (Number(room.uniqueName) === ownerId) {
+      if (Number(room.uniqueName) === roomId) {
         existingRoom = room
       }
     })
@@ -363,7 +368,7 @@ roomsRouter.post('/join-room', async (req, res) => {
 
     try {
       const createdRoom = await client.video.rooms.create({
-        uniqueName: ownerId,
+        uniqueName: roomId,
         type: 'group',
         videoCodecs: ['VP8'],
         statusCallback,

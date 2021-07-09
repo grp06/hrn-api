@@ -29,5 +29,4 @@ export { default as deleteRoomById } from './deleteRoomById'
 export { default as updateRoomUser } from './updateRoomUser'
 export { default as updateRoomMode } from './updateRoomMode'
 export { default as updateRoomPassword } from './updateRoomPassword'
-
-
+export { default as updateRoomModeRoomSid } from './updateRoomModeRoomSid'
