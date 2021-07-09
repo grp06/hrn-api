@@ -76,8 +76,10 @@ roomsRouter.post('/create-room', async (req, res) => {
         round_number: null,
         round_length: null,
         total_rounds: null,
+        owner_id: ownerId,
       },
     })
+    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
     if (insertRoomModeReq.errors) {
@@ -184,7 +186,8 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
   try {
     // get request input
     const { roomId, modeName, totalRounds = null, roundLength = null } = req.body.input.input
-
+    const { session_variables } = req.body
+    const sessionUserId = session_variables['x-hasura-user-id']
     console.log('🚀 ~ roomsRouter.post ~ req.body.input', req.body.input)
 
     // TODO: check params, should we add defaults for totalRounds & roundLength
@@ -196,6 +199,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
         round_length: roundLength,
         total_rounds: totalRounds,
         mode_name: modeName,
+        owner_id: sessionUserId,
       },
     })
 
@@ -268,7 +272,8 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
 roomsRouter.post('/reset-speed-chat', async (req, res) => {
   // get request input
   const { roomModeId } = req.body.input
-
+  const { session_variables } = req.body
+  const sessionUserId = session_variables['x-hasura-user-id']
   try {
     // cancel out the active room mode
     const updateRoomModeRes = await orm.request(updateRoomMode, {
@@ -289,6 +294,7 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
         round_number: null,
         round_length: null,
         total_rounds: null,
+        owner_id: sessionUserId,
       },
     })
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
@@ -330,7 +336,7 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
 })
 
 roomsRouter.post('/join-room', async (req, res) => {
-  const { roomId } = req.body.input
+  const { roomId, ownerId } = req.body.input
 
   const userId = req.body.session_variables['x-hasura-user-id']
   if (!userId) {
@@ -383,6 +389,7 @@ roomsRouter.post('/join-room', async (req, res) => {
           round_length: null,
           total_rounds: null,
           twilio_room_sid: createdRoom.sid,
+          owner_id: ownerId,
         },
       })
 

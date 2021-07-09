@@ -184,7 +184,7 @@ app.post('/status-callbacks', async (req, res) => {
             },
           })
         } else if (!stageFull && myRoomUserIsSpectator) {
-          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE')
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE(SEF)')
 
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
