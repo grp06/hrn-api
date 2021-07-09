@@ -511,4 +511,12 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
   })
 })
 
+roomsRouter.post('/get-user-recordings', async (req, res) => {
+  const { userId } = req.body.input
+  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
+  return res.json({
+    recordings: ['123', '456'],
+  })
+})
+
 export default roomsRouter
