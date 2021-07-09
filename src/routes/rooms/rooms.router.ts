@@ -30,26 +30,17 @@ const countdownSeconds = 20
 
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName, userId } = req.body.input
+  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
   const { session_variables } = req.body
   const sessionUserId = session_variables['x-hasura-user-id']
 
   const roomSlug = slug(roomName)
+  const statusCallback =
+    process.env.NODE_ENV === 'production'
+      ? 'https://api.hirightnow.co/status-callbacks'
+      : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
   try {
-    const insertRoomModeReq = await orm.request(insertRoomMode, {
-      objects: {
-        round_number: null,
-        round_length: null,
-        total_rounds: null,
-      },
-    })
-    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
-    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
-
-    if (insertRoomModeReq.errors) {
-      throw new Error(insertRoomModeReq.errors[0].message)
-    }
-
     let ownerId = null
     let token = ''
 
@@ -75,6 +66,33 @@ roomsRouter.post('/create-room', async (req, res) => {
         throw new Error(insertUserReq.errors[0].message)
       }
       token = await createToken(insertUserResponse, process.env.SECRET)
+    }
+    console.log('🚀 ~ OWNER ID OWNER ID CREATING ROOM OWNER ID', ownerId)
+
+    // create a twilio room where the room name is the `owner_id`
+    const createdRoom = await client.video.rooms.create({
+      uniqueName: ownerId,
+      type: 'group',
+      videoCodecs: ['VP8'],
+      statusCallback,
+      statusCallbackMethod: 'POST',
+    })
+    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+    // insert room_mode ... use the Twilio Room's SID and attach it to the room mode
+    // this will allow us to retrieve recordings later on
+    const insertRoomModeReq = await orm.request(insertRoomMode, {
+      objects: {
+        round_number: null,
+        round_length: null,
+        total_rounds: null,
+        twilio_room_sid: createdRoom.sid,
+      },
+    })
+    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
+    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
+
+    if (insertRoomModeReq.errors) {
+      throw new Error(insertRoomModeReq.errors[0].message)
     }
 
     const insertRoomReq = await orm.request(insertRoom, {
@@ -105,19 +123,6 @@ roomsRouter.post('/create-room', async (req, res) => {
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
-    const statusCallback =
-      process.env.NODE_ENV === 'production'
-        ? 'https://api.hirightnow.co/status-callbacks'
-        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
-
-    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: roomId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
 
     // console.log('createdRoom = ', createdRoom)
 
@@ -323,10 +328,9 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
 })
 
 roomsRouter.post('/join-room', async (req, res) => {
-  console.log('JOIN ROOM')
-
-  const { roomId } = req.body.input
-  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
+  // we gotta also pass in the room's slug?
+  const { roomId, ownerId } = req.body.input
+  console.log('🚀 ~ OWNER ID OWNER ID', ownerId)
 
   const userId = req.body.session_variables['x-hasura-user-id']
   if (!userId) {
@@ -337,8 +341,9 @@ roomsRouter.post('/join-room', async (req, res) => {
   let existingRoom
   try {
     const roomList = await client.video.rooms.list({ status: 'in-progress' })
+    console.log('🚀 ~ roomsRouter.post ~ roomList', roomList)
     roomList.forEach((room: any) => {
-      if (Number(room.uniqueName) === roomId) {
+      if (Number(room.uniqueName) === ownerId) {
         existingRoom = room
       }
     })
@@ -348,6 +353,7 @@ roomsRouter.post('/join-room', async (req, res) => {
     })
   }
 
+  // there's no active twilio room, create the twilio room, create a campfire, then update the room with the new roomModeId
   if (!existingRoom) {
     console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
     const statusCallback =
@@ -357,13 +363,54 @@ roomsRouter.post('/join-room', async (req, res) => {
 
     try {
       const createdRoom = await client.video.rooms.create({
-        uniqueName: roomId,
+        uniqueName: ownerId,
         type: 'group',
         videoCodecs: ['VP8'],
         statusCallback,
         statusCallbackMethod: 'POST',
       })
       console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+      // insert room_mode ... use the Twilio Room's SID and attach it to the room mode
+      // this will allow us to retrieve recordings later on
+      const insertRoomModeReq = await orm.request(insertRoomMode, {
+        objects: {
+          round_number: null,
+          round_length: null,
+          total_rounds: null,
+          twilio_room_sid: createdRoom.sid,
+        },
+      })
+
+      const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
+
+      if (insertRoomModeReq.errors) {
+        throw new Error(insertRoomModeReq.errors[0].message)
+      }
+
+      const insertRoomUserRes = await orm.request(insertRoomUser, {
+        objects: {
+          room_id: roomId,
+          user_id: userId,
+          on_stage: true,
+        },
+      })
+
+      if (insertRoomUserRes.errors) {
+        throw new Error(insertRoomUserRes.errors[0].message)
+      }
+
+      // update the room_modes_id on the room table
+      orm.request(updateRoom, {
+        roomId,
+        roomModesId: roomModesResponse.id,
+      })
+
+      // we could catch errors here... but then that means we have to wait for the mutation promise to complete
+      // we can speed up the process by just retuning
+      // if theres an error its probably not a big deal?
+      // if (updateRoomRes.errors) {
+      //   throw new Error(updateRoomRes.errors[0].message)
+      // }
     } catch (error) {
       return res.status(400).json({
         message: 'error joining room',
