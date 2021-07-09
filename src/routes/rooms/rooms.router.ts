@@ -15,18 +15,23 @@ import {
   insertRoomUser,
   insertUser,
   updateRoom,
+  deleteRoomModeCron,
+  updateRoomMode,
+  updateRoomPassword,
 } from '../../gql/mutations'
-import deleteRoomModeCron from '../../gql/mutations/deleteRoomModeCron'
-import updateRoomMode from '../../gql/mutations/updateRoomMode'
+import getRoomLogin from '../../gql/queries/getRoomLogin'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
+import { hashPassword, comparePasswords } from '../../services/auth-service'
 
 const roomsRouter = express.Router()
 const countdownSeconds = 20
 
 roomsRouter.post('/create-room', async (req, res) => {
-  const { firstName, roomName } = req.body.input
+  const { firstName, roomName, userId } = req.body.input
+  const { session_variables } = req.body
+  const sessionUserId = session_variables['x-hasura-user-id']
 
   const roomSlug = slug(roomName)
 
@@ -38,22 +43,40 @@ roomsRouter.post('/create-room', async (req, res) => {
         total_rounds: null,
       },
     })
+    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
     if (insertRoomModeReq.errors) {
       throw new Error(insertRoomModeReq.errors[0].message)
     }
 
-    const insertUserReq = await orm.request(insertUser, {
-      objects: {
-        first_name: firstName,
-      },
-    })
-    const insertUserResponse = insertUserReq.data.insert_users.returning[0]
-    const { id: ownerId } = insertUserResponse
-    if (insertUserReq.errors) {
-      throw new Error(insertUserReq.errors[0].message)
+    let ownerId = null
+    let token = ''
+
+    // if there's a userId, a logged in user is creating a room
+    if (userId) {
+      // as long as the sessionId === userId ... set the ownerId to the userId
+      if (Number(sessionUserId) === Number(userId)) {
+        ownerId = userId
+      } else {
+        return res.status(400).json({ message: "session doesn't match" })
+      }
+    } else {
+      // if there's not a userId, we need to create a user before creating a room
+      const insertUserReq = await orm.request(insertUser, {
+        objects: {
+          first_name: firstName,
+        },
+      })
+      const insertUserResponse = insertUserReq.data.insert_users.returning[0]
+      // use the newly created user's ID to create a token and send it back to the client
+      ownerId = insertUserResponse.id
+      if (insertUserReq.errors) {
+        throw new Error(insertUserReq.errors[0].message)
+      }
+      token = await createToken(insertUserResponse, process.env.SECRET)
     }
+
     const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
@@ -82,12 +105,12 @@ roomsRouter.post('/create-room', async (req, res) => {
     if (insertRoomUserRes.errors) {
       throw new Error(insertRoomUserRes.errors[0].message)
     }
-
     const statusCallback =
       process.env.NODE_ENV === 'production'
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
+    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
     const createdRoom = await client.video.rooms.create({
       uniqueName: roomId,
       type: 'group',
@@ -103,7 +126,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     return res.json({
       roomId,
       roomModeId,
-      token: await createToken(insertUserResponse, process.env.SECRET),
+      token: token,
     })
   } catch (error) {
     console.log('error = ', error)
@@ -306,23 +329,33 @@ roomsRouter.post('/join-room', async (req, res) => {
   console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
 
   const userId = req.body.session_variables['x-hasura-user-id']
-
+  if (!userId) {
+    return res.status(400).json({
+      message: "session doesn't match",
+    })
+  }
+  let existingRoom
   try {
-    const inProgressRooms = await client.video.rooms.list({ status: 'in-progress' })
-    const currentRoomExists = inProgressRooms.some(
-      (room: any) => Number(room.uniqueName) === roomId
-    )
-    console.log('🚀 ~ roomsRouter.post ~ currentRoomExists', currentRoomExists)
+    const roomList = await client.video.rooms.list({ status: 'in-progress' })
+    roomList.forEach((room: any) => {
+      if (Number(room.uniqueName) === roomId) {
+        existingRoom = room
+      }
+    })
+  } catch (error) {
+    return res.status(400).json({
+      message: 'error joining room',
+    })
+  }
 
+  if (!existingRoom) {
+    console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
     const statusCallback =
       process.env.NODE_ENV === 'production'
         ? 'https://api.hirightnow.co/status-callbacks'
         : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
-    if (!currentRoomExists) {
-      console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
-      console.log('statusCallback = ', statusCallback)
-
+    try {
       const createdRoom = await client.video.rooms.create({
         uniqueName: roomId,
         type: 'group',
@@ -330,25 +363,92 @@ roomsRouter.post('/join-room', async (req, res) => {
         statusCallback,
         statusCallbackMethod: 'POST',
       })
-      console.log('CREATED TWILIO ROOM --- INSERT CAMPFIRE HERE????')
-
-      console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+      console.log(
+        '🚀 ~ file: rooms.router.ts ~ line 363 ~ roomsRouter.post ~ createdRoom',
+        createdRoom
+      )
+    } catch (error) {
+      return res.status(400).json({
+        message: 'error joining room',
+      })
     }
-  } catch (error) {
-    console.log('🚀 ~ roomsRouter.post ~ error', error)
   }
   return res.json({
     roomId,
   })
 })
 
+roomsRouter.post('/lock-room', async (req, res) => {
+  const { roomId, password } = req.body.input
+
+  try {
+    // hash the password
+    const hashedPassword = await hashPassword(password)
+    await orm.request(updateRoomPassword, {
+      roomId,
+      password: hashedPassword,
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    return res.status(400).json({
+      message: 'error on setting up room password',
+    })
+  }
+  return res.json({
+    roomId,
+    locked: true,
+  })
+})
+
+roomsRouter.post('/login-room', async (req, res) => {
+  const { roomId, password } = req.body.input
+
+  try {
+    // check if user with email exists
+    const getRoomLoginResponse = await orm.request(getRoomLogin, { roomId })
+    console.log(
+      '🚀 ~ file: rooms.router.ts ~ line 360 ~ roomsRouter.post ~ getRoomLoginResponse',
+      getRoomLoginResponse
+    )
+
+    if (!getRoomLoginResponse?.data?.rooms_by_pk) {
+      return res.status(400).json({ message: "Password Doesn't exist" })
+    }
+
+    // compare passwords with hashing
+    const passwordCheck = await comparePasswords(
+      password,
+      getRoomLoginResponse?.data?.rooms_by_pk.password
+    )
+
+    if (!passwordCheck) {
+      return res.status(400).json({
+        message: 'Incorrect user_name or password',
+      })
+    }
+  } catch (error) {
+    console.log('Error logging in', error)
+    Sentry.captureException(error)
+    return res.status(500).json({
+      message: 'There was an error logging in',
+    })
+  }
+
+  return res.json({
+    roomId,
+    unlocked: true,
+  })
+})
+
 roomsRouter.post('/toggle-recording', async (req, res) => {
   const { recordTracks, roomId } = req.body.input
+  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
+  console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
 
   if (recordTracks) {
     const recordingRules = await client.video
       .rooms(roomId)
-      .recordingRules.update({ rules: [{ type: 'include', kind: 'audio' }] })
+      .recordingRules.update({ rules: [{ type: 'include', all: true }] })
     console.log('🚀 ~ roomsRouter.post ~ recordingRules', recordingRules)
   } else {
     const recordingRules = await client.video

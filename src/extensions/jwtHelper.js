@@ -20,7 +20,7 @@ export const createToken = async (user, secret, expiresIn) => {
     // not sure why this is "name"... seems like it should be called email
     // not sure if it'll break anything if I just change it here
     name: user.email,
-    iat: (Date.now() - 1000) / 1000,
+    iat: Date.now() / 1000 - 10,
   }
 
   tokenContents[constants.claims] = {}

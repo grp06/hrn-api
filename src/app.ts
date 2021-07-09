@@ -66,13 +66,11 @@ app.use(router)
  */
 // The error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler())
-console.log('app loading...')
 app.use(((error, req, res, next) => {
   let response
   if (NODE_ENV === 'production') {
     response = { error: { message: 'server error' } }
   } else {
-    console.error(error)
     response = { message: error.message, error }
   }
   res.status(500).json(response)
@@ -108,7 +106,7 @@ const checkForInterruptedEvents = async () => {
 }
 
 app.post('/status-callbacks', async (req, res) => {
-  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus } = req.body
+  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus, TrackKind } = req.body
   console.log(
     `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
   )
@@ -118,13 +116,21 @@ app.post('/status-callbacks', async (req, res) => {
     switch (StatusCallbackEvent) {
       case 'participant-disconnected':
         // take the user off the stage and set their last_seen to null
-        console.log('DISCONNECTED - TAKING OFF STAGE @ ', Date.now())
+        console.log('DISCONNECTED - SETTING ON_STAGE: FALSE')
 
         await orm.request(takeUserOffStage, {
           userId: ParticipantIdentity,
           roomId: RoomName,
         })
 
+        break
+      case 'track-added':
+        if (TrackKind === 'video') {
+          const roomUserRes = await orm.request(updateRoomUser, {
+            roomId: RoomName,
+            userId: ParticipantIdentity,
+          })
+        }
         break
       case 'room-ended': {
         const getRoomByIdRes = await orm.request(getRoomById, {
@@ -158,15 +164,18 @@ app.post('/status-callbacks', async (req, res) => {
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
+
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
+        const stageFull = stageUsers.length > 7
+        console.log('🚀 ~ app.post ~ stageFull', stageFull)
         const isAlreadyInRoomUsers = roomUsers.some(
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
 
         const numSpectators = roomUsers.length - stageUsers.length
-        let roomUserRes
 
-        if (!isAlreadyInRoomUsers && stageUsers.length < 8 && numSpectators === 0) {
+        let roomUserRes
+        if (!isAlreadyInRoomUsers && !stageFull && numSpectators === 0) {
           console.log('INSERTING TO STAGE')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
@@ -175,13 +184,14 @@ app.post('/status-callbacks', async (req, res) => {
               on_stage: true,
             },
           })
-        } else if (stageUsers.length < 8 && myRoomUserIsSpectator && numSpectators === 1) {
-          console.log('UPDATING TO STAGE')
+        } else if (!stageFull && myRoomUserIsSpectator) {
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE')
+
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
             userId: ParticipantIdentity,
           })
-        } else if (!isAlreadyInRoomUsers) {
+        } else if (!isAlreadyInRoomUsers && !stageFull) {
           console.log('INSERTING AS SPECTATOR')
           roomUserRes = await orm.request(insertRoomUser, {
             objects: {
@@ -189,6 +199,13 @@ app.post('/status-callbacks', async (req, res) => {
               user_id: ParticipantIdentity,
               on_stage: false,
             },
+          })
+        } else if (stageFull) {
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: FALSE')
+
+          await orm.request(takeUserOffStage, {
+            userId: ParticipantIdentity,
+            roomId: RoomName,
           })
         }
 
