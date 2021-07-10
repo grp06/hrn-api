@@ -10,6 +10,7 @@ import morgan from 'morgan'
 
 import { NODE_ENV, PORT } from './config'
 import * as discord from './discord-bots/new-host'
+import client from './extensions/twilioClient'
 import {
   takeUserOffStage,
   deleteRoomChats,
@@ -17,7 +18,7 @@ import {
   insertRoomUser,
   updateRoomUser,
 } from './gql/mutations'
-import { getRoomById, getRoomUsersByRoomId } from './gql/queries'
+import { getRoomById, getRoomUsersByRoomId, getBookmarksFromTimeframe } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
 import logger from './logger'
 import router from './routes/router'
@@ -105,7 +106,16 @@ const checkForInterruptedEvents = async () => {
 }
 
 app.post('/status-callbacks', async (req, res) => {
-  const { StatusCallbackEvent, ParticipantIdentity, RoomName, RoomStatus, TrackKind } = req.body
+  const {
+    StatusCallbackEvent,
+    ParticipantIdentity,
+    RoomName,
+    RoomStatus,
+    TrackKind,
+    Timestamp,
+    Duration,
+    RecordingUri,
+  } = req.body
   console.log(
     `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
   )
@@ -122,6 +132,37 @@ app.post('/status-callbacks', async (req, res) => {
       case 'composition-available':
         console.log('COMPOSITION AVAILABLE')
         break
+      case 'recording-completed': {
+        console.log('req.body = ', req.body)
+        const startTime = new Date(
+          new Date(Timestamp).getTime() - Number(Duration) * 1000
+        ).toISOString()
+
+        console.log('🚀 ~ app.post ~ startTime', startTime)
+        console.log('🚀 ~ app.post ~ Timestamp', Timestamp)
+        try {
+          const recordings = await orm.request(getBookmarksFromTimeframe, {
+            startTime,
+            endTime: Timestamp,
+            ownerId: RoomName,
+          })
+          console.log('🚀 ~ app.post ~ recordings', recordings)
+          if (!recordings.data.bookmarks.length) {
+            console.log('delete recording')
+            const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
+            console.log('🚀 ~ app.post ~ recordingSid', recordingSid)
+
+            const deletedRecording = await client.video.recordings(recordingSid).remove()
+            console.log('🚀 ~ app.post ~ deletedRecording', deletedRecording)
+          } else {
+            console.log('create composition')
+          }
+        } catch (error) {
+          console.log('error = ', error)
+        }
+
+        break
+      }
       case 'participant-disconnected':
         // take the user off the stage and set their last_seen to null
         console.log('DISCONNECTED - SETTING ON_STAGE: FALSE')
