@@ -113,6 +113,15 @@ app.post('/status-callbacks', async (req, res) => {
 
   try {
     switch (StatusCallbackEvent) {
+      case 'composition-started':
+        console.log('COMPOSITION STARTED')
+        break
+      case 'composition-progress':
+        console.log('COMPOSITION PROGRESS')
+        break
+      case 'composition-available':
+        console.log('COMPOSITION AVAILABLE')
+        break
       case 'participant-disconnected':
         // take the user off the stage and set their last_seen to null
         console.log('DISCONNECTED - SETTING ON_STAGE: FALSE')

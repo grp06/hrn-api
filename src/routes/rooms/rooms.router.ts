@@ -1,6 +1,7 @@
 /**
  * Rooms router v2
  */
+
 import * as Sentry from '@sentry/node'
 import { CronJob } from 'cron'
 import express from 'express'
@@ -20,6 +21,7 @@ import {
   updateRoomPassword,
   updateRoomModeRoomSid,
 } from '../../gql/mutations'
+import { getRoomModesByUserId } from '../../gql/queries'
 import getRoomLogin from '../../gql/queries/getRoomLogin'
 import { hashPassword, comparePasswords } from '../../services/auth-service'
 import jobs from '../../services/jobs'
@@ -521,9 +523,81 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
 roomsRouter.post('/get-user-recordings', async (req, res) => {
   const { userId } = req.body.input
   console.log('🚀 ~ roomsRouter.post ~ userId', userId)
-  return res.json({
-    recordings: ['123', '456'],
-  })
+
+  try {
+    const getRoomModesRes = await orm.request(getRoomModesByUserId, {
+      userId,
+    })
+    const allRoomSids = getRoomModesRes.data.room_modes.map(
+      (roomMode: any) => roomMode.twilio_room_sid
+    )
+
+    // client.video
+    //   .rooms(allRoomSids[1])
+    //   .recordings.list()
+    //   .then((recordings: any) =>
+    //     recordings.forEach((recording: any) => console.log('recording - ', recording))
+    //   )
+
+    const statusCallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.hirightnow.co/status-callbacks'
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
+
+    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
+    // client.video.compositions
+    //   .create({
+    //     roomSid: allRoomSids[1],
+    //     audioSources: '*',
+    //     videoLayout: {
+    //       grid: {
+    //         video_sources: ['*'],
+    //       },
+    //     },
+    //     statusCallback: statusCallback,
+    //     format: 'mp4',
+    //   })
+    //   .then((composition) => {
+    //     console.log('🚀 ~ .then ~ composition', composition)
+    //     console.log('Created Composition with SID=' + composition.sid)
+    //   })
+    client.video.compositions
+      .list({
+        roomSid: allRoomSids[1],
+      })
+      .then((compositions) => {
+        console.log(`Found ${compositions.length} compositions.`)
+        compositions.forEach((composition, index) => {
+          console.log('🚀 ~ index', index)
+          if (index === 7) {
+            console.log(`Read compositionSid=${composition.sid}`)
+
+            const compositionSid = composition.sid
+            const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
+            console.log('🚀 ~ uri', uri)
+
+            client
+              .request({
+                method: 'GET',
+                uri: uri,
+              })
+              .then((response) => {
+                console.log('🚀 ~ .then ~ response.body.redirect_to', response.body.redirect_to)
+                return res.json({
+                  recordings: [response.body.redirect_to],
+                })
+              })
+              .catch((error) => {
+                console.log(`Error fetching /Media resource ${error}`)
+              })
+          }
+        })
+      })
+
+    console.log('🚀 ~ roomsRouter.post ~ allRoomSids', allRoomSids)
+  } catch (error) {
+    console.log('error - ', error)
+  }
 })
 
 export default roomsRouter
