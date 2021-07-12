@@ -129,6 +129,7 @@ app.post('/status-callbacks', async (req, res) => {
         ).toISOString()
 
         try {
+          // get all bookmarks dropped while the recording was in progress
           const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
             startTime,
             endTime: Timestamp,
@@ -137,16 +138,14 @@ app.post('/status-callbacks', async (req, res) => {
           if (bookmarksFromTimeframe.errors) {
             throw new Error(bookmarksFromTimeframe.errors[0].message)
           }
+          // no bookmarks were dropped during recording, delete recording
           if (!bookmarksFromTimeframe.data.bookmarks.length) {
-            console.log('no bookmarks were dropped during recording, delete recordings')
             const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
-
             await client.video.recordings(recordingSid).remove()
           }
         } catch (error) {
           console.log('error = ', error)
         }
-
         break
       }
       case 'participant-disconnected':
@@ -264,13 +263,16 @@ app.post('/composition-status-callbacks', async (req, res) => {
   const { StatusCallbackEvent, CompositionSid: compositionSid } = req.body
 
   switch (StatusCallbackEvent) {
+    // once the composition is done processing
     case 'composition-available': {
       console.log('COMPOSITION AVAILABLE')
       const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
+      // make a request to get a super long url
       const mediaRequestObject = await client.request({
         method: 'GET',
         uri,
       })
+      // update the composition's row in the DB with the URL. Set status to completed
       const updateCompositionRes = await orm.request(updateCompositionStatus, {
         compositionSid,
         url: mediaRequestObject.body.redirect_to,
