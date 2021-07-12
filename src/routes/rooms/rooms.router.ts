@@ -20,8 +20,17 @@ import {
   updateRoomMode,
   updateRoomPassword,
   updateRoomModeRoomSid,
+  insertComposition,
+  deleteCompositionById,
+  updateComposition,
+  updateBookmarksWithCompositionSid,
 } from '../../gql/mutations'
-import { getRoomModesByUserId } from '../../gql/queries'
+import {
+  getRoomModesByUserId,
+  getCompositionsByOwnerId,
+  getBookmarksFromTimeframe,
+  getCompletedCompositions,
+} from '../../gql/queries'
 import getRoomLogin from '../../gql/queries/getRoomLogin'
 import { hashPassword, comparePasswords } from '../../services/auth-service'
 import jobs from '../../services/jobs'
@@ -33,7 +42,7 @@ const countdownSeconds = 20
 
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName, userId } = req.body.input
-  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
+  console.log('userId', userId)
   const { session_variables } = req.body
   const sessionUserId = session_variables['x-hasura-user-id']
 
@@ -81,7 +90,7 @@ roomsRouter.post('/create-room', async (req, res) => {
         owner_id: ownerId,
       },
     })
-    console.log('🚀 ~ roomsRouter.post ~ insertRoomModeReq', insertRoomModeReq)
+    console.log('insertRoomModeReq', insertRoomModeReq)
     const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
 
     if (insertRoomModeReq.errors) {
@@ -113,7 +122,7 @@ roomsRouter.post('/create-room', async (req, res) => {
       statusCallbackMethod: 'POST',
     })
 
-    console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+    console.log('createdRoom', createdRoom)
     await orm.request(updateRoomModeRoomSid, {
       roomModeId: roomModesResponse.id,
       twilioRoomSid: createdRoom.sid,
@@ -174,7 +183,7 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
       token: await createToken(newUser, process.env.SECRET),
     })
   } catch (error) {
-    console.log('🚀 ~ roomsRouter.post ~ error', error)
+    console.log('error', error)
     return res.status(400).json({
       message: 'couldnt create user',
     })
@@ -190,7 +199,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
     const { roomId, modeName, totalRounds = null, roundLength = null } = req.body.input.input
     const { session_variables } = req.body
     const sessionUserId = session_variables['x-hasura-user-id']
-    console.log('🚀 ~ roomsRouter.post ~ req.body.input', req.body.input)
+    console.log('req.body.input', req.body.input)
 
     // TODO: check params, should we add defaults for totalRounds & roundLength
 
@@ -205,7 +214,7 @@ roomsRouter.post('/change-room-mode', async (req, res) => {
       },
     })
 
-    console.log('🚀 ~ roomsRouter.post ~ roomModeRes', roomModeRes)
+    console.log('roomModeRes', roomModeRes)
 
     if (roomModeRes.errors) {
       throw new Error(roomModeRes.errors[0].message)
@@ -283,7 +292,7 @@ roomsRouter.post('/reset-speed-chat', async (req, res) => {
       pause: false,
       roundNumber: null,
     })
-    console.log('🚀 ~ roomsRouter.post ~ updateRoomModeRes', updateRoomModeRes)
+    console.log('updateRoomModeRes', updateRoomModeRes)
 
     await orm.request(deleteRoomModeCron, {
       roomModeId,
@@ -352,7 +361,7 @@ roomsRouter.post('/join-room', async (req, res) => {
 
     const roomList = await client.video.rooms.list({ status: 'in-progress' })
     const afterRoomCall = Date.now()
-    console.log('🚀 ~ roomsRouter.post ~ afterRoomCall', afterRoomCall)
+    console.log('afterRoomCall', afterRoomCall)
 
     console.log('call to twilio took ==== ', afterRoomCall - beforeRoomCall)
     roomList.forEach((room: any) => {
@@ -382,7 +391,7 @@ roomsRouter.post('/join-room', async (req, res) => {
         statusCallback,
         statusCallbackMethod: 'POST',
       })
-      console.log('🚀 ~ roomsRouter.post ~ createdRoom', createdRoom)
+      console.log('createdRoom', createdRoom)
       // insert room_mode ... use the Twilio Room's SID and attach it to the room mode
       // this will allow us to retrieve recordings later on
       const insertRoomModeReq = await orm.request(insertRoomMode, {
@@ -499,20 +508,133 @@ roomsRouter.post('/login-room', async (req, res) => {
 })
 
 roomsRouter.post('/toggle-recording', async (req, res) => {
-  const { recordTracks, roomId } = req.body.input
-  console.log('🚀 ~ roomsRouter.post ~ roomId', roomId)
-  console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
+  const { recordTracks, roomId, ownerId, roomSid } = req.body.input
 
-  if (recordTracks) {
-    const recordingRules = await client.video
-      .rooms(roomId)
-      .recordingRules.update({ rules: [{ type: 'include', all: true }] })
-    console.log('🚀 ~ roomsRouter.post ~ recordingRules', recordingRules)
-  } else {
-    const recordingRules = await client.video
-      .rooms(roomId)
-      .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
-    console.log('🚀 ~ roomsRouter.post ~ recordingRules', recordingRules)
+  try {
+    // user turned ON recording
+    if (recordTracks) {
+      // start the recording
+      await client.video
+        .rooms(roomId)
+        .recordingRules.update({ rules: [{ type: 'include', all: true }] })
+
+      // insert a "composition" row into the DB. We'll need the "startTime" later
+      const insertCompositionRes = await orm.request(insertComposition, {
+        ownerId,
+        startTime: new Date().toISOString(),
+      })
+      if (insertCompositionRes.errors) {
+        throw new Error(insertCompositionRes.errors[0].message)
+      }
+
+      // else... user turned OFF recording
+    } else {
+      // first get all IDs of recordings from this room that are "processing"
+      const processingRecordings = await client.video
+        .rooms(roomSid)
+        .recordings.list({ status: 'processing' })
+
+      const videoRecordings = processingRecordings
+        .filter((rec: any) => rec.type === 'video')
+        .map((item: any) => item.sid)
+
+      const audioRecordings = processingRecordings
+        .filter((rec: any) => rec.type === 'audio')
+        .map((item: any) => item.sid)
+
+      // stop the recording
+      await client.video
+        .rooms(roomId)
+        .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+
+      // query Hasura for the latest composition
+      const compositionsRes = await orm.request(getCompositionsByOwnerId, {
+        ownerId,
+      })
+
+      if (compositionsRes.errors) {
+        throw new Error(compositionsRes.errors[0].message)
+      }
+
+      const compositionsList = compositionsRes.data.compositions
+      const latestCompositionId = compositionsList[0]?.id
+      const startTime = compositionsList[0]?.recording_started_at
+
+      // get all bookmarks dropped while the recording was in progress
+      const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
+        startTime,
+        endTime: new Date().toISOString(),
+        roomId,
+      })
+
+      if (bookmarksFromTimeframe.errors) {
+        throw new Error(bookmarksFromTimeframe.errors[0].message)
+      }
+
+      // if there are no bookmarks, delete the composition's row from the DB
+      if (!bookmarksFromTimeframe.data.bookmarks.length) {
+        console.log('no bookmarks, delete the current composition from hasura')
+        const deleteCompositionByIdRes = await orm.request(deleteCompositionById, {
+          id: latestCompositionId,
+        })
+
+        if (deleteCompositionByIdRes.errors) {
+          throw new Error(deleteCompositionByIdRes.errors[0].message)
+        }
+      } else {
+        // otherwise --- there ARE bookmarks
+        const compositionStatusCallback =
+          process.env.NODE_ENV === 'production'
+            ? 'https://api.hirightnow.co/composition-status-callbacks'
+            : `${process.env.NGROK_STATUS_CALLBACK_URL}/composition-status-callbacks`
+        // create a composition
+        const composition = await client.video.compositions.create({
+          roomSid,
+          // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
+          audioSources: audioRecordings,
+          videoLayout: {
+            grid: {
+              // array of video recording SIDs that are "processing" (active when the owner pressed 'stop')
+              video_sources: videoRecordings,
+            },
+          },
+          statusCallback: compositionStatusCallback,
+          statusCallbackMethod: 'POST',
+          format: 'mp4',
+          resolution: '1280x720',
+        })
+
+        const recordingEndedAt = new Date().toISOString()
+        // update the composition's row in Hasura with the time it ended and set the status to enqueued
+        const updateCompositionRes = await orm.request(updateComposition, {
+          latestCompositionId,
+          compositionSid: composition.sid,
+          recordingEndedAt,
+          status: 'enqueued',
+        })
+
+        if (updateCompositionRes.errors) {
+          throw new Error(updateCompositionRes.errors[0].message)
+        }
+
+        // update the bookmarks that we dropped during the recording with the compositions SID
+        const updateBookmarksRes = await orm.request(updateBookmarksWithCompositionSid, {
+          startTime,
+          endTime: recordingEndedAt,
+          roomId,
+          compositionSid: composition.sid,
+        })
+
+        if (updateBookmarksRes.errors) {
+          throw new Error(updateBookmarksRes.errors[0].message)
+        }
+
+        // NOTE: the next thing that happens after all of this is that that the "composition-available" webhook gets hit
+        // this can take 30 seconds or 30 minutes... depends on Twilio's queue
+      }
+    }
+  } catch (error) {
+    console.log('error = ', error)
   }
 
   return res.json({
@@ -520,81 +642,76 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
   })
 })
 
-roomsRouter.post('/get-user-recordings', async (req, res) => {
-  const { userId } = req.body.input
-  console.log('🚀 ~ roomsRouter.post ~ userId', userId)
+// called from /admin/userId
+roomsRouter.post('/get-list-of-compositions', async (req, res) => {
+  const { ownerId } = req.body.input
 
   try {
-    const getRoomModesRes = await orm.request(getRoomModesByUserId, {
-      userId,
+    const compositionsRes = await orm.request(getCompletedCompositions, {
+      ownerId,
     })
-    const allRoomSids = getRoomModesRes.data.room_modes.map(
-      (roomMode: any) => roomMode.twilio_room_sid
-    )
 
-    // client.video
-    //   .rooms(allRoomSids[1])
-    //   .recordings.list()
-    //   .then((recordings: any) =>
-    //     recordings.forEach((recording: any) => console.log('recording - ', recording))
-    //   )
+    const compositionsList = compositionsRes.data.compositions
 
-    const statusCallback =
-      process.env.NODE_ENV === 'production'
-        ? 'https://api.hirightnow.co/status-callbacks'
-        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
+    const formattedResponse = compositionsList.map((item: any) => {
+      const recordingStartedAt = new Date(item.recording_started_at).getTime()
 
-    console.log('🚀 ~ roomsRouter.post ~ statusCallback', statusCallback)
-    // client.video.compositions
-    //   .create({
-    //     roomSid: allRoomSids[1],
-    //     audioSources: '*',
-    //     videoLayout: {
-    //       grid: {
-    //         video_sources: ['*'],
-    //       },
-    //     },
-    //     statusCallback: statusCallback,
-    //     format: 'mp4',
-    //   })
-    //   .then((composition) => {
-    //     console.log('🚀 ~ .then ~ composition', composition)
-    //     console.log('Created Composition with SID=' + composition.sid)
-    //   })
-    client.video.compositions
-      .list({
-        roomSid: allRoomSids[1],
-      })
-      .then((compositions) => {
-        console.log(`Found ${compositions.length} compositions.`)
-        compositions.forEach((composition, index) => {
-          console.log('🚀 ~ index', index)
-          if (index === 7) {
-            console.log(`Read compositionSid=${composition.sid}`)
+      const lengthInSeconds =
+        (new Date(item.recording_ended_at).getTime() -
+          new Date(item.recording_started_at).getTime()) /
+        1000
 
-            const compositionSid = composition.sid
-            const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
-            console.log('🚀 ~ uri', uri)
+      const recordingLength = new Date(lengthInSeconds * 1000)
+        .toISOString()
+        .substr(11, 8)
+        .split(':')
+        .map((secondsString, idx) => {
+          if (idx === 0) {
+            const hourString = secondsString.split('')[1]
 
-            client
-              .request({
-                method: 'GET',
-                uri: uri,
-              })
-              .then((response) => {
-                console.log('🚀 ~ .then ~ response.body.redirect_to', response.body.redirect_to)
-                return res.json({
-                  recordings: [response.body.redirect_to],
-                })
-              })
-              .catch((error) => {
-                console.log(`Error fetching /Media resource ${error}`)
-              })
+            return secondsString === '00' ? '' : `${hourString}h `
+          }
+          if (idx === 1) {
+            return secondsString === '00' ? '' : `${secondsString}m `
+          }
+          if (idx === 2) {
+            return `${secondsString}s `
           }
         })
-      })
 
-    console.log('🚀 ~ roomsRouter.post ~ allRoomSids', allRoomSids)
+      return {
+        firstName: item.user.first_name,
+        url: item.url,
+        startedAt: new Date(item.recording_started_at).toLocaleString(),
+        length: recordingLength,
+        bookmarks: item.bookmarks.map((bookmark: any) => {
+          const seconds = (new Date(bookmark.created_at).getTime() - recordingStartedAt) / 1000
+          const formattedString = new Date(seconds * 1000)
+            .toISOString()
+            .substr(11, 8)
+            .split(':')
+            .map((secondsString, idx) => {
+              if (idx === 0) {
+                const hourString = secondsString.split('')[1]
+                return `${hourString}h `
+              }
+              if (idx === 1) {
+                return `${secondsString}m `
+              }
+              if (idx === 2) {
+                return `${secondsString}s `
+              }
+            })
+
+          return formattedString
+        }),
+      }
+    })
+
+    // for some reason Hasura actions does not allow us to return a complex object. So I do it as a sting and parse it on the frontend
+    return res.json({
+      compositions: JSON.stringify(formattedResponse),
+    })
   } catch (error) {
     console.log('error - ', error)
   }

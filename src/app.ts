@@ -17,6 +17,7 @@ import {
   deleteRoomById,
   insertRoomUser,
   updateRoomUser,
+  updateCompositionStatus,
 } from './gql/mutations'
 import { getRoomById, getRoomUsersByRoomId, getBookmarksFromTimeframe } from './gql/queries'
 import getRoomModeCronjobs, { GetRoomModeCronjobs } from './gql/queries/getRoomModeCronjobs'
@@ -119,43 +120,28 @@ app.post('/status-callbacks', async (req, res) => {
   console.log(
     `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
   )
-  // when STatusCallbackEvent is "room-ended" delete all chats for that roomId
 
   try {
     switch (StatusCallbackEvent) {
-      case 'composition-started':
-        console.log('COMPOSITION STARTED')
-        break
-      case 'composition-progress':
-        console.log('COMPOSITION PROGRESS')
-        break
-      case 'composition-available':
-        console.log('COMPOSITION AVAILABLE')
-        break
       case 'recording-completed': {
-        console.log('req.body = ', req.body)
         const startTime = new Date(
           new Date(Timestamp).getTime() - Number(Duration) * 1000
         ).toISOString()
 
-        console.log('🚀 ~ app.post ~ startTime', startTime)
-        console.log('🚀 ~ app.post ~ Timestamp', Timestamp)
         try {
-          const recordings = await orm.request(getBookmarksFromTimeframe, {
+          const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
             startTime,
             endTime: Timestamp,
-            ownerId: RoomName,
+            roomId: RoomName,
           })
-          console.log('🚀 ~ app.post ~ recordings', recordings)
-          if (!recordings.data.bookmarks.length) {
-            console.log('delete recording')
+          if (bookmarksFromTimeframe.errors) {
+            throw new Error(bookmarksFromTimeframe.errors[0].message)
+          }
+          if (!bookmarksFromTimeframe.data.bookmarks.length) {
+            console.log('no bookmarks were dropped during recording, delete recordings')
             const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
-            console.log('🚀 ~ app.post ~ recordingSid', recordingSid)
 
-            const deletedRecording = await client.video.recordings(recordingSid).remove()
-            console.log('🚀 ~ app.post ~ deletedRecording', deletedRecording)
-          } else {
-            console.log('create composition')
+            await client.video.recordings(recordingSid).remove()
           }
         } catch (error) {
           console.log('error = ', error)
@@ -175,7 +161,7 @@ app.post('/status-callbacks', async (req, res) => {
         break
       case 'track-added':
         if (TrackKind === 'video') {
-          const roomUserRes = await orm.request(updateRoomUser, {
+          await orm.request(updateRoomUser, {
             roomId: RoomName,
             userId: ParticipantIdentity,
           })
@@ -196,16 +182,15 @@ app.post('/status-callbacks', async (req, res) => {
             roomId: RoomName,
           })
         }
+
         break
       }
       case 'participant-connected': {
-        // query room_users for the roomId
-        console.log('PARTICIPANT CONNECTED @ ', Date.now())
+        // query room_users by roomId
 
         const getRoomUsersRes = await orm.request(getRoomUsersByRoomId, {
           roomId: RoomName,
         })
-        console.log('🚀 ~ app.post ~ getRoomUsersRes', getRoomUsersRes)
 
         const roomUsers = getRoomUsersRes.data.online_room_users
 
@@ -216,7 +201,6 @@ app.post('/status-callbacks', async (req, res) => {
 
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const stageFull = stageUsers.length > 7
-        console.log('🚀 ~ app.post ~ stageFull', stageFull)
         const isAlreadyInRoomUsers = roomUsers.some(
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
@@ -234,7 +218,7 @@ app.post('/status-callbacks', async (req, res) => {
             },
           })
         } else if (!stageFull && myRoomUserIsSpectator) {
-          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE(SEF)')
+          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: TRUE')
 
           roomUserRes = await orm.request(updateRoomUser, {
             roomId: RoomName,
@@ -250,8 +234,7 @@ app.post('/status-callbacks', async (req, res) => {
             },
           })
         } else if (stageFull) {
-          console.log('PARTICIPANT CONNECTED - SETTING ON_STAGE: FALSE')
-
+          console.log('PARTICIPANT CONNECTED - STAGE FULL, SETTING ON_STAGE: FALSE')
           await orm.request(takeUserOffStage, {
             userId: ParticipantIdentity,
             roomId: RoomName,
@@ -261,7 +244,6 @@ app.post('/status-callbacks', async (req, res) => {
         if (roomUserRes && roomUserRes.errors) {
           throw new Error(roomUserRes.errors[0].message)
         }
-        console.log('PARTICIPANT CONNECTED RETURNING @ ', Date.now())
 
         break
       }
@@ -275,6 +257,35 @@ app.post('/status-callbacks', async (req, res) => {
 
   return res.json({
     success: true,
+  })
+})
+
+app.post('/composition-status-callbacks', async (req, res) => {
+  const { StatusCallbackEvent, CompositionSid: compositionSid } = req.body
+
+  switch (StatusCallbackEvent) {
+    case 'composition-available': {
+      console.log('COMPOSITION AVAILABLE')
+      const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
+      const mediaRequestObject = await client.request({
+        method: 'GET',
+        uri,
+      })
+      const updateCompositionRes = await orm.request(updateCompositionStatus, {
+        compositionSid,
+        url: mediaRequestObject.body.redirect_to,
+      })
+      if (updateCompositionRes.errors) {
+        throw new Error(updateCompositionRes.errors[0].message)
+      }
+
+      break
+    }
+    default:
+      console.log('default')
+  }
+  return res.json({
+    sucess: true,
   })
 })
 

@@ -1,10 +1,10 @@
 import gql from 'graphql-tag'
 
-const getCronJobs = gql`
-  query getBookmarksFromTimeframe($startTime: timestamptz!, $endTime: timestamptz, $ownerId: Int!) {
+const getBookmarksFromTimeframe = gql`
+  query getBookmarksFromTimeframe($startTime: timestamptz!, $endTime: timestamptz, $roomId: Int!) {
     bookmarks(
       where: {
-        _and: { created_at: { _gt: $startTime }, room_mode: { owner_id: { _eq: $ownerId } } }
+        _and: { created_at: { _gt: $startTime }, room_mode: { rooms: { id: { _eq: $roomId } } } }
         created_at: { _lt: $endTime }
       }
     ) {
@@ -13,4 +13,4 @@ const getCronJobs = gql`
   }
 `
 
-export default getCronJobs
+export default getBookmarksFromTimeframe

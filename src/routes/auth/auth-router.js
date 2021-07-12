@@ -52,11 +52,13 @@ authRouter.post('/login', async (req, res) => {
 })
 
 authRouter.post('/get-anonymous-token', async (req, res) => {
+  console.log('inside anonymous token')
   try {
     return res.json({
       token: await createToken({ id: null, email: null, role: 'anonymous' }, process.env.SECRET),
     })
   } catch (error) {
+    console.log('🚀 ~ authRouter.post ~ error', error)
     Sentry.captureException(error)
     return res.status(400).json({
       message: error,
