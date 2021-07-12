@@ -373,7 +373,8 @@ roomsRouter.post('/join-room', async (req, res) => {
     })
   }
 
-  // there's no active twilio room, create the twilio room, create a campfire, then update the room with the new roomModeId
+  // there's no active twilio room, create the twilio room, create a campfire,
+  // then update the room with the new roomModeId
   if (!existingRoom) {
     console.log('NO EXISTING ROOM ---- CREATE FROM REST API')
     const statusCallback =
@@ -407,14 +408,6 @@ roomsRouter.post('/join-room', async (req, res) => {
       if (insertRoomModeReq.errors) {
         throw new Error(insertRoomModeReq.errors[0].message)
       }
-
-      orm.request(insertRoomUser, {
-        objects: {
-          room_id: roomId,
-          user_id: userId,
-          on_stage: true,
-        },
-      })
 
       // update the room_modes_id on the room table
       orm.request(updateRoom, {
@@ -508,6 +501,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
   try {
     // user turned ON recording
     if (recordTracks) {
+      console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
       // start the recording
       await client.video
         .rooms(roomId)
@@ -524,6 +518,8 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
 
       // else... user turned OFF recording
     } else {
+      console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
+
       // first get all IDs of recordings from this room that are "processing"
       const processingRecordings = await client.video
         .rooms(roomSid)

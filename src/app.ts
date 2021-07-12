@@ -197,6 +197,7 @@ app.post('/status-callbacks', async (req, res) => {
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
+        console.log('🚀 ~ app.post ~ myRoomUserIsSpectator', myRoomUserIsSpectator)
 
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const stageFull = stageUsers.length > 7
