@@ -26,7 +26,6 @@ import {
   updateBookmarksWithCompositionSid,
 } from '../../gql/mutations'
 import {
-  getRoomModesByUserId,
   getCompositionsByOwnerId,
   getBookmarksFromTimeframe,
   getCompletedCompositions,
@@ -42,7 +41,6 @@ const countdownSeconds = 20
 
 roomsRouter.post('/create-room', async (req, res) => {
   const { firstName, roomName, userId } = req.body.input
-  console.log('userId', userId)
   const { session_variables } = req.body
   const sessionUserId = session_variables['x-hasura-user-id']
 
@@ -80,8 +78,8 @@ roomsRouter.post('/create-room', async (req, res) => {
       token = await createToken(insertUserResponse, process.env.SECRET)
     }
 
-    // insert room_mode ... use the Twilio Room's SID and attach it to the room mode
-    // this will allow us to retrieve recordings later on
+    // attach the Twilio Room SID to room_mode
+    // this helps us to retrieve recordings later on
     const insertRoomModeReq = await orm.request(insertRoomMode, {
       objects: {
         round_number: null,
@@ -90,18 +88,18 @@ roomsRouter.post('/create-room', async (req, res) => {
         owner_id: ownerId,
       },
     })
-    console.log('insertRoomModeReq', insertRoomModeReq)
-    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
-
     if (insertRoomModeReq.errors) {
       throw new Error(insertRoomModeReq.errors[0].message)
     }
+
+    const roomModesResponse = insertRoomModeReq.data.insert_room_modes.returning[0]
+    const { id: roomModeId } = roomModesResponse
 
     const insertRoomReq = await orm.request(insertRoom, {
       objects: {
         name: roomName,
         slug: roomSlug,
-        room_modes_id: roomModesResponse.id,
+        room_modes_id: roomModeId,
         owner_id: ownerId,
       },
     })
@@ -113,35 +111,38 @@ roomsRouter.post('/create-room', async (req, res) => {
     }
 
     const roomId = insertRoomReq.data.insert_rooms.returning[0].id
-    // create a twilio room where the room name is the `roomId`
-    const createdRoom = await client.video.rooms.create({
-      uniqueName: roomId,
-      type: 'group',
-      videoCodecs: ['VP8'],
-      statusCallback,
-      statusCallbackMethod: 'POST',
-    })
 
-    console.log('createdRoom', createdRoom)
-    await orm.request(updateRoomModeRoomSid, {
-      roomModeId: roomModesResponse.id,
-      twilioRoomSid: createdRoom.sid,
-    })
-    const insertRoomUserRes = await orm.request(insertRoomUser, {
+    // NOTE: I took the await off of the following API calls
+    //  --- client.video.rooms
+    //  --- updateRoomModeRoomSid
+    //  --- insertRoomUser
+    // and it shaved off 1100 - 1500ms ... making the room creation process faster
+    // downside is that the errors arent handled now... but error handling was already bad...
+
+    // create a twilio room where the room name is the `roomId`
+    client.video.rooms
+      .create({
+        uniqueName: roomId,
+        type: 'group',
+        videoCodecs: ['VP8'],
+        statusCallback,
+        statusCallbackMethod: 'POST',
+      })
+      .then((createdRoom: any) => {
+        console.log('createdRoom', createdRoom)
+        orm.request(updateRoomModeRoomSid, {
+          roomModeId,
+          twilioRoomSid: createdRoom.sid,
+        })
+      })
+
+    orm.request(insertRoomUser, {
       objects: {
         room_id: roomId,
         user_id: ownerId,
         on_stage: true,
       },
     })
-
-    if (insertRoomUserRes.errors) {
-      throw new Error(insertRoomUserRes.errors[0].message)
-    }
-
-    // console.log('createdRoom = ', createdRoom)
-
-    const { id: roomModeId } = roomModesResponse
 
     return res.json({
       roomId,
@@ -162,9 +163,9 @@ roomsRouter.post('/create-room', async (req, res) => {
  * Create a guest user in a room
  * TODO: move part of this to the user router/service
  */
+
 roomsRouter.post('/create-guest-user', async (req, res) => {
-  // make roomId optional
-  const { firstName, roomId } = req.body.input
+  const { firstName } = req.body.input
 
   try {
     const insertUserRes = await orm.request(insertUser, {
@@ -177,7 +178,6 @@ roomsRouter.post('/create-guest-user', async (req, res) => {
       throw new Error(insertUserRes.errors[0].message)
     }
 
-    // success
     return res.json({
       userId: newUser.id,
       token: await createToken(newUser, process.env.SECRET),
@@ -352,18 +352,16 @@ roomsRouter.post('/join-room', async (req, res) => {
   const userId = req.body.session_variables['x-hasura-user-id']
   if (!userId) {
     return res.status(400).json({
-      message: "session doesn't match",
+      message: 'session doesnt match',
     })
   }
   let existingRoom
   try {
-    const beforeRoomCall = Date.now()
-
+    const beforeList = Date.now()
     const roomList = await client.video.rooms.list({ status: 'in-progress' })
-    const afterRoomCall = Date.now()
-    console.log('afterRoomCall', afterRoomCall)
+    const afterList = Date.now()
+    console.log('call to list rooms took = ', afterList - beforeList)
 
-    console.log('call to twilio took ==== ', afterRoomCall - beforeRoomCall)
     roomList.forEach((room: any) => {
       if (Number(room.uniqueName) === roomId) {
         existingRoom = room
@@ -410,17 +408,13 @@ roomsRouter.post('/join-room', async (req, res) => {
         throw new Error(insertRoomModeReq.errors[0].message)
       }
 
-      const insertRoomUserRes = await orm.request(insertRoomUser, {
+      orm.request(insertRoomUser, {
         objects: {
           room_id: roomId,
           user_id: userId,
           on_stage: true,
         },
       })
-
-      if (insertRoomUserRes.errors) {
-        throw new Error(insertRoomUserRes.errors[0].message)
-      }
 
       // update the room_modes_id on the room table
       orm.request(updateRoom, {
@@ -440,6 +434,7 @@ roomsRouter.post('/join-room', async (req, res) => {
       })
     }
   }
+
   return res.json({
     roomId,
   })
