@@ -11,7 +11,7 @@ const getCompositionsByOwnerId = gql`
       user {
         first_name
       }
-      url
+      composition_sid
     }
   }
 `

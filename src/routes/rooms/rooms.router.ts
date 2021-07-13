@@ -528,13 +528,14 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         .filter((rec: any) => rec.type === 'audio')
         .map((item: any) => item.sid)
 
-      const ownerVideoRecording = processingRecordings.find(
-        (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
-      )
+      // if we want to make the owner the big video and the other PIP, we need these
+      // const ownerVideoRecordingTrackId = processingRecordings.find(
+      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
+      // )
 
-      const partnerVideoRecording = processingRecordings.find(
-        (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
-      )
+      // const partnerVideoRecordingTrackId = processingRecordings.find(
+      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
+      // )
       // stop the recording
       client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
 
@@ -581,22 +582,19 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
 
         // create a composition
 
-        const verticalCompositionOptions = {
+        const defaultVerticalCompositionOptions = {
           roomSid,
           // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
           audioSources: audioRecordings,
           videoLayout: {
-            main: {
-              z_pos: 1,
-              video_sources: [ownerVideoRecording.trackName],
-            },
-            pip: {
-              z_pos: 2,
-              x_pos: 420,
-              y_pos: 770,
-              width: 270,
-              height: 480,
-              video_sources: [partnerVideoRecording.trackName],
+            column: {
+              y_pos: 0,
+              x_pos: 0,
+              width: 720,
+              height: 1280,
+              max_columns: 1,
+              max_rows: 2,
+              video_sources: videoRecordings,
             },
           },
           statusCallback: compositionStatusCallback,
@@ -604,27 +602,9 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
           format: 'mp4',
           resolution: '720x1280',
         }
-        const defaultCompositionOptions = {
-          roomSid,
-          // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
-          audioSources: audioRecordings,
-          videoLayout: {
-            grid: {
-              // array of video recording SIDs that are "processing" (active when the owner pressed 'stop')
-              video_sources: videoRecordings,
-            },
-          },
-          statusCallback: compositionStatusCallback,
-          statusCallbackMethod: 'POST',
-          format: 'mp4',
-          resolution: '1280x720',
-        }
         const composition = await client.video.compositions.create(
-          ownerVideoRecording && partnerVideoRecording
-            ? verticalCompositionOptions
-            : defaultCompositionOptions
+          defaultVerticalCompositionOptions
         )
-        console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
@@ -703,9 +683,9 @@ roomsRouter.post('/get-list-of-compositions', async (req, res) => {
 
       return {
         firstName: item.user.first_name,
-        url: item.url,
         startedAt: new Date(item.recording_started_at).toLocaleString(),
         length: recordingLength,
+        compositionSid: item.composition_sid,
         bookmarks: item.bookmarks.map((bookmark: any) => {
           const seconds = (new Date(bookmark.created_at).getTime() - recordingStartedAt) / 1000
           const formattedString = new Date(seconds * 1000)
@@ -738,5 +718,17 @@ roomsRouter.post('/get-list-of-compositions', async (req, res) => {
     console.log('error - ', error)
   }
 })
-
+roomsRouter.post('/get-composition-link', async (req, res) => {
+  const { compositionSid } = req.body.input
+  const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
+  // make a request to get a super long url
+  const mediaRequestObject = await client.request({
+    method: 'GET',
+    uri,
+  })
+  console.log('🚀 ~ roomsRouter.post ~ mediaRequestObject', mediaRequestObject)
+  return res.json({
+    url: mediaRequestObject.body.redirect_to,
+  })
+})
 export default roomsRouter

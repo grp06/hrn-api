@@ -1,10 +1,10 @@
 import gql from 'graphql-tag'
 
 const updateCompositionStatus = gql`
-  mutation updateCompositionStatus($compositionSid: String!, $url: String!) {
+  mutation updateCompositionStatus($compositionSid: String!) {
     update_compositions(
       where: { composition_sid: { _eq: $compositionSid } }
-      _set: { status: "completed", url: $url }
+      _set: { status: "completed" }
     ) {
       affected_rows
     }

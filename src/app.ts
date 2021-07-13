@@ -267,16 +267,10 @@ app.post('/composition-status-callbacks', async (req, res) => {
     // once the composition is done processing
     case 'composition-available': {
       console.log('COMPOSITION AVAILABLE')
-      const uri = `https://video.twilio.com/v1/Compositions/${compositionSid}/Media?Ttl=3600`
-      // make a request to get a super long url
-      const mediaRequestObject = await client.request({
-        method: 'GET',
-        uri,
-      })
+
       // update the composition's row in the DB with the URL. Set status to completed
       const updateCompositionRes = await orm.request(updateCompositionStatus, {
         compositionSid,
-        url: mediaRequestObject.body.redirect_to,
       })
       if (updateCompositionRes.errors) {
         throw new Error(updateCompositionRes.errors[0].message)
