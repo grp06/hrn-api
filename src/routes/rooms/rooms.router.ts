@@ -503,9 +503,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
     if (recordTracks) {
       console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
       // start the recording
-      await client.video
-        .rooms(roomId)
-        .recordingRules.update({ rules: [{ type: 'include', all: true }] })
+      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'include', all: true }] })
 
       // insert a "composition" row into the DB. We'll need the "startTime" later
       const insertCompositionRes = await orm.request(insertComposition, {
@@ -534,9 +532,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         .map((item: any) => item.sid)
 
       // stop the recording
-      await client.video
-        .rooms(roomId)
-        .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
 
       // query Hasura for the latest composition
       const compositionsRes = await orm.request(getCompositionsByOwnerId, {
