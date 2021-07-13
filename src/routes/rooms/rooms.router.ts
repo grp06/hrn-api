@@ -501,7 +501,6 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
   try {
     // user turned ON recording
     if (recordTracks) {
-      console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
       // start the recording
       client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'include', all: true }] })
 
@@ -516,8 +515,6 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
 
       // else... user turned OFF recording
     } else {
-      console.log('🚀 ~ roomsRouter.post ~ recordTracks', recordTracks)
-
       // first get all IDs of recordings from this room that are "processing"
       const processingRecordings = await client.video
         .rooms(roomSid)
@@ -531,6 +528,13 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         .filter((rec: any) => rec.type === 'audio')
         .map((item: any) => item.sid)
 
+      const ownerVideoRecording = processingRecordings.find(
+        (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
+      )
+
+      const partnerVideoRecording = processingRecordings.find(
+        (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
+      )
       // stop the recording
       client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
 
@@ -574,8 +578,33 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
           process.env.NODE_ENV === 'production'
             ? 'https://api.hirightnow.co/composition-status-callbacks'
             : `${process.env.NGROK_STATUS_CALLBACK_URL}/composition-status-callbacks`
+
         // create a composition
-        const composition = await client.video.compositions.create({
+
+        const verticalCompositionOptions = {
+          roomSid,
+          // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
+          audioSources: audioRecordings,
+          videoLayout: {
+            main: {
+              z_pos: 1,
+              video_sources: [ownerVideoRecording.trackName],
+            },
+            pip: {
+              z_pos: 2,
+              x_pos: 420,
+              y_pos: 770,
+              width: 270,
+              height: 480,
+              video_sources: [partnerVideoRecording.trackName],
+            },
+          },
+          statusCallback: compositionStatusCallback,
+          statusCallbackMethod: 'POST',
+          format: 'mp4',
+          resolution: '720x1280',
+        }
+        const defaultCompositionOptions = {
           roomSid,
           // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
           audioSources: audioRecordings,
@@ -589,7 +618,13 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
           statusCallbackMethod: 'POST',
           format: 'mp4',
           resolution: '1280x720',
-        })
+        }
+        const composition = await client.video.compositions.create(
+          ownerVideoRecording && partnerVideoRecording
+            ? verticalCompositionOptions
+            : defaultCompositionOptions
+        )
+        console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
