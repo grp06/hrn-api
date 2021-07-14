@@ -509,6 +509,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         ownerId,
         startTime: new Date().toISOString(),
       })
+      console.log('inserted composition when recording started = ', insertCompositionRes)
       if (insertCompositionRes.errors) {
         throw new Error(insertCompositionRes.errors[0].message)
       }
@@ -550,6 +551,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
 
       const compositionsList = compositionsRes.data.compositions
       const latestCompositionId = compositionsList[0]?.id
+      console.log('🚀 ~ roomsRouter.post ~ latestCompositionId', latestCompositionId)
       const startTime = compositionsList[0]?.recording_started_at
 
       // get all bookmarks dropped while the recording was in progress
@@ -558,6 +560,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         endTime: new Date().toISOString(),
         roomId,
       })
+      console.log('bookmarks from this session: ', bookmarksFromTimeframe)
 
       if (bookmarksFromTimeframe.errors) {
         throw new Error(bookmarksFromTimeframe.errors[0].message)
@@ -605,6 +608,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
         const composition = await client.video.compositions.create(
           defaultVerticalCompositionOptions
         )
+        console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
@@ -614,6 +618,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
           recordingEndedAt,
           status: 'enqueued',
         })
+        console.log('🚀 ~ roomsRouter.post ~ updateCompositionRes', updateCompositionRes)
 
         if (updateCompositionRes.errors) {
           throw new Error(updateCompositionRes.errors[0].message)
@@ -626,6 +631,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
           roomId,
           compositionSid: composition.sid,
         })
+        console.log('updated bookmarks for composition with compositionSid = ', updateBookmarksRes)
 
         if (updateBookmarksRes.errors) {
           throw new Error(updateBookmarksRes.errors[0].message)
@@ -637,6 +643,7 @@ roomsRouter.post('/toggle-recording', async (req, res) => {
     }
   } catch (error) {
     console.log('error = ', error)
+    return res.status(400).json({ message: 'error creating composition when recording stopped' })
   }
 
   return res.json({
