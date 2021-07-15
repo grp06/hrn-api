@@ -25,6 +25,7 @@ import logger from './logger'
 import router from './routes/router'
 import { startApolloServer } from './server-graphql'
 import orm from './services/orm'
+import toggleRecording from './services/recording/toggle-recording'
 import { initNextRound } from './services/room-modes/speed-rounds'
 
 /**
@@ -116,14 +117,22 @@ app.post('/status-callbacks', async (req, res) => {
     Timestamp,
     Duration,
     RecordingUri,
+    RoomSid,
   } = req.body
-  console.log(
-    `userId ${ParticipantIdentity} fired event ${StatusCallbackEvent} for roomId ${RoomName} ... room status is ${RoomStatus}`
-  )
+
+  console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
+  console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
 
   try {
     switch (StatusCallbackEvent) {
+      case 'recording-started':
+        console.log('recording started === ', Date.now())
+        console.log('req.body = ', req.body)
+
+        break
       case 'recording-completed': {
+        console.log('recording completed === ', Date.now())
+        console.log('req.body = ', req.body)
         const startTime = new Date(
           new Date(Timestamp).getTime() - Number(Duration) * 1000
         ).toISOString()
@@ -141,7 +150,9 @@ app.post('/status-callbacks', async (req, res) => {
           // no bookmarks were dropped during recording, delete recording
           if (!bookmarksFromTimeframe.data.bookmarks.length) {
             const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
-            await client.video.recordings(recordingSid).remove()
+
+            // console.log('recording finish. Deleting recordings from twilio')
+            // client.video.recordings(recordingSid).remove()
           }
         } catch (error) {
           console.log('error = ', error)
@@ -170,15 +181,28 @@ app.post('/status-callbacks', async (req, res) => {
         const getRoomByIdRes = await orm.request(getRoomById, {
           roomId: RoomName,
         })
+
+        const ownerId = getRoomByIdRes.data.rooms[0]?.owner_id
+
         // if this user hasn't yet set up a password, then when their room ends, it gets deleted
         const roomIsClaimed = getRoomByIdRes.data.rooms[0]?.owner.password
         if (!roomIsClaimed) {
+          console.log('deleting room')
+
           orm.request(deleteRoomById, {
             roomId: RoomName,
           })
         } else {
-          orm.request(deleteRoomChats, {
+          await orm.request(deleteRoomChats, {
             roomId: RoomName,
+          })
+
+          return toggleRecording({
+            recordTracks: false,
+            roomId: RoomName,
+            ownerId,
+            roomSid: RoomSid,
+            res,
           })
         }
 

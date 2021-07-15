@@ -20,20 +20,13 @@ import {
   updateRoomMode,
   updateRoomPassword,
   updateRoomModeRoomSid,
-  insertComposition,
-  deleteCompositionById,
-  updateComposition,
-  updateBookmarksWithCompositionSid,
 } from '../../gql/mutations'
-import {
-  getCompositionsByOwnerId,
-  getBookmarksFromTimeframe,
-  getCompletedCompositions,
-} from '../../gql/queries'
+import { getCompletedCompositions } from '../../gql/queries'
 import getRoomLogin from '../../gql/queries/getRoomLogin'
 import { hashPassword, comparePasswords } from '../../services/auth-service'
 import jobs from '../../services/jobs'
 import orm from '../../services/orm'
+import toggleRecording from '../../services/recording/toggle-recording'
 import { initSpeedRounds } from '../../services/room-modes/speed-rounds'
 
 const roomsRouter = express.Router()
@@ -498,157 +491,7 @@ roomsRouter.post('/login-room', async (req, res) => {
 roomsRouter.post('/toggle-recording', async (req, res) => {
   const { recordTracks, roomId, ownerId, roomSid } = req.body.input
 
-  try {
-    // user turned ON recording
-    if (recordTracks) {
-      // start the recording
-      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'include', all: true }] })
-
-      // insert a "composition" row into the DB. We'll need the "startTime" later
-      const insertCompositionRes = await orm.request(insertComposition, {
-        ownerId,
-        startTime: new Date().toISOString(),
-      })
-      console.log('inserted composition when recording started = ', insertCompositionRes)
-      if (insertCompositionRes.errors) {
-        throw new Error(insertCompositionRes.errors[0].message)
-      }
-
-      // else... user turned OFF recording
-    } else {
-      // first get all IDs of recordings from this room that are "processing"
-      const processingRecordings = await client.video
-        .rooms(roomSid)
-        .recordings.list({ status: 'processing' })
-
-      const videoRecordings = processingRecordings
-        .filter((rec: any) => rec.type === 'video')
-        .map((item: any) => item.sid)
-
-      const audioRecordings = processingRecordings
-        .filter((rec: any) => rec.type === 'audio')
-        .map((item: any) => item.sid)
-
-      // if we want to make the owner the big video and the other PIP, we need these
-      // const ownerVideoRecordingTrackId = processingRecordings.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
-      // )
-
-      // const partnerVideoRecordingTrackId = processingRecordings.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
-      // )
-      // stop the recording
-      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
-
-      // query Hasura for the latest composition
-      const compositionsRes = await orm.request(getCompositionsByOwnerId, {
-        ownerId,
-      })
-
-      if (compositionsRes.errors) {
-        throw new Error(compositionsRes.errors[0].message)
-      }
-
-      const compositionsList = compositionsRes.data.compositions
-      const latestCompositionId = compositionsList[0]?.id
-      console.log('🚀 ~ roomsRouter.post ~ latestCompositionId', latestCompositionId)
-      const startTime = compositionsList[0]?.recording_started_at
-
-      // get all bookmarks dropped while the recording was in progress
-      const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
-        startTime,
-        endTime: new Date().toISOString(),
-        roomId,
-      })
-      console.log('bookmarks from this session: ', bookmarksFromTimeframe)
-
-      if (bookmarksFromTimeframe.errors) {
-        throw new Error(bookmarksFromTimeframe.errors[0].message)
-      }
-
-      // if there are no bookmarks, delete the composition's row from the DB
-      if (!bookmarksFromTimeframe.data.bookmarks.length) {
-        console.log('no bookmarks, delete the current composition from hasura')
-        const deleteCompositionByIdRes = await orm.request(deleteCompositionById, {
-          id: latestCompositionId,
-        })
-
-        if (deleteCompositionByIdRes.errors) {
-          throw new Error(deleteCompositionByIdRes.errors[0].message)
-        }
-      } else {
-        // otherwise --- there ARE bookmarks
-        const compositionStatusCallback =
-          process.env.NODE_ENV === 'production'
-            ? 'https://api.hirightnow.co/composition-status-callbacks'
-            : `${process.env.NGROK_STATUS_CALLBACK_URL}/composition-status-callbacks`
-
-        // create a composition
-
-        const defaultVerticalCompositionOptions = {
-          roomSid,
-          // array of audio recording SIDs that are "processing" (active when the owner pressed 'stop')
-          audioSources: audioRecordings,
-          videoLayout: {
-            column: {
-              y_pos: 0,
-              x_pos: 0,
-              width: 720,
-              height: 1280,
-              max_columns: 1,
-              max_rows: 2,
-              video_sources: videoRecordings,
-            },
-          },
-          statusCallback: compositionStatusCallback,
-          statusCallbackMethod: 'POST',
-          format: 'mp4',
-          resolution: '720x1280',
-        }
-        const composition = await client.video.compositions.create(
-          defaultVerticalCompositionOptions
-        )
-        console.log('🚀 ~ roomsRouter.post ~ composition', composition)
-
-        const recordingEndedAt = new Date().toISOString()
-        // update the composition's row in Hasura with the time it ended and set the status to enqueued
-        const updateCompositionRes = await orm.request(updateComposition, {
-          latestCompositionId,
-          compositionSid: composition.sid,
-          recordingEndedAt,
-          status: 'enqueued',
-        })
-        console.log('🚀 ~ roomsRouter.post ~ updateCompositionRes', updateCompositionRes)
-
-        if (updateCompositionRes.errors) {
-          throw new Error(updateCompositionRes.errors[0].message)
-        }
-
-        // update the bookmarks that we dropped during the recording with the compositions SID
-        const updateBookmarksRes = await orm.request(updateBookmarksWithCompositionSid, {
-          startTime,
-          endTime: recordingEndedAt,
-          roomId,
-          compositionSid: composition.sid,
-        })
-        console.log('updated bookmarks for composition with compositionSid = ', updateBookmarksRes)
-
-        if (updateBookmarksRes.errors) {
-          throw new Error(updateBookmarksRes.errors[0].message)
-        }
-
-        // NOTE: the next thing that happens after all of this is that that the "composition-available" webhook gets hit
-        // this can take 30 seconds or 30 minutes... depends on Twilio's queue
-      }
-    }
-  } catch (error) {
-    console.log('error = ', error)
-    return res.status(400).json({ message: 'error creating composition when recording stopped' })
-  }
-
-  return res.json({
-    roomId,
-  })
+  return toggleRecording({ recordTracks, roomId, ownerId, roomSid, res })
 })
 
 // called from /admin/userId
