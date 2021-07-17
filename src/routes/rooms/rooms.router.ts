@@ -532,6 +532,7 @@ roomsRouter.post('/get-list-of-compositions', async (req, res) => {
         })
 
       return {
+        id: item.id,
         firstName: item.user.first_name,
         startedAt: new Date(item.recording_started_at).toLocaleString(),
         length: recordingLength,

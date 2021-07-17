@@ -125,14 +125,7 @@ app.post('/status-callbacks', async (req, res) => {
 
   try {
     switch (StatusCallbackEvent) {
-      case 'recording-started':
-        console.log('recording started === ', Date.now())
-        console.log('req.body = ', req.body)
-
-        break
       case 'recording-completed': {
-        console.log('recording completed === ', Date.now())
-        console.log('req.body = ', req.body)
         const startTime = new Date(
           new Date(Timestamp).getTime() - Number(Duration) * 1000
         ).toISOString()
@@ -151,8 +144,8 @@ app.post('/status-callbacks', async (req, res) => {
           if (!bookmarksFromTimeframe.data.bookmarks.length) {
             const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
 
-            // console.log('recording finish. Deleting recordings from twilio')
-            // client.video.recordings(recordingSid).remove()
+            console.log('recording finish. Deleting recordings from twilio')
+            client.video.recordings(recordingSid).remove()
           }
         } catch (error) {
           console.log('error = ', error)

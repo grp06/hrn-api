@@ -36,43 +36,13 @@ const toggleRecording: ToggleRecording = async ({
         ownerId,
         startTime: new Date().toISOString(),
       })
-      console.log('inserted composition when recording started = ', insertCompositionRes)
+      console.log('inserted composition when recording started')
       if (insertCompositionRes.errors) {
         throw new Error(insertCompositionRes.errors[0].message)
       }
 
       // else... user turned OFF recording
     } else {
-      // first get all IDs of recordings from this room
-
-      const allRoomRecordings = await client.video.rooms(roomSid).recordings.list()
-      const uniqueUsers: Array<string> = []
-      allRoomRecordings.forEach((rec: any) => {
-        if (!uniqueUsers.includes(rec.trackName.split('-')[1])) {
-          uniqueUsers.push(rec.trackName.split('-')[1])
-        }
-      })
-
-      const videoRecordings = allRoomRecordings
-        .filter((rec: any) => rec.type === 'video')
-        .map((item: any) => item.sid)
-
-      const audioRecordings = allRoomRecordings
-        .filter((rec: any) => rec.type === 'audio')
-        .map((item: any) => item.sid)
-
-      // if we want to make the owner the big video and the other PIP, we need these
-      // const ownerVideoRecordingTrackId = allRoomRecordings.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
-      // )
-
-      // const partnerVideoRecordingTrackId = allRoomRecordings.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
-      // )
-      // stop the recording
-
-      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
-
       // query Hasura for the latest composition
       const compositionsRes = await orm.request(getCompositionsByOwnerId, {
         ownerId,
@@ -82,10 +52,41 @@ const toggleRecording: ToggleRecording = async ({
         throw new Error(compositionsRes.errors[0].message)
       }
 
-      const compositionsList = compositionsRes.data.compositions
-      const latestCompositionId = compositionsList[0]?.id
-      console.log('🚀 ~ roomsRouter.post ~ latestCompositionId', latestCompositionId)
-      const startTime = compositionsList[0]?.recording_started_at
+      const latestComposition = compositionsRes.data.compositions[0]
+      const { id: latestCompositionId, recording_started_at: startTime } = latestComposition
+
+      // first get all IDs of recordings from this room
+      const recordingsDuringThisComposition = await client.video
+        .rooms(roomSid)
+        .recordings.list({ dateCreatedAfter: startTime })
+
+      const uniqueUsers: Array<string> = []
+      recordingsDuringThisComposition.forEach((rec: any) => {
+        if (!uniqueUsers.includes(rec.trackName.split('-')[1])) {
+          uniqueUsers.push(rec.trackName.split('-')[1])
+        }
+      })
+      console.log('🚀 ~ uniqueUsers during this composition', uniqueUsers)
+
+      const videoRecordings = recordingsDuringThisComposition
+        .filter((rec: any) => rec.type === 'video')
+        .map((item: any) => item.sid)
+
+      const audioRecordings = recordingsDuringThisComposition
+        .filter((rec: any) => rec.type === 'audio')
+        .map((item: any) => item.sid)
+
+      // if we want to make the owner the big video and the other PIP, we need these
+      // const ownerVideoRecordingTrackId = recordingsDuringThisComposition.find(
+      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
+      // )
+
+      // const partnerVideoRecordingTrackId = recordingsDuringThisComposition.find(
+      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
+      // )
+      // stop the recording
+
+      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
 
       // get all bookmarks dropped while the recording was in progress
       const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
@@ -99,9 +100,8 @@ const toggleRecording: ToggleRecording = async ({
         throw new Error(bookmarksFromTimeframe.errors[0].message)
       }
 
-      // if there are no bookmarks, delete the composition's row from the DB
+      // if we had some bookmarks during this recording
       if (bookmarksFromTimeframe.data.bookmarks.length) {
-        // otherwise --- there ARE bookmarks
         const compositionStatusCallback =
           process.env.NODE_ENV === 'production'
             ? 'https://api.hirightnow.co/composition-status-callbacks'
@@ -157,7 +157,6 @@ const toggleRecording: ToggleRecording = async ({
           recordingEndedAt,
           status: 'enqueued',
         })
-        console.log('🚀 ~ roomsRouter.post ~ updateCompositionRes', updateCompositionRes)
 
         if (updateCompositionRes.errors) {
           throw new Error(updateCompositionRes.errors[0].message)
