@@ -120,6 +120,7 @@ roomsRouter.post('/create-room', async (req, res) => {
         videoCodecs: ['VP8'],
         statusCallback,
         statusCallbackMethod: 'POST',
+        RecordParticipantsOnConnect: true,
       })
       .then((createdRoom: any) => {
         console.log('createdRoom', createdRoom)
@@ -489,6 +490,7 @@ roomsRouter.post('/login-room', async (req, res) => {
 })
 
 roomsRouter.post('/toggle-recording', async (req, res) => {
+  console.log("🚀 ~ file: rooms.router.ts ~ line 492 ~ roomsRouter.post ~ toggle-recording")
   const { recordTracks, roomId, ownerId, roomSid } = req.body.input
 
   return toggleRecording({ recordTracks, roomId, ownerId, roomSid, res })

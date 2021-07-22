@@ -119,6 +119,9 @@ app.post('/status-callbacks', async (req, res) => {
     RecordingUri,
     RoomSid,
   } = req.body
+  console.log("🚀 ~ file: app.ts ~ line 122 ~ app.post ~ req.body", req.body)
+    console.log("🚀 ~ file: app.ts ~ line 122 ~ app.post ~ TrackKind", TrackKind)
+  // console.log("🚀 ~ file: app.ts ~ line 122 ~ app.post ~ req.body", req.body)
 
   console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
   console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
@@ -145,7 +148,39 @@ app.post('/status-callbacks', async (req, res) => {
             const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
 
             console.log('recording finish. Deleting recordings from twilio')
+
+            const getRoomByIdRes = await orm.request(getRoomById, {
+              roomId: RoomName,
+            })
+    
+            const ownerId = getRoomByIdRes.data.rooms[0]?.owner_id
+            console.log("🚀 ~ file: app.ts ~ line 179 ~ app.post ~ ownerId === ParticipantIdentity", ownerId, ParticipantIdentity)
+
+              client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'exclude', publisher: ParticipantIdentity }] })
+
+            // if(ownerId === ParticipantIdentity) {
+              
+            // } 
+            // else {
+              // client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'exclude', publisher: ParticipantIdentity }] })
+
+              // client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+            //   .then(()=>client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'include', all: true }] }))
+            // }
+            
+            // client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+            // client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'include', all: true }] })
+    
+            // client.video.rooms(RoomName).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+            // .then((recording_rules:any) => console.log('recording_rules.roomSid', recording_rules.roomSid));
             client.video.recordings(recordingSid).remove()
+            return toggleRecording({
+              recordTracks: false,
+              roomId: RoomName,
+              ownerId,
+              roomSid: RoomSid,
+              res,
+            })
           }
         } catch (error) {
           console.log('error = ', error)
@@ -214,7 +249,6 @@ app.post('/status-callbacks', async (req, res) => {
           (user: any) => Number(ParticipantIdentity) === user.user_id
         )
         const myRoomUserIsSpectator = myRoomUser && !myRoomUser.on_stage
-        console.log('🚀 ~ app.post ~ myRoomUserIsSpectator', myRoomUserIsSpectator)
 
         const stageUsers = roomUsers.filter((stageUser: any) => stageUser.on_stage)
         const stageFull = stageUsers.length > 7

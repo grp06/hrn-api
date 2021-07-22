@@ -28,6 +28,7 @@ const toggleRecording: ToggleRecording = async ({
   try {
     // user turned ON recording
     if (recordTracks) {
+      console.log("🚀 ~ file: toggle-recording.ts ~ line 31 ~ recordTracks true", recordTracks)
       // start the recording
       client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'include', all: true }] })
 
@@ -43,6 +44,8 @@ const toggleRecording: ToggleRecording = async ({
 
       // else... user turned OFF recording
     } else {
+      console.log("🚀 ~ file: toggle-recording.ts ~ line 31 ~ recordTracks false", recordTracks)
+
       // query Hasura for the latest composition
       const compositionsRes = await orm.request(getCompositionsByOwnerId, {
         ownerId,
@@ -141,19 +144,20 @@ const toggleRecording: ToggleRecording = async ({
           statusCallback: compositionStatusCallback,
           format: 'mp4',
           resolution: '1280x720',
+          RecordParticipantsOnConnect: true,
         }
 
         const compositionSelection = () =>
           uniqueUsers.length > 2 ? gridCompositionOptions : verticalCompositionOptions
 
-        const composition = await client.video.compositions.create(compositionSelection())
-        console.log('🚀 ~ roomsRouter.post ~ composition', composition)
+        // const composition = await client.video.compositions.create(compositionSelection())
+        // console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
         const updateCompositionRes = await orm.request(updateComposition, {
           latestCompositionId,
-          compositionSid: composition.sid,
+          compositionSid: "",
           recordingEndedAt,
           status: 'enqueued',
         })
@@ -167,7 +171,7 @@ const toggleRecording: ToggleRecording = async ({
           startTime,
           endTime: recordingEndedAt,
           roomId,
-          compositionSid: composition.sid,
+          compositionSid: "",
         })
         console.log('updated bookmarks for composition with compositionSid = ', updateBookmarksRes)
 
