@@ -150,14 +150,14 @@ const toggleRecording: ToggleRecording = async ({
         const compositionSelection = () =>
           uniqueUsers.length > 2 ? gridCompositionOptions : verticalCompositionOptions
 
-        // const composition = await client.video.compositions.create(compositionSelection())
+        const composition = await client.video.compositions.create(compositionSelection())
         // console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
         const updateCompositionRes = await orm.request(updateComposition, {
           latestCompositionId,
-          compositionSid: "",
+          compositionSid: composition.sid,
           recordingEndedAt,
           status: 'enqueued',
         })
@@ -171,7 +171,7 @@ const toggleRecording: ToggleRecording = async ({
           startTime,
           endTime: recordingEndedAt,
           roomId,
-          compositionSid: "",
+          compositionSid: composition.sid,
         })
         console.log('updated bookmarks for composition with compositionSid = ', updateBookmarksRes)
 
