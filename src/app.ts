@@ -119,9 +119,10 @@ app.post('/status-callbacks', async (req, res) => {
     RecordingUri,
     RoomSid,
   } = req.body
+  console.log('req.body = ', req.body)
 
-  console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
-  console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
+  // console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
+  // console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
 
   try {
     switch (StatusCallbackEvent) {
@@ -265,7 +266,7 @@ app.post('/status-callbacks', async (req, res) => {
         break
       }
       default:
-        console.log('default')
+      // console.log('default')
     }
   } catch (error) {
     console.log('🚀 ~ app.post ~ error', error)
