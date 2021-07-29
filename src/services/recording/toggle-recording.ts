@@ -32,7 +32,9 @@ const toggleRecording: ToggleRecording = async ({
       // start the recording
       console.log('update recording rules ON')
 
-      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'include', all: true }] })
+      await client.video
+        .rooms(roomId)
+        .recordingRules.update({ rules: [{ type: 'include', all: true }] })
 
       // insert a "composition" row into the DB. We'll need the "startTime" later
       const insertCompositionRes = await orm.request(insertComposition, {
@@ -89,7 +91,9 @@ const toggleRecording: ToggleRecording = async ({
       // )
       // stop the recording
       console.log('update recording rules OFF')
-      client.video.rooms(roomId).recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+      await client.video
+        .rooms(roomId)
+        .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
 
       // get all bookmarks dropped while the recording was in progress
       const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {

@@ -113,7 +113,7 @@ roomsRouter.post('/create-room', async (req, res) => {
     // downside is that the errors arent handled now... but error handling was already bad...
 
     // create a twilio room where the room name is the `roomId`
-    client.video.rooms
+    await client.video.rooms
       .create({
         uniqueName: roomId,
         type: 'group',

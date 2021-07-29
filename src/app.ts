@@ -119,7 +119,6 @@ app.post('/status-callbacks', async (req, res) => {
     RecordingUri,
     RoomSid,
   } = req.body
-  console.log('req.body = ', req.body)
 
   // console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
   // console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
