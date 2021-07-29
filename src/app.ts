@@ -141,13 +141,13 @@ app.post('/status-callbacks', async (req, res) => {
           if (bookmarksFromTimeframe.errors) {
             throw new Error(bookmarksFromTimeframe.errors[0].message)
           }
-          // no bookmarks were dropped during recording, delete recording
-          if (!bookmarksFromTimeframe.data.bookmarks.length) {
-            const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
+          // // no bookmarks were dropped during recording, delete recording
+          // if (!bookmarksFromTimeframe.data.bookmarks.length) {
+          //   const recordingSid = RecordingUri.split('/v1/Recordings/')[1]
 
-            console.log('recording finish. Deleting recordings from twilio')
-            client.video.recordings(recordingSid).remove()
-          }
+          //   console.log('recording finish. Deleting recordings from twilio')
+          //   client.video.recordings(recordingSid).remove()
+          // }
         } catch (error) {
           console.log('error = ', error)
         }
