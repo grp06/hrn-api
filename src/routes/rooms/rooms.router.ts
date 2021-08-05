@@ -491,7 +491,7 @@ roomsRouter.post('/login-room', async (req, res) => {
 roomsRouter.post('/toggle-recording', async (req, res) => {
   const { recordTracks, roomId, ownerId, roomSid } = req.body.input
 
-  return toggleRecording({ recordTracks, roomId, ownerId, roomSid, res })
+  return toggleRecording({ recordTracks, roomId, ownerId, roomSid, res, roomEndedCallback: false })
 })
 
 // called from /admin/userId

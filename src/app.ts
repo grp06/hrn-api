@@ -194,6 +194,7 @@ app.post('/status-callbacks', async (req, res) => {
             ownerId,
             roomSid: RoomSid,
             res,
+            roomEndedCallback: true,
           })
         }
 

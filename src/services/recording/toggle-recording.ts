@@ -13,6 +13,7 @@ type ToggleRecordingParams = {
   ownerId: number
   roomSid: string
   res: any
+  roomEndedCallback: boolean
 }
 
 type ToggleRecording = (params: ToggleRecordingParams) => Promise<void>
@@ -23,6 +24,7 @@ const toggleRecording: ToggleRecording = async ({
   ownerId,
   roomSid,
   res,
+  roomEndedCallback,
 }) => {
   console.log('toggle recording called')
 
@@ -74,26 +76,19 @@ const toggleRecording: ToggleRecording = async ({
       console.log('🚀 ~ uniqueUsers during this composition', uniqueUsers)
 
       const videoRecordings = recordingsDuringThisComposition
-        .filter((rec: any) => rec.type === 'video')
+        .filter((rec: any) => rec.trackName.indexOf('video') > -1)
         .map((item: any) => item.sid)
 
       const audioRecordings = recordingsDuringThisComposition
-        .filter((rec: any) => rec.type === 'audio')
+        .filter((rec: any) => rec.trackName.indexOf('audio') > -1)
         .map((item: any) => item.sid)
 
-      // if we want to make the owner the big video and the other PIP, we need these
-      // const ownerVideoRecordingTrackId = recordingsDuringThisComposition.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) === ownerId
-      // )
-
-      // const partnerVideoRecordingTrackId = recordingsDuringThisComposition.find(
-      //   (rec: any) => rec.type === 'video' && Number(rec.trackName.split('-')[1]) !== ownerId
-      // )
-      // stop the recording
-      console.log('update recording rules OFF')
-      await client.video
-        .rooms(roomId)
-        .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+      if (!roomEndedCallback) {
+        console.log('update recording rules OFF')
+        await client.video
+          .rooms(roomId)
+          .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
+      }
 
       // get all bookmarks dropped while the recording was in progress
       const bookmarksFromTimeframe = await orm.request(getBookmarksFromTimeframe, {
