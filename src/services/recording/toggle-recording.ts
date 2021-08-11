@@ -119,8 +119,8 @@ const toggleRecording: ToggleRecording = async ({
             column: {
               y_pos: 0,
               x_pos: 0,
-              width: 720,
-              height: 1280,
+              width: 856,
+              height: 1070,
               max_columns: 1,
               max_rows: 2,
               video_sources: videoRecordings,
@@ -129,7 +129,7 @@ const toggleRecording: ToggleRecording = async ({
           statusCallback: compositionStatusCallback,
           statusCallbackMethod: 'POST',
           format: 'mp4',
-          resolution: '720x1280',
+          resolution: '856x1070',
         }
 
         const gridCompositionOptions = {
@@ -142,7 +142,7 @@ const toggleRecording: ToggleRecording = async ({
           },
           statusCallback: compositionStatusCallback,
           format: 'mp4',
-          resolution: '1280x720',
+          resolution: '856x1070',
         }
 
         const compositionSelection = () =>
