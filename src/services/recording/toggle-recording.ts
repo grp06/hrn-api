@@ -103,7 +103,7 @@ const toggleRecording: ToggleRecording = async ({
       }
 
       // if we had some bookmarks during this recording
-      if (bookmarksFromTimeframe.data.bookmarks.length) {
+      if (bookmarksFromTimeframe.data.bookmarks.length && videoRecordings.length) {
         const compositionStatusCallback =
           process.env.NODE_ENV === 'production'
             ? 'https://api.hirightnow.co/composition-status-callbacks'
