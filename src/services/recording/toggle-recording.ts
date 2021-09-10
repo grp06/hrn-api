@@ -80,7 +80,7 @@ const toggleRecording: ToggleRecording = async ({
         .map((item: any) => item.sid)
 
       const audioRecordings = recordingsDuringThisComposition
-        .filter((rec: any) => rec.trackName.indexOf('audio') > -1)
+        .filter((rec: any) => rec.type === 'audio')
         .map((item: any) => item.sid)
 
       if (!roomEndedCallback) {
