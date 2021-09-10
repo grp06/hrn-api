@@ -35,7 +35,7 @@ const toggleRecording: ToggleRecording = async ({
       console.log('update recording rules ON')
 
       await client.video
-        .rooms(roomId)
+        .rooms(roomSid)
         .recordingRules.update({ rules: [{ type: 'include', all: true }] })
 
       // insert a "composition" row into the DB. We'll need the "startTime" later
@@ -86,7 +86,7 @@ const toggleRecording: ToggleRecording = async ({
       if (!roomEndedCallback) {
         console.log('update recording rules OFF')
         await client.video
-          .rooms(roomId)
+          .rooms(roomSid)
           .recordingRules.update({ rules: [{ type: 'exclude', all: true }] })
       }
 
