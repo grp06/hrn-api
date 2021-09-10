@@ -76,7 +76,7 @@ const toggleRecording: ToggleRecording = async ({
       console.log('🚀 ~ uniqueUsers during this composition', uniqueUsers)
 
       const videoRecordings = recordingsDuringThisComposition
-        .filter((rec: any) => rec.trackName.indexOf('video') > -1)
+        .filter((rec: any) => rec.type === 'video')
         .map((item: any) => item.sid)
 
       const audioRecordings = recordingsDuringThisComposition
