@@ -151,6 +151,8 @@ const toggleRecording: ToggleRecording = async ({
         const composition = await client.video.compositions.create(compositionSelection())
         console.log('🚀 ~ roomsRouter.post ~ composition', composition)
 
+        // TODO: we should move this outside of this if statement because a composition
+        //  it's not updated when if no bookmarks were set
         const recordingEndedAt = new Date().toISOString()
         // update the composition's row in Hasura with the time it ended and set the status to enqueued
         const updateCompositionRes = await orm.request(updateComposition, {
@@ -171,6 +173,14 @@ const toggleRecording: ToggleRecording = async ({
           roomId,
           compositionSid: composition.sid,
         })
+
+        console.log('updateBookmarksRes', {
+          startTime,
+          endTime: recordingEndedAt,
+          roomId,
+          compositionSid: composition.sid,
+        })
+
         console.log('updated bookmarks for composition with compositionSid = ', updateBookmarksRes)
 
         if (updateBookmarksRes.errors) {
