@@ -52,6 +52,7 @@ authRouter.post('/login', async (req, res) => {
 })
 
 authRouter.post('/get-anonymous-token', async (req, res) => {
+  console.log('get anonymous token')
   console.log('inside anonymous token')
   try {
     return res.json({
@@ -67,6 +68,7 @@ authRouter.post('/get-anonymous-token', async (req, res) => {
 })
 
 authRouter.post('/fetch-user-by-token', async (req, res) => {
+  console.log('fetch user by token')
   const userId = req.body.session_variables['x-hasura-user-id']
   try {
     const findUserByIdReq = await orm.request(findUserById, {

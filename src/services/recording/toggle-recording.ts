@@ -60,12 +60,15 @@ const toggleRecording: ToggleRecording = async ({
       }
 
       const latestComposition = compositionsRes.data.compositions[0]
+      console.log('🚀 ~ latestComposition', latestComposition)
       const { id: latestCompositionId, recording_started_at: startTime } = latestComposition
 
       // first get all IDs of recordings from this room
       const recordingsDuringThisComposition = await client.video
         .rooms(roomSid)
         .recordings.list({ dateCreatedAfter: startTime })
+
+      console.log('🚀 ~ recordingsDuringThisComposition', recordingsDuringThisComposition)
 
       const uniqueUsers: Array<string> = []
       recordingsDuringThisComposition.forEach((rec: any) => {
@@ -107,7 +110,7 @@ const toggleRecording: ToggleRecording = async ({
         const compositionStatusCallback =
           process.env.NODE_ENV === 'production'
             ? 'https://api.hirightnow.co/composition-status-callbacks'
-            : `${process.env.NGROK_STATUS_CALLBACK_URL}/composition-status-callbacks`
+            : `https://402f-74-108-47-5.ngrok.io/composition-status-callbacks`
 
         // create a composition
 
