@@ -72,8 +72,8 @@ const toggleRecording: ToggleRecording = async ({
 
       const uniqueUsers: Array<string> = []
       recordingsDuringThisComposition.forEach((rec: any) => {
-        if (!uniqueUsers.includes(rec.trackName.split('-')[1])) {
-          uniqueUsers.push(rec.trackName.split('-')[1])
+        if (!uniqueUsers.includes(rec.trackName.split('_')[1])) {
+          uniqueUsers.push(rec.trackName.split('_')[1])
         }
       })
       console.log('🚀 ~ uniqueUsers during this composition', uniqueUsers)

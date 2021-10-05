@@ -118,7 +118,7 @@ app.post('/status-callbacks', async (req, res) => {
     RoomSid,
   } = req.body
 
-  // console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
+  console.log(`userId ${ParticipantIdentity} fired event ${StatusCallbackEvent}`)
   // console.log(`for roomId ${RoomName} ... room status is ${RoomStatus}`)
 
   try {
@@ -169,9 +169,11 @@ app.post('/status-callbacks', async (req, res) => {
         }
         break
       case 'room-ended': {
+        console.log('!!!room ended!!!')
         const getRoomByIdRes = await orm.request(getRoomById, {
           roomId: RoomName,
         })
+        console.log('🚀 ~ app.post ~ getRoomByIdRes', getRoomByIdRes)
 
         const ownerId = getRoomByIdRes.data.rooms[0]?.owner_id
 
