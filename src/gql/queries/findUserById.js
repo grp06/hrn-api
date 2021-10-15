@@ -6,7 +6,6 @@ const findUserById = gql`
       id
       email
       role
-      password
       first_name
       last_name
       created_at

@@ -110,7 +110,7 @@ const toggleRecording: ToggleRecording = async ({
         const compositionStatusCallback =
           process.env.NODE_ENV === 'production'
             ? 'https://api.hirightnow.co/composition-status-callbacks'
-            : `https://402f-74-108-47-5.ngrok.io/composition-status-callbacks`
+            : process.env.NGROK_STATUS_CALLBACK_URL / composition - status - callbacks
 
         // create a composition
 
