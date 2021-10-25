@@ -14,13 +14,16 @@ const roles = {
   premium: 'premium',
 }
 
-export const createToken = async (user, secret, expiresIn) => {
+export const createToken = async (user, secret) => {
+  const { issuer, publicAddress, email, uid } = user
+  console.log('🚀 ~ createToken ~ user', user)
+
   const tokenContents = {
-    sub: `${user.id}`,
-    // not sure why this is "name"... seems like it should be called email
-    // not sure if it'll break anything if I just change it here
-    name: user.email,
+    publicAddress,
+    uid,
+    email,
     iat: Date.now() / 1000 - 10,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * process.env.SESSION_LENGTH_IN_DAYS,
   }
 
   tokenContents[constants.claims] = {}
@@ -29,8 +32,8 @@ export const createToken = async (user, secret, expiresIn) => {
     roles.free,
     roles.premium,
   ]
-  tokenContents[constants.claims][constants.userId] = `${user.id}`
-  tokenContents[constants.claims][constants.defaultRole] = user.role
+  tokenContents[constants.claims][constants.userId] = `${issuer}`
+  tokenContents[constants.claims][constants.defaultRole] = 'free'
 
   return jwt.sign(tokenContents, secret)
 }

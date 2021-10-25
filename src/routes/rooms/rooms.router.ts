@@ -41,7 +41,7 @@ roomsRouter.post('/create-room', async (req, res) => {
   const statusCallback =
     process.env.NODE_ENV === 'production'
       ? 'https://api.hirightnow.co/status-callbacks'
-      : `https://402f-74-108-47-5.ngrok.io/status-callbacks`
+      : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
   try {
     let ownerId = null
@@ -373,7 +373,7 @@ roomsRouter.post('/join-room', async (req, res) => {
     const statusCallback =
       process.env.NODE_ENV === 'production'
         ? 'https://api.hirightnow.co/status-callbacks'
-        : `https://402f-74-108-47-5.ngrok.io/status-callbacks`
+        : `${process.env.NGROK_STATUS_CALLBACK_URL}/status-callbacks`
 
     try {
       const createdRoom = await client.video.rooms.create({

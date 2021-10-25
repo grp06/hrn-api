@@ -1,9 +1,10 @@
+require('dotenv').config({ path: '.env' })
+
 import * as Sentry from '@sentry/node'
 import './services/cron-service'
 import 'isomorphic-fetch'
 import bodyParser from 'body-parser'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import es6Promise from 'es6-promise'
 import express, { ErrorRequestHandler } from 'express'
 import morgan from 'morgan'
@@ -27,13 +28,15 @@ import { startApolloServer } from './server-graphql'
 import orm from './services/orm'
 import toggleRecording from './services/recording/toggle-recording'
 import { initNextRound } from './services/room-modes/speed-rounds'
+import cookieParser from 'cookie-parser'
 
 /**
  * Initialise & configure libraries
  */
-dotenv.config()
+
 es6Promise.polyfill()
 const app = express().set('view engine', 'ejs')
+app.use(cookieParser())
 discord.newHost()
 
 Sentry.init({ dsn: 'https://c9f54122fb8e4de4b52f55948a091e2b@o408346.ingest.sentry.io/5279031' })
@@ -56,7 +59,12 @@ app.use(Sentry.Handlers.requestHandler())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(morgan(NODE_ENV === 'production' ? 'tiny' : 'common'))
-app.use(cors())
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+)
 
 /**
  * Import routes
@@ -305,5 +313,86 @@ app.post('/composition-status-callbacks', async (req, res) => {
 })
 
 checkForInterruptedEvents().then()
+
+// export default async function login(req, res) {
+//   try {
+//     const didToken = req.headers.authorization.substr(7)
+//     await magic.token.validate(didToken)
+//     const metadata = await magic.users.getMetadataByToken(didToken)
+
+//     let token = jwt.sign(
+//       {
+//         ...metadata,
+//         'https://hasura.io/jwt/claims': {
+//           'x-hasura-allowed-roles': ['user'],
+//           'x-hasura-default-role': 'user',
+//           'x-hasura-user-id': `${metadata.issuer}`,
+//         },
+//         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * process.env.SESSION_LENGTH_IN_DAYS,
+//       },
+//       process.env.JWT_SECRET
+//     )
+
+//     // Check if user trying to log in already exists
+//     let newUser = await isNewUser(metadata.issuer, token)
+
+//     // If not, create a new user in Hasura
+//     newUser && (await createNewUser(metadata, token))
+
+//     setTokenCookie(res, token)
+//     res.status(200).send({ done: true })
+//   } catch (error) {
+//     // handle error
+//   }
+// }
+
+// async function isNewUser(issuer, token) {
+//   let query = {
+//     query: `{
+//       users( where: {issuer: {_eq: "${issuer}"}}) {
+//         email
+//       }
+//     }`,
+//   }
+//   try {
+//     let data = await queryHasura(query, token)
+//     return data?.users.length ? false : true
+//   } catch (error) {
+//     c // handle error
+//   }
+// }
+
+// async function createNewUser({ issuer, publicAddress, email }, token) {
+//   let query = {
+//     query: `mutation {
+//       insert_users_one( object: { email: "${email}", issuer: "${issuer}", publicAddress: "${publicAddress}" }) {
+//         email
+//       }
+//     }`,
+//   }
+//   try {
+//     await queryHasura(query, token)
+//   } catch (error) {
+//     // handle error
+//   }
+// }
+
+// async function queryHasura(query, token) {
+//   try {
+//     let res = await fetch(process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Accept: 'application/json',
+//         Authorization: 'Bearer ' + token,
+//       },
+//       body: JSON.stringify(query),
+//     })
+//     let { data } = await res.json()
+//     return data
+//   } catch (error) {
+//     // handle error
+//   }
+// }
 
 module.exports = app
